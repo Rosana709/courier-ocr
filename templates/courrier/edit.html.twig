@@ -1,0 +1,140 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier {{ courrier.numeroReference }} - Gestion de Courrier{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">
+                <i class="bi bi-pencil"></i> Modifier le Courrier
+            </h1>
+            <p class="text-muted">{{ courrier.numeroReference }}</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ path('courrier_show', {id: courrier.id}) }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="objet" class="form-label">Objet *</label>
+                            <input type="text" class="form-control" id="objet" name="objet" value="{{ courrier.objet }}" required maxlength="500">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="priorite" class="form-label">Priorité *</label>
+                            <select class="form-select" id="priorite" name="priorite" required>
+                                {% for prioriteValue in priorites %}
+                                    <option value="{{ prioriteValue }}" {% if prioriteValue == courrier.priorite %}selected{% endif %}>
+                                        {{ prioriteValue }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="statut" class="form-label">Statut *</label>
+                    <select class="form-select" id="statut" name="statut" required>
+                        {% for statutValue in statuts %}
+                            <option value="{{ statutValue }}" {% if statutValue == courrier.statut %}selected{% endif %}>
+                                {{ statutValue|replace({'_': ' '}) }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="contenu" class="form-label">Contenu</label>
+                    <textarea class="form-control" id="contenu" name="contenu" rows="5">{{ courrier.contenu }}</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="destinatairesCopieIds" class="form-label">Services en copie</label>
+                    <select class="form-select" id="destinatairesCopieIds" name="destinatairesCopieIds[]" multiple>
+                        {% for service in services %}
+                            <option value="{{ service.id }}"
+                                {% for copie in courrier.destinatairesCopie %}
+                                    {% if copie.id == service.id %}selected{% endif %}
+                                {% endfor %}>
+                                {{ service.nom }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-text text-muted">Maintenez Ctrl pour sélectionner plusieurs services</small>
+                </div>
+
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Ajouter des notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Les notes seront ajoutées aux notes existantes"></textarea>
+
+                    {% if courrier.notes %}
+                    <div class="mt-2">
+                        <small class="text-muted">Notes existantes:</small>
+                        <div class="alert alert-light small">
+                            {{ courrier.notes|nl2br }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ path('courrier_show', {id: courrier.id}) }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <h6 class="mb-0">Informations du courrier (non modifiables)</h6>
+        </div>
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Type</dt>
+                <dd class="col-sm-9">
+                    {% if courrier.type == 'ENTRANT' %}
+                        <span class="badge bg-info">Entrant</span>
+                    {% else %}
+                        <span class="badge bg-success">Sortant</span>
+                    {% endif %}
+                </dd>
+
+                <dt class="col-sm-3">Expéditeur</dt>
+                <dd class="col-sm-9">
+                    {% if courrier.typeExpediteur == 'SERVICE' %}
+                        <i class="bi bi-building"></i> {{ courrier.serviceExpediteur.nom }}
+                    {% else %}
+                        <i class="bi bi-person"></i> {{ courrier.personneExterneExpediteur.nom }}
+                    {% endif %}
+                </dd>
+
+                <dt class="col-sm-3">Destinataire</dt>
+                <dd class="col-sm-9">
+                    {% if courrier.typeDestinataire == 'SERVICE' %}
+                        <i class="bi bi-building"></i> {{ courrier.serviceDestinataire.nom }}
+                    {% else %}
+                        <i class="bi bi-person"></i> {{ courrier.personneExterneDestinataire.nom }}
+                    {% endif %}
+                </dd>
+
+                <dt class="col-sm-3">Date du courrier</dt>
+                <dd class="col-sm-9 mb-0">{{ courrier.dateCourrier|date('d/m/Y') }}</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+{% endblock %}

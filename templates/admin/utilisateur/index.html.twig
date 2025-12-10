@@ -1,0 +1,304 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Utilisateurs - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <style>
+        .page-header {
+            margin-top: 2rem;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .stats-card {
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            margin-bottom: 2rem;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .stats-card.total {
+            background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
+            color: white;
+        }
+
+        .stats-card.active {
+            background: linear-gradient(135deg, #a8e6cf 0%, var(--color-success) 100%);
+            color: white;
+        }
+
+        .stats-card.inactive {
+            background: linear-gradient(135deg, #ffcccb 0%, var(--color-inactive) 100%);
+            color: white;
+        }
+
+        .stats-card .stats-number {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .stats-card .stats-label {
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+            opacity: 0.95;
+        }
+
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--color-primary-lighter) 0%, white 100%);
+            border-bottom: 2px solid var(--color-primary-light);
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+
+        .table-responsive {
+            border-radius: 0 0 15px 15px;
+        }
+
+        .badge-role {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            border-radius: 8px;
+        }
+
+        .badge-admin {
+            background-color: var(--color-inactive);
+            color: white;
+        }
+
+        .badge-service {
+            background-color: var(--color-primary-lighter);
+            color: #333;
+        }
+
+        .btn-action {
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .inactive-row {
+            background-color: rgba(212, 165, 165, 0.1);
+            opacity: 0.7;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            border: 2px solid var(--color-primary-lighter);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+        }
+
+        .dataTables_wrapper .dataTables_filter input:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 0.2rem rgba(118, 170, 170, 0.25);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-2">
+                    <i class="bi bi-people"></i>
+                    Gestion des Utilisateurs
+                </h1>
+                <p class="mb-0">Direction Générale des Impôts - Administration des comptes utilisateurs</p>
+            </div>
+            <div>
+                <div class="btn-group me-2">
+                    <a href="{{ path('admin_utilisateur_export_excel') }}" class="btn btn-success btn-lg">
+                        <i class="bi bi-file-earmark-excel"></i> Excel
+                    </a>
+                    <a href="{{ path('admin_utilisateur_export_pdf') }}" class="btn btn-danger btn-lg">
+                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                    </a>
+                </div>
+                <a href="{{ path('admin_utilisateur_create') }}" class="btn btn-light btn-lg">
+                    <i class="bi bi-person-plus"></i>
+                    Nouvel Utilisateur
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stats-card total">
+                <p class="stats-number">{{ utilisateurs|length }}</p>
+                <p class="stats-label">
+                    <i class="bi bi-people"></i>
+                    Total Utilisateurs
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card active">
+                <p class="stats-number">{{ utilisateurs|filter(u => u.estActif())|length }}</p>
+                <p class="stats-label">
+                    <i class="bi bi-check-circle"></i>
+                    Utilisateurs Actifs
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card inactive">
+                <p class="stats-number">{{ utilisateurs|filter(u => not u.estActif())|length }}</p>
+                <p class="stats-label">
+                    <i class="bi bi-x-circle"></i>
+                    Utilisateurs Inactifs
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-list-ul"></i>
+                Liste des utilisateurs
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="utilisateursTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Rôle</th>
+                            <th>Service</th>
+                            <th>Statut</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for utilisateur in utilisateurs %}
+                            <tr class="{{ not utilisateur.estActif() ? 'inactive-row' : '' }}">
+                                <td><code>{{ utilisateur.id }}</code></td>
+                                <td>
+                                    <i class="bi bi-envelope"></i>
+                                    {{ utilisateur.email }}
+                                </td>
+                                <td>
+                                    {% if utilisateur.isAdmin() %}
+                                        <span class="badge badge-role badge-admin">
+                                            <i class="bi bi-shield-check"></i> Administrateur
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-role badge-service">
+                                            <i class="bi bi-person"></i> Utilisateur Service
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if utilisateur.getService() %}
+                                        <span class="text-capitalize">
+                                            <i class="bi bi-building"></i>
+                                            {{ utilisateur.getService().nom|lower }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if utilisateur.estActif() %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> Actif
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle"></i> Inactif
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ path('admin_utilisateur_show', {id: utilisateur.id}) }}"
+                                           class="btn btn-sm btn-info btn-action"
+                                           title="Voir les détails">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{{ path('admin_utilisateur_edit', {id: utilisateur.id}) }}"
+                                           class="btn btn-sm btn-primary btn-action"
+                                           title="Modifier">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% if utilisateur.estActif() %}
+                                            <form method="post"
+                                                  action="{{ path('admin_utilisateur_deactivate', {id: utilisateur.id}) }}"
+                                                  style="display: inline;"
+                                                  onsubmit="return confirm('Voulez-vous vraiment désactiver cet utilisateur ?');">
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-warning btn-action"
+                                                        title="Désactiver">
+                                                    <i class="bi bi-pause-circle"></i>
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <form method="post"
+                                                  action="{{ path('admin_utilisateur_activate', {id: utilisateur.id}) }}"
+                                                  style="display: inline;"
+                                                  onsubmit="return confirm('Voulez-vous vraiment activer cet utilisateur ?');">
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-success btn-action"
+                                                        title="Activer">
+                                                    <i class="bi bi-play-circle"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#utilisateursTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/fr-FR.json'
+                },
+                responsive: true,
+                pageLength: 25,
+                order: [[1, 'asc']], // Order by email
+                columnDefs: [
+                    {
+                        targets: -1, // Last column (Actions)
+                        orderable: false,
+                        searchable: false
+                    }
+                ]
+            });
+        });
+    </script>
+{% endblock %}

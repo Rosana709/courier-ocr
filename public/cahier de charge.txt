@@ -1,0 +1,136 @@
+1. Périmètre de l’application
+L’application est dédiée à la gestion complète des courriers papier circulant au sein d’une administration.
+Elle prend en charge deux catégories de courriers :
+•	Courriers reçus : un service interne reçoit un courrier (d’une personne externe ou d’un autre service).
+•	Courriers envoyés : un service envoie un courrier (vers un autre service interne ou vers une personne/organisme externe).
+Le système garantit ainsi la traçabilité, le suivi du cycle de vie et la fluidité de la circulation des courriers internes et externes.
+2. Utilisateurs et gestion des services
+ Deux profils principaux
+a) Administrateur
+L’administrateur dispose d’une vision globale et de droits étendus. Il peut :
+•	gérer les services internes : création, modification, désactivation ;
+•	créer, corriger, archiver et consulter tous les courriers ;
+•	gérer les référentiels :
+services, personnes externes, statuts, paramètres (ex : numérotation) ;
+•	accéder à l’historique complet des actions effectuées par tous les services.
+b) Utilisateur de service
+•	un administrateur par service qui peut créer des utilisateurs rattaché au service: le compte représente officiellement le service.
+•	Chaque service possède sa propre session.
+•	Un service ne peut voir que :
+o	les courriers dont il est expéditeur,
+o	les courriers dont il est destinataire ou en copie.
+•	Il ne voit jamais les courriers qui ne concernent pas son service
+➜ confidentialité et cloisonnement garantis.
+3. Référentiels gérés par l’application
+ Services internes
+•	Chaque service correspond à une entité organisationnelle (direction, service, cellule).
+•	Attributs : identifiant, code, libellé, statut actif/inactif.
+•	Un service désactivé reste visible dans les historiques mais ne peut plus envoyer ni recevoir.
+Personnes externes
+•	Représentent les contribuables, entreprises, administrations, organismes externes.
+•	Attributs : nom/raison sociale, type, adresse postale.
+•	Peuvent être expéditeur ou destinataire selon le type de courrier.
+________________________________________
+4. Gestion des courriers : types, acteurs et numérotation
+Types de courriers
+•	Reçu : adressé à un service DGI depuis un service interne ou une personne externe.
+•	Envoyé : envoyé par un service DGI vers un autre service interne ou une personne externe.
+Acteurs associés à un courrier
+Chaque courrier comporte :
+•	1 expéditeur (service interne ou personne externe),
+•	1 destinataire principal,
+•	0 à N destinataires en copie (uniquement services internes).
+Numérotation automatique
+Format : N° XXX – année/DGI/SERVICE
+•	XXX : compteur par service et par année (001, 002…)
+•	année de création,
+•	code du service expéditeur.
+La numérotation est :
+•	automatique,
+•	non modifiable par les services,
+•	corrigible uniquement par l’administrateur (avec historisation).
+5. Cycle de vie et statuts des courriers
+ Statuts génériques
+•	Enregistré : courrier nouvellement intégré (souvent via scan OCR).
+•	En cours de traitement
+•	En attente (information, réponse, validation…)
+•	Clos : traitement terminé.
+•	Archivé
+ Statuts spécifiques aux courriers internes
+•	En attente d’accusé de réception (envoi d’un service vers un autre)
+•	Accusé de réception reçu (confirmation par le service destinataire)
+ Traçabilité
+Chaque changement de statut est :
+•	réalisé par un service ou par l’admin,
+•	horodaté,
+•	associé à l’utilisateur,
+•	enregistré dans un historique complet.
+Ce journal permet d’avoir une traçabilité exacte et infalsifiable du traitement de chaque courrier.
+________________________________________
+6. Gestion des courriers reçus
+ Enregistrement
+Lorsqu’un service reçoit un courrier papier, il l’intègre dans le système en :
+•	téléversant les pièces numérisées (lecture OCR possible),
+•	renseignant :
+o	expéditeur,
+o	destinataire (le service),
+o	objet,
+o	date du courrier (si connue),
+o	date de réception (obligatoire),
+o	type (interne / externe).
+Statut initial : Enregistré
+Traitement
+Le service peut :
+•	consulter et modifier les informations,
+•	faire évoluer le statut (En cours, En attente, Clos…),
+•	créer une réponse papier : cela génère automatiquement un courrier envoyé lié, avec le lien “Réponse à”.
+________________________________________
+7. Gestion des courriers envoyés
+Création
+Depuis sa session, un service créé un courrier envoyé en :
+•	fournissant les pièces jointes numérisées,
+•	définissant :
+o	expéditeur (son service),
+o	destinataire (service interne ou personne externe),
+o	date d’envoi,
+o	type (externe / interne).
+Statut initial :
+•	Enregistré,
+•	En cours,
+•	ou pour un courrier interne : En attente d’accusé de réception.
+Notifications automatiques
+Lorsqu’un service A envoie un courrier interne à un service B :
+•	B reçoit une notification automatique,
+•	Le courrier apparaît dans la session de B comme courrier reçu, avec statut “Reçu (non confirmé)”.
+________________________________________
+8. Notifications et accusés de réception
+Notifications
+Chaque service possède une zone Notification affichant :
+•	référence du courrier,
+•	expéditeur interne,
+•	objet,
+•	date d’enregistrement.
+Accusé de réception
+Quand un service reçoit physiquement le courrier interne envoyé :
+•	il clique sur “Accusé de réception”,
+•	le statut devient :
+o	côté B : “Reçu confirmé”,
+o	côté A : “Accusé de réception reçu”.
+•	La date de réception est enregistrée dans l’historique.
+Tous les acteurs concernés (services A, B et admin) peuvent consulter cette information.
+________________________________________
+9. Gestion des droits
+ Services
+Un service peut :
+•	créer, modifier, clôturer les courriers où il est impliqué,
+•	envoyer un accusé de réception,
+•	consulter l’historique complet des actions liées à ses courriers.
+Administrateur
+L’administrateur peut :
+•	corriger les courriers (expéditeur, destinataire, dates, statuts…),
+•	archiver les courriers,
+•	gérer les services, les référentiels et les statuts,
+•	consulter tout le flux de circulation des courriers.
+
+
+Couleur de la charte graphique : #76aaaa   #91c4c6  #a9d9de

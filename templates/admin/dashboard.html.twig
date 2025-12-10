@@ -1,0 +1,135 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord Administrateur - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>
+                <i class="bi bi-speedometer2"></i>
+                Tableau de bord Administrateur
+            </h1>
+            <p class="text-muted">Vue d'ensemble du système de gestion de courrier</p>
+        </div>
+    </div>
+
+    {# Statistiques #}
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">Services Actifs</h6>
+                            <h2 class="card-title mb-0">{{ stats.services_actifs }}</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-building" style="font-size: 3rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                    <small class="text-white-50">Total: {{ stats.total_services }}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">Utilisateurs Actifs</h6>
+                            <h2 class="card-title mb-0">{{ stats.utilisateurs_actifs }}</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-people" style="font-size: 3rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                    <small class="text-white-50">Total: {{ stats.total_utilisateurs }}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">Total Courriers</h6>
+                            <h2 class="card-title mb-0">{{ stats.total_couriers }}</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-envelope-paper" style="font-size: 3rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                    <small class="text-white-50">Tous les courriers</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">En attente</h6>
+                            <h2 class="card-title mb-0">0</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-hourglass-split" style="font-size: 3rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                    <small class="text-white-50">Courriers en attente</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Actions rapides #}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Actions rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <a href="{{ path('service_create') }}" class="btn btn-outline-primary w-100 py-3">
+                                <i class="bi bi-building"></i><br>
+                                Créer un service
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="#" class="btn btn-outline-success w-100 py-3">
+                                <i class="bi bi-person-plus"></i><br>
+                                Créer un utilisateur
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="#" class="btn btn-outline-info w-100 py-3">
+                                <i class="bi bi-file-earmark-text"></i><br>
+                                Voir tous les courriers
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Activité récente #}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Activité récente</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Aucune activité récente à afficher pour le moment.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,279 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ utilisateur.email }} - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .page-header {
+            margin-top: 2rem;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--color-primary-lighter) 0%, white 100%);
+            border-bottom: 2px solid var(--color-primary-light);
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+
+        .info-row {
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-row:hover {
+            background-color: rgba(118, 170, 170, 0.05);
+        }
+
+        .badge-role {
+            padding: 0.5rem 1rem;
+            font-size: 0.95rem;
+            border-radius: 8px;
+        }
+
+        .badge-admin {
+            background-color: var(--color-inactive);
+            color: white;
+        }
+
+        .badge-service {
+            background-color: var(--color-primary-lighter);
+            color: #333;
+        }
+
+        .btn {
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover, .btn-outline-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(118, 170, 170, 0.4);
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="page-header">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ path('admin_utilisateur_index') }}" class="text-white">Utilisateurs</a></li>
+                <li class="breadcrumb-item active text-white">{{ utilisateur.email }}</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-2">
+                    <i class="bi bi-person-circle"></i>
+                    {{ utilisateur.email }}
+                </h1>
+                <p class="mb-0">
+                    {% if utilisateur.isAdmin() %}
+                        <span class="badge badge-role badge-admin">
+                            <i class="bi bi-shield-check"></i> Administrateur
+                        </span>
+                    {% else %}
+                        <span class="badge badge-role badge-service">
+                            <i class="bi bi-person"></i> Utilisateur de service
+                        </span>
+                    {% endif %}
+                    {% if utilisateur.estActif() %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> Actif
+                        </span>
+                    {% else %}
+                        <span class="badge bg-danger">
+                            <i class="bi bi-x-circle"></i> Inactif
+                        </span>
+                    {% endif %}
+                </p>
+            </div>
+            <div>
+                <a href="{{ path('admin_utilisateur_edit', {id: utilisateur.id}) }}" class="btn btn-light">
+                    <i class="bi bi-pencil"></i> Modifier
+                </a>
+                <a href="{{ path('admin_utilisateur_index') }}" class="btn btn-light">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if not utilisateur.estActif() %}
+        <div class="alert alert-warning mb-4">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>Attention :</strong> Ce compte est actuellement inactif. L'utilisateur ne peut pas se connecter au système.
+        </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle"></i>
+                        Informations générales
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="info-row">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <strong><i class="bi bi-hash"></i> Identifiant</strong>
+                            </div>
+                            <div class="col-sm-8">
+                                <code class="fs-5">{{ utilisateur.id }}</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <strong><i class="bi bi-envelope"></i> Email</strong>
+                            </div>
+                            <div class="col-sm-8">
+                                <a href="mailto:{{ utilisateur.email }}">{{ utilisateur.email }}</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <strong><i class="bi bi-shield-check"></i> Rôle</strong>
+                            </div>
+                            <div class="col-sm-8">
+                                {% if utilisateur.isAdmin() %}
+                                    <span class="badge badge-role badge-admin">
+                                        <i class="bi bi-shield-check"></i> Administrateur
+                                    </span>
+                                    <div class="small text-muted mt-1">Accès complet à la gestion du système</div>
+                                {% else %}
+                                    <span class="badge badge-role badge-service">
+                                        <i class="bi bi-person"></i> Utilisateur de service
+                                    </span>
+                                    <div class="small text-muted mt-1">Accès limité aux courriers de son service</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <strong><i class="bi bi-building"></i> Service</strong>
+                            </div>
+                            <div class="col-sm-8">
+                                {% if utilisateur.getService() %}
+                                    <a href="{{ path('service_show', {id: utilisateur.getService().id}) }}" class="text-capitalize">
+                                        {{ utilisateur.getService().nom|lower }}
+                                    </a>
+                                    <div class="small text-muted mt-1">
+                                        <i class="bi bi-geo-alt"></i>
+                                        {% if utilisateur.getService().localite %}
+                                            {{ utilisateur.getService().localite }}
+                                        {% else %}
+                                            Localité non renseignée
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">Aucun service associé</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <strong><i class="bi bi-toggle-on"></i> Statut</strong>
+                            </div>
+                            <div class="col-sm-8">
+                                {% if utilisateur.estActif() %}
+                                    <span class="badge bg-success fs-6">
+                                        <i class="bi bi-check-circle"></i> Actif
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger fs-6">
+                                        <i class="bi bi-x-circle"></i> Inactif
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-gear"></i>
+                        Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('admin_utilisateur_edit', {id: utilisateur.id}) }}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Modifier l'utilisateur
+                        </a>
+                        {% if utilisateur.estActif() %}
+                            <form method="post" action="{{ path('admin_utilisateur_deactivate', {id: utilisateur.id}) }}" onsubmit="return confirm('Voulez-vous vraiment désactiver cet utilisateur ?');">
+                                <button type="submit" class="btn btn-outline-warning w-100">
+                                    <i class="bi bi-pause-circle"></i> Désactiver le compte
+                                </button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="{{ path('admin_utilisateur_activate', {id: utilisateur.id}) }}" onsubmit="return confirm('Voulez-vous vraiment activer cet utilisateur ?');">
+                                <button type="submit" class="btn btn-outline-success w-100">
+                                    <i class="bi bi-play-circle"></i> Activer le compte
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-info-circle"></i>
+                        Informations
+                    </h6>
+                    <p class="small mb-2">
+                        <strong>Mot de passe par défaut :</strong> dgi2025
+                    </p>
+                    <p class="small mb-0">
+                        Ce compte {% if utilisateur.isAdmin() %}administrateur peut gérer tous les aspects du système de gestion de courrier{% else %}utilisateur peut gérer les courriers de son service{% endif %}.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

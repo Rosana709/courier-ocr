@@ -1,0 +1,57 @@
+
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+.env.dev
+.env.test
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
+
+###> phpunit/phpunit ###
+/phpunit.xml
+.phpunit.result.cache
+###< phpunit/phpunit ###
+
+###> symfony/phpunit-bridge ###
+.phpunit.result.cache
+/phpunit.xml
+###< symfony/phpunit-bridge ###
+
+###> Fichiers temporaires et logs ###
+*.log
+php_errors.log
+server_new.log
+*.sql
+nul
+
+###> Scripts temporaires ###
+check_*.php
+init_*.php
+debug_*.php
+create_schema.php
+
+###> Fichiers de documentation temporaires ###
+AUTHENTICATION.md
+MIGRATION_SYMFONY7.md
+README_WARNINGS.md
+SOLUTION_FINALE.md
+resume_application.html
+
+###> Fichiers Windows ###
+*.bat
+composer.phar
+
+###> IDE et outils ###
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*.swo
+*~
+
+###> Claude AI ###
+.claude/

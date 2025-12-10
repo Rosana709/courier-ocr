@@ -1,0 +1,253 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier {{ utilisateur.email }} - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .page-header {
+            margin-top: 2rem;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--color-primary-lighter) 0%, white 100%);
+            border-bottom: 2px solid var(--color-primary-light);
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--color-primary-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-label .required {
+            color: #dc3545;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid var(--color-primary-lighter);
+            border-radius: 10px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 0.25rem rgba(118, 170, 170, 0.15);
+        }
+
+        .form-control:disabled {
+            background-color: #f8f9fa;
+            opacity: 0.7;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+        }
+
+        .btn {
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            box-shadow: 0 4px 10px rgba(118, 170, 170, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(118, 170, 170, 0.4);
+        }
+
+        .form-check-input:checked {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="page-header">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ path('admin_utilisateur_index') }}" class="text-white">Utilisateurs</a></li>
+                <li class="breadcrumb-item"><a href="{{ path('admin_utilisateur_show', {id: utilisateur.id}) }}" class="text-white">{{ utilisateur.email }}</a></li>
+                <li class="breadcrumb-item active text-white">Modifier</li>
+            </ol>
+        </nav>
+        <h1 class="h2 mb-0">
+            <i class="bi bi-pencil"></i>
+            Modifier l'utilisateur
+        </h1>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle"></i>
+                        Informations de l'utilisateur
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        <div class="mb-4">
+                            <label for="id" class="form-label">
+                                <i class="bi bi-hash"></i>
+                                Identifiant
+                            </label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="id"
+                                   value="{{ utilisateur.id }}"
+                                   disabled>
+                            <div class="form-text">L'identifiant ne peut pas être modifié</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="email" class="form-label">
+                                <i class="bi bi-envelope"></i>
+                                Adresse email <span class="required">*</span>
+                            </label>
+                            <input type="email"
+                                   class="form-control"
+                                   id="email"
+                                   name="email"
+                                   value="{{ utilisateur.email }}"
+                                   required
+                                   placeholder="utilisateur@dgi.gov">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="role" class="form-label">
+                                <i class="bi bi-shield-check"></i>
+                                Rôle actuel
+                            </label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="role"
+                                   value="{% if utilisateur.isAdmin() %}Administrateur{% else %}Utilisateur de service{% endif %}"
+                                   disabled>
+                            <div class="form-text">Le rôle ne peut pas être modifié après la création</div>
+                        </div>
+
+                        {% if not utilisateur.isAdmin() %}
+                            <div class="mb-4">
+                                <label for="service_id" class="form-label">
+                                    <i class="bi bi-building"></i>
+                                    Service
+                                </label>
+                                <select class="form-select" id="service_id" name="service_id">
+                                    <option value="">-- Aucun service --</option>
+                                    {% for service in services %}
+                                        <option value="{{ service.id }}"
+                                                {% if utilisateur.getService() and utilisateur.getService().id == service.id %}selected{% endif %}>
+                                            {{ service.nom }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-4">
+                            <label for="password" class="form-label">
+                                <i class="bi bi-lock"></i>
+                                Nouveau mot de passe
+                            </label>
+                            <input type="password"
+                                   class="form-control"
+                                   id="password"
+                                   name="password"
+                                   placeholder="Laisser vide pour ne pas changer">
+                            <div class="form-text">Entrez un nouveau mot de passe seulement si vous souhaitez le modifier</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       role="switch"
+                                       id="est_actif"
+                                       name="est_actif"
+                                       value="1"
+                                       {% if utilisateur.estActif() %}checked{% endif %}>
+                                <label class="form-check-label" for="est_actif">
+                                    <i class="bi bi-check-circle"></i>
+                                    Compte actif
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                {% if utilisateur.estActif() %}
+                                    Le compte est actuellement <strong>actif</strong>
+                                {% else %}
+                                    Le compte est actuellement <strong>inactif</strong>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i>
+                                Enregistrer les modifications
+                            </button>
+                            <a href="{{ path('admin_utilisateur_show', {id: utilisateur.id}) }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i>
+                                Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-lightbulb"></i>
+                        Informations
+                    </h6>
+                    <ul class="small mb-0">
+                        <li>L'identifiant et le rôle ne peuvent pas être modifiés</li>
+                        <li>Laissez le champ mot de passe vide si vous ne souhaitez pas le changer</li>
+                        <li>La désactivation du compte empêchera l'utilisateur de se connecter</li>
+                        <li>Vous pouvez réactiver un compte désactivé à tout moment</li>
+                    </ul>
+                </div>
+            </div>
+
+            {% if not utilisateur.estActif() %}
+                <div class="card mt-3" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%); border: 2px solid #ffc107;">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            Compte inactif
+                        </h6>
+                        <p class="small mb-0">
+                            Ce compte est actuellement inactif. L'utilisateur ne peut pas se connecter au système.
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

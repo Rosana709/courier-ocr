@@ -1,0 +1,143 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier mon profil - Gestion de Courrier{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">
+                <i class="bi bi-pencil"></i> Modifier mon profil
+            </h1>
+        </div>
+        <div class="col-auto">
+            <a href="{{ path('profil_show') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        <h5 class="mb-3">Informations du compte</h5>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Adresse email *</label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                   value="{{ user.email }}" required maxlength="180">
+                            <div class="form-text">Cette adresse sera utilisée pour vous connecter</div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h5 class="mb-3">Modifier le mot de passe</h5>
+                        <p class="text-muted small">Laissez vide si vous ne souhaitez pas changer votre mot de passe</p>
+
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Mot de passe actuel</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password">
+                            <div class="form-text">Requis uniquement si vous changez votre mot de passe</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label">Nouveau mot de passe</label>
+                                    <input type="password" class="form-control" id="new_password" name="new_password" minlength="6">
+                                    <div class="form-text">Au moins 6 caractères</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">Confirmer le mot de passe</label>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" minlength="6">
+                                    <div class="form-text">Doit correspondre au nouveau mot de passe</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ path('profil_show') }}" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Enregistrer les modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-info-circle"></i>
+                        Informations
+                    </h6>
+                    <ul class="list-unstyled small">
+                        <li><strong>Rôle :</strong> {{ user.isAdmin() ? 'Administrateur' : 'Utilisateur de service' }}</li>
+                        {% if user.service %}
+                        <li><strong>Service :</strong> {{ user.service.nom }}</li>
+                        {% endif %}
+                    </ul>
+
+                    <h6 class="card-title mt-3">
+                        <i class="bi bi-lightbulb"></i>
+                        Conseils
+                    </h6>
+                    <ul class="list-unstyled small">
+                        <li>• Utilisez une adresse email valide</li>
+                        <li>• Choisissez un mot de passe sécurisé</li>
+                        <li>• Votre mot de passe doit contenir au moins 6 caractères</li>
+                        <li>• Vous serez déconnecté après le changement de mot de passe</li>
+                    </ul>
+
+                    <div class="alert alert-warning small mt-3">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Note:</strong> Seul votre email et mot de passe peuvent être modifiés. Pour changer de service, contactez un administrateur.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    // Validation côté client
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const newPassword = document.getElementById('new_password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        const currentPassword = document.getElementById('current_password').value;
+
+        // Si on change le mot de passe
+        if (newPassword || confirmPassword) {
+            // Vérifier que l'ancien mot de passe est fourni
+            if (!currentPassword) {
+                e.preventDefault();
+                alert('Vous devez fournir votre mot de passe actuel pour changer de mot de passe');
+                return;
+            }
+
+            // Vérifier que les mots de passe correspondent
+            if (newPassword !== confirmPassword) {
+                e.preventDefault();
+                alert('Les mots de passe ne correspondent pas');
+                return;
+            }
+
+            // Vérifier la longueur minimale
+            if (newPassword.length < 6) {
+                e.preventDefault();
+                alert('Le mot de passe doit contenir au moins 6 caractères');
+                return;
+            }
+        }
+    });
+</script>
+{% endblock %}

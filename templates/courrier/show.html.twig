@@ -1,0 +1,324 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ courrier.numeroReference }} - Gestion de Courrier{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">
+                <i class="bi bi-envelope"></i> {{ courrier.numeroReference }}
+            </h1>
+        </div>
+        <div class="col-auto">
+            {% if is_granted('courrier_edit', courrier) %}
+            <a href="{{ path('courrier_edit', {id: courrier.id}) }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Modifier
+            </a>
+            {% endif %}
+            <a href="{{ path('courrier_index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Informations générales</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        {% if courrier.numeroArrivee %}
+                        <dt class="col-sm-4">Numéro d'arrivée</dt>
+                        <dd class="col-sm-8">
+                            <strong class="text-primary">{{ courrier.numeroArrivee }}</strong>
+                            <span class="badge bg-info ms-2">
+                                <i class="bi bi-inbox"></i> Entrant
+                            </span>
+                        </dd>
+                        {% endif %}
+
+                        <dt class="col-sm-4">Numéro de référence</dt>
+                        <dd class="col-sm-8">
+                            <strong>{{ courrier.numeroReference }}</strong>
+                            {% if courrier.type == 'ENTRANT' and courrier.numeroReference starts with 'REF-' %}
+                                <small class="text-muted">(généré automatiquement)</small>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">Type</dt>
+                        <dd class="col-sm-8">
+                            {% if courrier.type == 'ENTRANT' %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-arrow-down-circle"></i> Entrant
+                                </span>
+                            {% else %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-arrow-up-circle"></i> Sortant
+                                </span>
+                            {% endif %}
+                            {% if courrier.estInterne() %}
+                                <span class="badge bg-secondary">Interne</span>
+                            {% else %}
+                                <span class="badge bg-warning">Externe</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">Statut</dt>
+                        <dd class="col-sm-8">
+                            {% set statutClass = '' %}
+                            {% if courrier.statut == 'ENREGISTRE' %}
+                                {% set statutClass = 'secondary' %}
+                            {% elseif courrier.statut == 'EN_COURS_TRAITEMENT' %}
+                                {% set statutClass = 'primary' %}
+                            {% elseif courrier.statut == 'EN_ATTENTE' %}
+                                {% set statutClass = 'warning' %}
+                            {% elseif courrier.statut == 'CLOS' %}
+                                {% set statutClass = 'success' %}
+                            {% elseif courrier.statut == 'ARCHIVE' %}
+                                {% set statutClass = 'dark' %}
+                            {% else %}
+                                {% set statutClass = 'info' %}
+                            {% endif %}
+                            <span class="badge bg-{{ statutClass }}">
+                                {{ courrier.statut|replace({'_': ' '}) }}
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-4">Priorité</dt>
+                        <dd class="col-sm-8">
+                            {% set prioriteClass = '' %}
+                            {% if courrier.priorite == 'URGENTE' %}
+                                {% set prioriteClass = 'danger' %}
+                            {% elseif courrier.priorite == 'HAUTE' %}
+                                {% set prioriteClass = 'warning' %}
+                            {% elseif courrier.priorite == 'NORMALE' %}
+                                {% set prioriteClass = 'info' %}
+                            {% else %}
+                                {% set prioriteClass = 'secondary' %}
+                            {% endif %}
+                            <span class="badge bg-{{ prioriteClass }}">
+                                {{ courrier.priorite }}
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-4">Date du courrier</dt>
+                        <dd class="col-sm-8">{{ courrier.dateCourrier|date('d/m/Y') }}</dd>
+
+                        <dt class="col-sm-4">Date d'enregistrement</dt>
+                        <dd class="col-sm-8">{{ courrier.dateEnregistrement|date('d/m/Y H:i') }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Acteurs</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Expéditeur</dt>
+                        <dd class="col-sm-8">
+                            {% if courrier.typeExpediteur == 'SERVICE' %}
+                                <i class="bi bi-building"></i> {{ courrier.serviceExpediteur.nom }}
+                                {% if courrier.serviceExpediteur.sigle %}
+                                    <span class="badge bg-secondary">{{ courrier.serviceExpediteur.sigle }}</span>
+                                {% endif %}
+                            {% else %}
+                                <i class="bi bi-person"></i> {{ courrier.personneExterneExpediteur.nom }}
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">Destinataire</dt>
+                        <dd class="col-sm-8">
+                            {% if courrier.typeDestinataire == 'SERVICE' %}
+                                <i class="bi bi-building"></i> {{ courrier.serviceDestinataire.nom }}
+                                {% if courrier.serviceDestinataire.sigle %}
+                                    <span class="badge bg-secondary">{{ courrier.serviceDestinataire.sigle }}</span>
+                                {% endif %}
+                            {% else %}
+                                <i class="bi bi-person"></i> {{ courrier.personneExterneDestinataire.nom }}
+                            {% endif %}
+                        </dd>
+
+                        {% if courrier.destinatairesCopie|length > 0 %}
+                        <dt class="col-sm-4">En copie</dt>
+                        <dd class="col-sm-8">
+                            {% for service in courrier.destinatairesCopie %}
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-building"></i> {{ service.nom }}
+                                </span>
+                            {% endfor %}
+                        </dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Contenu</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Objet</h6>
+                    <p>{{ courrier.objet }}</p>
+
+                    {% if courrier.contenu %}
+                    <hr>
+                    <h6>Contenu</h6>
+                    <p class="text-muted">{{ courrier.contenu|nl2br }}</p>
+                    {% endif %}
+
+                    {% if courrier.notes %}
+                    <hr>
+                    <h6>Notes</h6>
+                    <p class="text-muted fst-italic">{{ courrier.notes|nl2br }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Pièces jointes</h5>
+                    {% if is_granted('courrier_edit', courrier) %}
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                        <i class="bi bi-paperclip"></i> Ajouter
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if piecesJointes is empty %}
+                        <p class="text-muted mb-0">Aucune pièce jointe</p>
+                    {% else %}
+                        <div class="list-group">
+                            {% for piece in piecesJointes %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-file-earmark-{{ piece.extension == 'pdf' ? 'pdf' : 'text' }}"></i>
+                                    <strong>{{ piece.nomFichierOriginal }}</strong>
+                                    <small class="text-muted d-block">
+                                        {{ piece.tailleFichierFormate }} -
+                                        Ajouté le {{ piece.dateTelechargement|date('d/m/Y à H:i') }}
+                                        par {{ piece.telechargeParUtilisateur.email }}
+                                    </small>
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ path('piece_jointe_download', {courrierId: courrier.id, id: piece.id}) }}"
+                                       class="btn btn-outline-primary"
+                                       title="Télécharger">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                    {% if is_granted('courrier_edit', courrier) %}
+                                    <form method="post"
+                                          action="{{ path('piece_jointe_delete', {courrierId: courrier.id, id: piece.id}) }}"
+                                          onsubmit="return confirm('Supprimer cette pièce jointe ?');"
+                                          style="display: inline;">
+                                        <button type="submit" class="btn btn-outline-danger" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            {% if courrier.typeDestinataire == 'SERVICE'
+               and (courrier.statut == 'RECU_NON_CONFIRME' or courrier.statut == 'EN_ATTENTE_ACCUSE_RECEPTION') %}
+            <div class="card mb-3 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Accusé de réception</h6>
+                </div>
+                <div class="card-body">
+                    {% if courrier.statut == 'RECU_NON_CONFIRME' %}
+                        <p class="small">Ce courrier est en attente de confirmation de réception.</p>
+                        {% if app.user.service and app.user.service.id == courrier.serviceDestinataire.id %}
+                        <form method="post" action="{{ path('courrier_accuse_reception', {id: courrier.id}) }}">
+                            <button type="submit" class="btn btn-warning btn-sm w-100">
+                                <i class="bi bi-check-circle"></i> Confirmer la réception
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% else %}
+                        <p class="small">En attente de l'accusé de réception du destinataire.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Métadonnées</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-1">
+                        <strong>Créé par:</strong><br>
+                        {{ courrier.creeParUtilisateur.email }}
+                    </p>
+                    <p class="small mb-1">
+                        <strong>Date de création:</strong><br>
+                        {{ courrier.dateCreation|date('d/m/Y H:i') }}
+                    </p>
+                    {% if courrier.dateModification %}
+                    <p class="small mb-0">
+                        <strong>Dernière modification:</strong><br>
+                        {{ courrier.dateModification|date('d/m/Y H:i') }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if is_granted('ROLE_ADMIN') %}
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="mb-0">Zone Administrateur</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ path('courrier_delete', {id: courrier.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce courrier ?');">
+                        <button type="submit" class="btn btn-danger btn-sm w-100">
+                            <i class="bi bi-trash"></i> Supprimer
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'upload de pièce jointe -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{{ path('piece_jointe_upload', {courrierId: courrier.id}) }}" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadModalLabel">Ajouter une pièce jointe</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="fichier" class="form-label">Fichier *</label>
+                        <input type="file" class="form-control" id="fichier" name="fichier" required>
+                        <small class="form-text text-muted">
+                            Formats acceptés : PDF, JPG, PNG, DOCX, XLSX, DOC, XLS (max 10 Mo)
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload"></i> Téléverser
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

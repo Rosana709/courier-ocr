@@ -1,0 +1,226 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un utilisateur - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .page-header {
+            margin-top: 2rem;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--color-primary-lighter) 0%, white 100%);
+            border-bottom: 2px solid var(--color-primary-light);
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--color-primary-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-label .required {
+            color: #dc3545;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid var(--color-primary-lighter);
+            border-radius: 10px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 0.25rem rgba(118, 170, 170, 0.15);
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, var(--color-primary-lighter) 0%, white 100%);
+            border: 2px solid var(--color-primary-light);
+            border-radius: 10px;
+            color: var(--color-primary-dark);
+        }
+
+        .btn {
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            box-shadow: 0 4px 10px rgba(118, 170, 170, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(118, 170, 170, 0.4);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="page-header">
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ path('admin_utilisateur_index') }}" class="text-white">Utilisateurs</a></li>
+                <li class="breadcrumb-item active text-white">Créer un utilisateur</li>
+            </ol>
+        </nav>
+        <h1 class="h2 mb-0">
+            <i class="bi bi-person-plus"></i>
+            Créer un nouvel utilisateur
+        </h1>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle"></i>
+                        Informations de l'utilisateur
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Mot de passe par défaut :</strong> Tous les utilisateurs sont créés avec le mot de passe <code>dgi2025</code>
+                    </div>
+
+                    <form method="post">
+                        <div class="mb-4">
+                            <label for="role" class="form-label">
+                                <i class="bi bi-shield-check"></i>
+                                Rôle <span class="required">*</span>
+                            </label>
+                            <select class="form-select" id="role" name="role" required onchange="toggleServiceField()">
+                                <option value="">-- Sélectionnez un rôle --</option>
+                                <option value="ROLE_ADMIN">Administrateur</option>
+                                <option value="ROLE_SERVICE">Utilisateur de service</option>
+                            </select>
+                            <div class="form-text">
+                                <strong>Administrateur :</strong> Accès complet à la gestion du système<br>
+                                <strong>Utilisateur de service :</strong> Accès limité aux courriers de son service
+                            </div>
+                        </div>
+
+                        <div class="mb-4" id="service-field" style="display: none;">
+                            <label for="service_id" class="form-label">
+                                <i class="bi bi-building"></i>
+                                Service <span class="required">*</span>
+                            </label>
+                            <select class="form-select" id="service_id" name="service_id">
+                                <option value="">-- Sélectionnez un service --</option>
+                                {% for service in services %}
+                                    <option value="{{ service.id }}" data-email="{{ service.mail }}">{{ service.nom }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Le service auquel l'utilisateur sera rattaché. L'email du service sera utilisé automatiquement.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="email" class="form-label">
+                                <i class="bi bi-envelope"></i>
+                                Adresse email <span class="required">*</span>
+                            </label>
+                            <input type="email"
+                                   class="form-control"
+                                   id="email"
+                                   name="email"
+                                   required
+                                   placeholder="utilisateur@dgi.gov">
+                            <div class="form-text">L'adresse email servira d'identifiant de connexion</div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i>
+                                Créer l'utilisateur
+                            </button>
+                            <a href="{{ path('admin_utilisateur_index') }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i>
+                                Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-lightbulb"></i>
+                        Informations importantes
+                    </h6>
+                    <ul class="small mb-0">
+                        <li>Le mot de passe par défaut est <strong>dgi2025</strong></li>
+                        <li>Les utilisateurs doivent changer leur mot de passe lors de leur première connexion</li>
+                        <li>Un service ne peut avoir qu'un seul utilisateur associé</li>
+                        <li>Les administrateurs ont accès à toutes les fonctionnalités</li>
+                        <li>Les utilisateurs de service ne voient que les courriers de leur service</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        function toggleServiceField() {
+            const role = document.getElementById('role').value;
+            const serviceField = document.getElementById('service-field');
+            const serviceSelect = document.getElementById('service_id');
+
+            if (role === 'ROLE_SERVICE') {
+                serviceField.style.display = 'block';
+                serviceSelect.required = true;
+            } else {
+                serviceField.style.display = 'none';
+                serviceSelect.required = false;
+                serviceSelect.value = '';
+            }
+        }
+
+        // Auto-fill email when service is selected
+        function autoFillEmail() {
+            const serviceSelect = document.getElementById('service_id');
+            const emailInput = document.getElementById('email');
+
+            serviceSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const serviceEmail = selectedOption.getAttribute('data-email');
+
+                if (serviceEmail && serviceEmail !== 'null' && serviceEmail !== '') {
+                    emailInput.value = serviceEmail;
+                }
+            });
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleServiceField();
+            autoFillEmail();
+        });
+    </script>
+{% endblock %}

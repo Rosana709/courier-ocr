@@ -1,0 +1,213 @@
+/* Charte graphique DGI */
+:root {
+    --color-primary: #76aaaa;
+    --color-primary-light: #91c4c6;
+    --color-primary-lighter: #a9d9de;
+    --color-primary-dark: #5f8c8c;
+    --color-success: #76aa8e;
+    --color-inactive: #d4a5a5;
+}
+
+/* Navbar */
+.navbar-dgi {
+    background-color: var(--color-primary) !important;
+}
+
+/* Couleurs primaires */
+.bg-primary {
+    background-color: var(--color-primary) !important;
+}
+
+.text-primary {
+    color: var(--color-primary) !important;
+}
+
+.border-primary {
+    border-color: var(--color-primary) !important;
+}
+
+/* Boutons */
+.btn-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+}
+
+.btn-outline-primary {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+/* Liens */
+a {
+    color: var(--color-primary);
+}
+
+a:hover {
+    color: var(--color-primary-dark);
+}
+
+/* Badges */
+.badge.bg-primary {
+    background-color: var(--color-primary) !important;
+}
+
+.badge.bg-info {
+    background-color: var(--color-primary-lighter) !important;
+    color: #333 !important;
+}
+
+/* Formulaires */
+.form-control:focus {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 0.2rem rgba(118, 170, 170, 0.25);
+}
+
+.form-select:focus {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 0.2rem rgba(118, 170, 170, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+/* Pagination */
+.page-item.active .page-link {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.page-link {
+    color: var(--color-primary);
+}
+
+.page-link:hover {
+    color: var(--color-primary-dark);
+    background-color: var(--color-primary-lighter);
+    border-color: var(--color-primary-light);
+}
+
+/* Alertes */
+.alert-primary {
+    background-color: var(--color-primary-lighter);
+    border-color: var(--color-primary-light);
+    color: var(--color-primary-dark);
+}
+
+/* Cartes */
+.card-header.bg-primary {
+    background-color: var(--color-primary) !important;
+    color: white;
+}
+
+/* Gradients */
+.gradient-dgi {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+}
+
+.gradient-dgi-light {
+    background: linear-gradient(135deg, var(--color-primary-lighter) 0%, white 100%);
+}
+
+/* Tables */
+.table-primary {
+    --bs-table-bg: var(--color-primary-lighter);
+    --bs-table-border-color: var(--color-primary-light);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(118, 170, 170, 0.05);
+}
+
+/* Dropdowns */
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--color-primary-lighter);
+}
+
+/* Progress bars */
+.progress-bar {
+    background-color: var(--color-primary);
+}
+
+/* Spinners */
+.spinner-border.text-primary {
+    color: var(--color-primary) !important;
+}
+
+/* Tooltips */
+.tooltip-inner {
+    background-color: var(--color-primary-dark);
+}
+
+.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: var(--color-primary-dark);
+}
+
+.bs-tooltip-end .tooltip-arrow::before {
+    border-right-color: var(--color-primary-dark);
+}
+
+.bs-tooltip-bottom .tooltip-arrow::before {
+    border-bottom-color: var(--color-primary-dark);
+}
+
+.bs-tooltip-start .tooltip-arrow::before {
+    border-left-color: var(--color-primary-dark);
+}
+
+/* Modaux */
+.modal-header.bg-primary {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+/* Breadcrumb */
+.breadcrumb-item.active {
+    color: var(--color-primary-dark);
+}
+
+.breadcrumb-item a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+}
+
+/* Navigation tabs */
+.nav-tabs .nav-link.active {
+    color: var(--color-primary);
+    border-color: var(--color-primary) var(--color-primary) #fff;
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--color-primary);
+}
+
+/* List group */
+.list-group-item.active {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+/* Footer */
+footer {
+    background-color: #f8f9fa;
+    border-top: 3px solid var(--color-primary-lighter);
+}

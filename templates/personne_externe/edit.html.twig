@@ -1,0 +1,121 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier {{ personne.nomOuRaisonSociale }} - Gestion de Courrier{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">
+                <i class="bi bi-pencil"></i> Modifier Personne Externe
+            </h1>
+            <p class="text-muted">{{ personne.nomOuRaisonSociale }}</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ path('personne_externe_show', {id: personne.id}) }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label for="nomOuRaisonSociale" class="form-label">Nom / Raison sociale *</label>
+                            <input type="text" class="form-control" id="nomOuRaisonSociale" name="nomOuRaisonSociale"
+                                   value="{{ personne.nomOuRaisonSociale }}" required maxlength="255">
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="type" class="form-label">Type *</label>
+                            <select class="form-select" id="type" name="type" required>
+                                {% for typeValue in types %}
+                                    <option value="{{ typeValue }}" {% if typeValue == personne.type %}selected{% endif %}>
+                                        {% if typeValue == 'CONTRIBUABLE' %}Contribuable
+                                        {% elseif typeValue == 'ENTREPRISE' %}Entreprise
+                                        {% elseif typeValue == 'ADMINISTRATION' %}Administration
+                                        {% else %}Organisme{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="adressePostale" class="form-label">Adresse postale</label>
+                    <textarea class="form-control" id="adressePostale" name="adressePostale" rows="3">{{ personne.adressePostale }}</textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="telephone" class="form-label">Téléphone</label>
+                            <input type="tel" class="form-control" id="telephone" name="telephone"
+                                   value="{{ personne.telephone }}" maxlength="50">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                   value="{{ personne.email }}" maxlength="180">
+                        </div>
+                    </div>
+                </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ path('personne_externe_show', {id: personne.id}) }}" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Enregistrer les modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-info-circle"></i>
+                        Informations
+                    </h6>
+                    <ul class="list-unstyled small">
+                        <li><strong>Types de personnes :</strong>
+                            <ul class="mb-0">
+                                <li><strong>Contribuable :</strong> Personne physique</li>
+                                <li><strong>Entreprise :</strong> Société commerciale</li>
+                                <li><strong>Administration :</strong> Service public</li>
+                                <li><strong>Organisme :</strong> Association, ONG, etc.</li>
+                            </ul>
+                        </li>
+                        <li class="mt-2"><strong>Champs obligatoires :</strong> Nom/Raison sociale et Type</li>
+                        <li><strong>Champs optionnels :</strong> Adresse, Téléphone et Email</li>
+                    </ul>
+
+                    <h6 class="card-title mt-3">
+                        <i class="bi bi-lightbulb"></i>
+                        Conseils
+                    </h6>
+                    <ul class="list-unstyled small">
+                        <li>• Vérifiez les informations avant l'enregistrement</li>
+                        <li>• Le type peut être modifié si nécessaire</li>
+                        <li>• L'email facilite la communication</li>
+                        <li>• L'adresse postale aide à l'identification</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

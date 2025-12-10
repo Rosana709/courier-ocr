@@ -1,0 +1,161 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord Service - {{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>
+                <i class="bi bi-speedometer2"></i>
+                Tableau de bord - {{ stats.service.nom }}
+            </h1>
+            <p class="text-muted">
+                <span class="badge bg-primary">{{ stats.service.sigle ?? stats.service.id }}</span>
+                Gestion de vos courriers
+            </p>
+        </div>
+    </div>
+
+    {# Statistiques #}
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">Courriers Reçus</h6>
+                            <h2 class="card-title mb-0">{{ stats.courriers_recus }}</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                    <small class="text-white-50">Courriers destinés à votre service</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">Courriers Envoyés</h6>
+                            <h2 class="card-title mb-0">{{ stats.courriers_envoyes }}</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-send" style="font-size: 3rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                    <small class="text-white-50">Courriers envoyés par votre service</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Actions rapides #}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Actions rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <a href="#" class="btn btn-outline-primary w-100 py-3">
+                                <i class="bi bi-envelope-plus"></i><br>
+                                Enregistrer un courrier reçu
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="#" class="btn btn-outline-success w-100 py-3">
+                                <i class="bi bi-send-plus"></i><br>
+                                Créer un courrier envoyé
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="#" class="btn btn-outline-info w-100 py-3">
+                                <i class="bi bi-bell"></i><br>
+                                Voir les notifications
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Derniers courriers #}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-inbox"></i> Derniers courriers reçus</h5>
+                </div>
+                <div class="card-body">
+                    {% if courriers_recus is empty %}
+                        <p class="text-muted">Aucun courrier reçu pour le moment.</p>
+                    {% else %}
+                        <div class="list-group list-group-flush">
+                            {% for courrier in courriers_recus %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ courrier.objet }}</h6>
+                                        <small class="text-muted">{{ courrier.dateCourrier|date('d/m/Y') }}</small>
+                                    </div>
+                                    <small>De:
+                                        {% if courrier.typeExpediteur == 'SERVICE' %}
+                                            {{ courrier.serviceExpediteur.nom }}
+                                        {% else %}
+                                            {{ courrier.personneExterneExpediteur.nomOuRaisonSociale }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="#" class="btn btn-sm btn-outline-primary">Voir tous les courriers reçus</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-send"></i> Derniers courriers envoyés</h5>
+                </div>
+                <div class="card-body">
+                    {% if courriers_envoyes is empty %}
+                        <p class="text-muted">Aucun courrier envoyé pour le moment.</p>
+                    {% else %}
+                        <div class="list-group list-group-flush">
+                            {% for courrier in courriers_envoyes %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ courrier.objet }}</h6>
+                                        <small class="text-muted">{{ courrier.dateCourrier|date('d/m/Y') }}</small>
+                                    </div>
+                                    <small>À:
+                                        {% if courrier.typeDestinataire == 'SERVICE' %}
+                                            {{ courrier.serviceDestinataire.nom }}
+                                        {% else %}
+                                            {{ courrier.personneExterneDestinataire.nomOuRaisonSociale }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="#" class="btn btn-sm btn-outline-success">Voir tous les courriers envoyés</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

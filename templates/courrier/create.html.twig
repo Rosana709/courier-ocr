@@ -1,0 +1,305 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau courrier - Gestion de Courrier{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">
+                <i class="bi bi-envelope-plus"></i> Nouveau Courrier
+            </h1>
+        </div>
+        <div class="col-auto">
+            <a href="{{ path('courrier_index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="type" class="form-label">Type de courrier *</label>
+                            <select class="form-select" id="type" name="type" required>
+                                <option value="">-- Sélectionnez --</option>
+                                {% for typeValue in types %}
+                                    <option value="{{ typeValue }}">
+                                        {% if typeValue == 'ENTRANT' %}Entrant{% else %}Sortant{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        {# Numéro de référence (pour courriers entrants uniquement) #}
+                        <div class="mb-3" id="numeroReferenceField" style="display: none;">
+                            <label for="numeroReference" class="form-label">
+                                Numéro de référence de l'expéditeur
+                                <small class="text-muted">(optionnel)</small>
+                            </label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="numeroReference"
+                                   name="numeroReference"
+                                   maxlength="100"
+                                   placeholder="Ex: 123/2025/EXP">
+                            <div class="form-text">
+                                Le numéro de référence du courrier fourni par l'expéditeur (si disponible)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="priorite" class="form-label">Priorité *</label>
+                            <select class="form-select" id="priorite" name="priorite" required>
+                                {% for prioriteValue in priorites %}
+                                    <option value="{{ prioriteValue }}" {% if prioriteValue == 'NORMALE' %}selected{% endif %}>
+                                        {{ prioriteValue }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="dateCourrier" class="form-label">Date du courrier *</label>
+                            <input type="date" class="form-control" id="dateCourrier" name="dateCourrier" value="{{ 'now'|date('Y-m-d') }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h5>Expéditeur</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="typeExpediteur" class="form-label">Type d'expéditeur *</label>
+                            <select class="form-select" id="typeExpediteur" name="typeExpediteur" required>
+                                <option value="">-- Sélectionnez --</option>
+                                <option value="SERVICE">Service interne</option>
+                                <option value="PERSONNE_EXTERNE">Personne externe</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3" id="serviceExpediteurGroup" style="display:none;">
+                            <label for="serviceExpediteurId" class="form-label">Service expéditeur *</label>
+                            <select class="form-select" id="serviceExpediteurId" name="serviceExpediteurId">
+                                <option value="">-- Sélectionnez --</option>
+                                {% for service in services %}
+                                    <option value="{{ service.id }}">{{ service.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="personneExterneExpediteurGroup" style="display:none;">
+                            <label for="personneExterneExpediteurId" class="form-label">Personne externe expéditrice *</label>
+                            <select class="form-select" id="personneExterneExpediteurId" name="personneExterneExpediteurId">
+                                <option value="">-- Sélectionnez --</option>
+                                {% for personne in personnesExternes %}
+                                    <option value="{{ personne.id }}">{{ personne.nomOuRaisonSociale }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h5>Destinataire</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="typeDestinataire" class="form-label">Type de destinataire *</label>
+                            <select class="form-select" id="typeDestinataire" name="typeDestinataire" required>
+                                <option value="">-- Sélectionnez --</option>
+                                <option value="SERVICE">Service interne</option>
+                                <option value="PERSONNE_EXTERNE">Personne externe</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3" id="serviceDestinataireGroup" style="display:none;">
+                            <label for="serviceDestinataireId" class="form-label">Service destinataire *</label>
+                            <select class="form-select" id="serviceDestinataireId" name="serviceDestinataireId">
+                                <option value="">-- Sélectionnez --</option>
+                                {% for service in services %}
+                                    <option value="{{ service.id }}">{{ service.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3" id="personneExterneDestinataireGroup" style="display:none;">
+                            <label for="personneExterneDestinataireId" class="form-label">Personne externe destinataire *</label>
+                            <select class="form-select" id="personneExterneDestinataireId" name="personneExterneDestinataireId">
+                                <option value="">-- Sélectionnez --</option>
+                                {% for personne in personnesExternes %}
+                                    <option value="{{ personne.id }}">{{ personne.nomOuRaisonSociale }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="destinatairesCopieIds" class="form-label">Services en copie</label>
+                    <select class="form-select" id="destinatairesCopieIds" name="destinatairesCopieIds[]" multiple>
+                        {% for service in services %}
+                            <option value="{{ service.id }}">{{ service.nom }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-text text-muted">Maintenez Ctrl pour sélectionner plusieurs services</small>
+                </div>
+
+                <hr>
+
+                <div class="mb-3">
+                    <label for="objet" class="form-label">Objet *</label>
+                    <input type="text" class="form-control" id="objet" name="objet" required maxlength="500">
+                </div>
+
+                <div class="mb-3">
+                    <label for="contenu" class="form-label">Contenu</label>
+                    <textarea class="form-control" id="contenu" name="contenu" rows="5"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ path('courrier_index') }}" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Enregistrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-info-circle"></i>
+                        Informations
+                    </h6>
+                    <ul class="list-unstyled small">
+                        <li><strong>Courrier Entrant :</strong> Courrier reçu de l'extérieur ou d'un autre service</li>
+                        <li><strong>Courrier Sortant :</strong> Courrier envoyé à l'extérieur ou à un autre service</li>
+                        <li><strong>Numéro de référence :</strong> Généré automatiquement au format N° XXX – année/DGI/SERVICE</li>
+                        <li><strong>Priorités :</strong>
+                            <ul class="mb-0">
+                                <li>URGENTE : Traitement immédiat requis</li>
+                                <li>NORMALE : Traitement standard</li>
+                                <li>BASSE : Non urgent</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h6 class="card-title mt-3">
+                        <i class="bi bi-lightbulb"></i>
+                        Conseils
+                    </h6>
+                    <ul class="list-unstyled small">
+                        <li>• Vérifiez le type de courrier (Entrant/Sortant)</li>
+                        <li>• <strong>Courrier ENTRANT :</strong> Saisissez le numéro de référence de l'expéditeur si disponible. Un numéro d'arrivée sera généré automatiquement : N° XXX-2025/DG/SERVICE</li>
+                        <li>• <strong>Courrier SORTANT :</strong> Le numéro de référence sera généré automatiquement au format DGI</li>
+                        <li>• Sélectionnez d'abord le type d'expéditeur et destinataire</li>
+                        <li>• Utilisez "Services en copie" pour informer d'autres services</li>
+                        <li>• Rédigez un objet clair et précis</li>
+                        <li>• Les pièces jointes peuvent être ajoutées après la création</li>
+                        <li>• Une notification sera envoyée automatiquement au destinataire</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('type');
+        const numeroRefField = document.getElementById('numeroReferenceField');
+
+        const typeExpediteur = document.getElementById('typeExpediteur');
+        const serviceExpediteurGroup = document.getElementById('serviceExpediteurGroup');
+        const personneExterneExpediteurGroup = document.getElementById('personneExterneExpediteurGroup');
+
+        const typeDestinataire = document.getElementById('typeDestinataire');
+        const serviceDestinataireGroup = document.getElementById('serviceDestinataireGroup');
+        const personneExterneDestinataireGroup = document.getElementById('personneExterneDestinataireGroup');
+
+        // Fonction pour afficher/masquer le champ numéro de référence
+        function toggleNumeroReference() {
+            if (typeSelect && numeroRefField) {
+                if (typeSelect.value === 'ENTRANT') {
+                    numeroRefField.style.display = 'block';
+                } else {
+                    numeroRefField.style.display = 'none';
+                }
+            }
+        }
+
+        // Écouter les changements du type de courrier
+        if (typeSelect) {
+            typeSelect.addEventListener('change', toggleNumeroReference);
+            toggleNumeroReference(); // Initialiser
+        }
+
+        typeExpediteur.addEventListener('change', function() {
+            if (this.value === 'SERVICE') {
+                serviceExpediteurGroup.style.display = 'block';
+                personneExterneExpediteurGroup.style.display = 'none';
+                document.getElementById('serviceExpediteurId').required = true;
+                document.getElementById('personneExterneExpediteurId').required = false;
+            } else if (this.value === 'PERSONNE_EXTERNE') {
+                serviceExpediteurGroup.style.display = 'none';
+                personneExterneExpediteurGroup.style.display = 'block';
+                document.getElementById('serviceExpediteurId').required = false;
+                document.getElementById('personneExterneExpediteurId').required = true;
+            } else {
+                serviceExpediteurGroup.style.display = 'none';
+                personneExterneExpediteurGroup.style.display = 'none';
+                document.getElementById('serviceExpediteurId').required = false;
+                document.getElementById('personneExterneExpediteurId').required = false;
+            }
+        });
+
+        typeDestinataire.addEventListener('change', function() {
+            if (this.value === 'SERVICE') {
+                serviceDestinataireGroup.style.display = 'block';
+                personneExterneDestinataireGroup.style.display = 'none';
+                document.getElementById('serviceDestinataireId').required = true;
+                document.getElementById('personneExterneDestinataireId').required = false;
+            } else if (this.value === 'PERSONNE_EXTERNE') {
+                serviceDestinataireGroup.style.display = 'none';
+                personneExterneDestinataireGroup.style.display = 'block';
+                document.getElementById('serviceDestinataireId').required = false;
+                document.getElementById('personneExterneDestinataireId').required = true;
+            } else {
+                serviceDestinataireGroup.style.display = 'none';
+                personneExterneDestinataireGroup.style.display = 'none';
+                document.getElementById('serviceDestinataireId').required = false;
+                document.getElementById('personneExterneDestinataireId').required = false;
+            }
+        });
+    });
+</script>
+{% endblock %}

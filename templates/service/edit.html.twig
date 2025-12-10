@@ -1,0 +1,140 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier {{ service.nom }} - {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('service_index') }}">Services</a></li>
+                    <li class="breadcrumb-item"><a href="{{ path('service_show', {id: service.id}) }}">{{ service.nom }}</a></li>
+                    <li class="breadcrumb-item active">Modifier</li>
+                </ol>
+            </nav>
+
+            <h1 class="h2">
+                <i class="bi bi-pencil"></i>
+                Modifier le service
+            </h1>
+            <p class="text-muted">Modifier les informations du service <strong>{{ service.nom }}</strong></p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="id" class="form-label">Identifiant du service</label>
+                            <input type="text" class="form-control" id="id" name="id" value="{{ service.id }}"
+                                   disabled readonly>
+                            <div class="form-text">
+                                <i class="bi bi-lock"></i> L'identifiant ne peut pas être modifié après la création
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="nom" class="form-label">Nom du service <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nom" name="nom"
+                                   value="{{ service.nom }}" required maxlength="255"
+                                   placeholder="Ex: Direction des Grandes Entreprises">
+                            <div class="form-text">Le nom complet du service (max. 255 caractères)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="sigle" class="form-label">Sigle</label>
+                            <input type="text" class="form-control" id="sigle" name="sigle"
+                                   value="{{ service.sigle }}" maxlength="50"
+                                   placeholder="Ex: DGE">
+                            <div class="form-text">Sigle ou abréviation du service (optionnel, max. 50 caractères)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="localite" class="form-label">Localité</label>
+                            <input type="text" class="form-control" id="localite" name="localite"
+                                   value="{{ service.localite }}" maxlength="100"
+                                   placeholder="Ex: Ouagadougou">
+                            <div class="form-text">Localité ou ville où se trouve le service (optionnel)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="mail" name="mail"
+                                   value="{{ service.mail }}" maxlength="255"
+                                   placeholder="Ex: dge@impots.gov.bf">
+                            <div class="form-text">Adresse email du service (optionnel)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="adresse" class="form-label">Adresse</label>
+                            <textarea class="form-control" id="adresse" name="adresse" rows="3"
+                                      placeholder="Adresse postale complète du service...">{{ service.adresse }}</textarea>
+                            <div class="form-text">Adresse postale complète (optionnel)</div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Enregistrer les modifications
+                            </button>
+                            <a href="{{ path('service_show', {id: service.id}) }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-info-circle"></i>
+                        Informations
+                    </h6>
+                    <ul class="list-unstyled small">
+                        <li><strong>ID :</strong> Identifiant unique non modifiable</li>
+                        <li><strong>Nom :</strong> Nom complet affiché dans l'interface</li>
+                        <li><strong>Sigle :</strong> Abréviation courte du service</li>
+                        <li><strong>Localité :</strong> Ville ou zone géographique</li>
+                        <li><strong>Email :</strong> Contact email du service</li>
+                        <li><strong>Adresse :</strong> Adresse postale complète</li>
+                    </ul>
+
+                    <h6 class="card-title mt-3">
+                        <i class="bi bi-lightbulb"></i>
+                        Conseils
+                    </h6>
+                    <ul class="list-unstyled small">
+                        <li>• Soyez précis dans le nom</li>
+                        <li>• Remplissez tous les champs pour faciliter le contact</li>
+                        <li>• Évitez les abréviations ambiguës</li>
+                        <li>• Vérifiez l'adresse email</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-shield-check"></i>
+                        Statut
+                    </h6>
+                    <p class="small mb-0">
+                        Ce service est actuellement
+                        {% if service.estActif %}
+                            <span class="badge bg-success">Actif</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inactif</span>
+                        {% endif %}
+                    </p>
+                    <p class="small text-muted mt-2 mb-0">
+                        Pour modifier le statut, retournez à la liste des services.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

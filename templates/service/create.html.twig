@@ -1,0 +1,126 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau service - {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">
+                <i class="bi bi-plus-circle"></i>
+                Nouveau service
+            </h1>
+            <p class="text-muted">Créer un nouveau service de la Direction Générale des Impôts</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="id" class="form-label">Identifiant du service <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="id" name="id" required maxlength="20"
+                                   placeholder="Ex: DGE" pattern="[A-Z0-9_]+" style="text-transform: uppercase;">
+                            <div class="form-text">Identifiant unique du service (max. 20 caractères, lettres majuscules, chiffres et underscores uniquement)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="nom" class="form-label">Nom du service <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="nom" name="nom" required maxlength="255"
+                                   placeholder="Ex: Direction des Grandes Entreprises">
+                            <div class="form-text">Le nom complet du service (max. 255 caractères)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="sigle" class="form-label">Sigle</label>
+                            <input type="text" class="form-control" id="sigle" name="sigle" maxlength="50"
+                                   placeholder="Ex: DGE">
+                            <div class="form-text">Sigle ou abréviation du service (optionnel, max. 50 caractères)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="localite" class="form-label">Localité</label>
+                            <input type="text" class="form-control" id="localite" name="localite" maxlength="100"
+                                   placeholder="Ex: Ihosy">
+                            <div class="form-text">Localité ou ville où se trouve le service (optionnel)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="mail" name="mail" maxlength="255"
+                                   placeholder="Ex: dge@impots.mg">
+                            <div class="form-text">Adresse email du service (optionnel)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="adresse" class="form-label">Adresse</label>
+                            <textarea class="form-control" id="adresse" name="adresse" rows="3"
+                                      placeholder="Adresse postale complète du service..."></textarea>
+                            <div class="form-text">Adresse postale complète (optionnel)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="estActif" name="estActif" value="1" checked>
+                                <label class="form-check-label" for="estActif">
+                                    Service actif
+                                </label>
+                            </div>
+                            <div class="form-text">Un service actif peut envoyer et recevoir des courriers</div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Créer le service
+                            </button>
+                            <a href="{{ path('service_index') }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-info-circle"></i>
+                        Informations
+                    </h6>
+                    <ul class="list-unstyled small">
+                        <li><strong>ID :</strong> Identifiant unique non modifiable du service</li>
+                        <li><strong>Nom :</strong> Nom complet affiché dans l'interface</li>
+                        <li><strong>Sigle :</strong> Abréviation courte du service</li>
+                        <li><strong>Localité :</strong> Ville ou zone géographique</li>
+                        <li><strong>Email :</strong> Contact email du service</li>
+                        <li><strong>Adresse :</strong> Adresse postale complète</li>
+                    </ul>
+
+                    <h6 class="card-title mt-3">
+                        <i class="bi bi-lightbulb"></i>
+                        Conseils
+                    </h6>
+                    <ul class="list-unstyled small">
+                        <li>• Choisissez un ID court et mémorable</li>
+                        <li>• L'ID ne pourra pas être modifié après la création</li>
+                        <li>• Utilisez des acronymes standards pour l'ID</li>
+                        <li>• Remplissez tous les champs pour faciliter le contact</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Auto-uppercase pour l'ID
+        document.getElementById('id').addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+    </script>
+{% endblock %}

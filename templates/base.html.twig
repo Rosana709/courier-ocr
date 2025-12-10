@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gestion de Courrier - Direction Générale des Impôts{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ asset('css/dgi-theme.css') }}" rel="stylesheet">
+
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+    {% if app.user %}
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #76aaaa;">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ path('app_dashboard') }}">
+                <i class="bi bi-envelope-paper"></i>
+                Gestion de Courrier - DGI
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('app_dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Tableau de bord
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-envelope-paper"></i> Courriers
+                        </a>
+                        <ul class="dropdown-menu">
+                            {% if is_granted('ROLE_ADMIN') %}
+                                {# Admin: menu simple #}
+                                <li><a class="dropdown-item" href="{{ path('courrier_index') }}">
+                                    <i class="bi bi-list-ul"></i> Tous les courriers
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                            {% else %}
+                                {# Service: menu avec 3 vues #}
+                                <li><a class="dropdown-item" href="{{ path('courrier_index') }}">
+                                    <i class="bi bi-list-ul"></i> Tous les courriers
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ path('courrier_entrants') }}">
+                                    <i class="bi bi-inbox"></i> Courriers Entrants
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ path('courrier_sortants') }}">
+                                    <i class="bi bi-send"></i> Courriers Sortants
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{{ path('courrier_create') }}">
+                                <i class="bi bi-plus-circle"></i> Nouveau courrier
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person"></i> Personnes Externes
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ path('personne_externe_index') }}">Toutes les personnes</a></li>
+                            <li><a class="dropdown-item" href="{{ path('personne_externe_create') }}">Nouvelle personne</a></li>
+                        </ul>
+                    </li>
+                    {% if is_granted('ROLE_ADMIN') %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-building"></i> Services
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ path('service_index') }}">Tous les services</a></li>
+                            <li><a class="dropdown-item" href="{{ path('service_create') }}">Nouveau service</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-people"></i> Utilisateurs
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ path('admin_utilisateur_index') }}">Tous les utilisateurs</a></li>
+                            <li><a class="dropdown-item" href="{{ path('admin_utilisateur_create') }}">Nouvel utilisateur</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="{{ path('notification_index') }}" title="Notifications">
+                            <i class="bi bi-bell fs-5"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notification-badge" style="display: none;">
+                                0
+                            </span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                            {{ app.user.email }}
+                            {% if app.user.isAdmin() %}
+                                <span class="badge" style="background-color: #d4a5a5;">Admin</span>
+                            {% elseif app.user.service %}
+                                <span class="badge" style="background-color: #a9d9de; color: #333;">{{ app.user.service.sigle ?? app.user.service.id }}</span>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ path('profil_show') }}"><i class="bi bi-person"></i> Mon profil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ path('app_logout') }}"><i class="bi bi-box-arrow-right"></i> Déconnexion</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <main class="container mt-4">
+        {% for type, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ type == 'error' ? 'danger' : type }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        {% block body %}{% endblock %}
+    </main>
+
+    <footer class="bg-light mt-5 py-4">
+        <div class="container text-center">
+            <p class="text-muted">&copy; {{ 'now'|date('Y') }} Direction Générale des Impôts - Système de gestion de courrier</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% if app.user %}
+    <script>
+        // Charger le nombre de notifications non lues
+        function loadNotificationCount() {
+            fetch('{{ path('notification_count') }}')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notification-badge');
+                    if (data.count > 0) {
+                        badge.textContent = data.count > 99 ? '99+' : data.count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('Erreur lors du chargement des notifications:', error));
+        }
+
+        // Charger au démarrage
+        loadNotificationCount();
+
+        // Recharger toutes les 30 secondes
+        setInterval(loadNotificationCount, 30000);
+    </script>
+    {% endif %}
+
+    {% block javascripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,134 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord - {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">
+                <i class="bi bi-speedometer2"></i>
+                Tableau de bord
+            </h1>
+            <p class="text-muted">Système de gestion de courrier - DGI</p>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ stats.total_services }}</h4>
+                            <p class="card-text">Services</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-building fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ stats.total_couriers }}</h4>
+                            <p class="card-text">Courriers</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-envelope fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">0</h4>
+                            <p class="card-text">Utilisateurs</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-people fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">0</h4>
+                            <p class="card-text">Personnes Externes</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-person fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                <h5><i class="bi bi-info-circle"></i> Refonte en cours</h5>
+                <p class="mb-0">
+                    La base de données a été créée avec succès avec la nouvelle structure (entités Courrier, Utilisateur, PersonneExterne, etc.).
+                    Les contrôleurs, UseCases et vues seront implémentés dans les prochaines étapes selon le cahier des charges.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-check2-circle"></i>
+                        Étapes complétées
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Création des entités du domaine</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Création des interfaces de repository</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Implémentation des repositories</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Configuration Doctrine (type UUID)</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Création du schéma de base de données</li>
+                        <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Nettoyage des anciens fichiers</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-task"></i>
+                        Prochaines étapes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="bi bi-circle text-secondary"></i> Authentification et gestion utilisateurs</li>
+                        <li class="mb-2"><i class="bi bi-circle text-secondary"></i> Controllers et UseCases pour Courrier</li>
+                        <li class="mb-2"><i class="bi bi-circle text-secondary"></i> Formulaires de création/modification</li>
+                        <li class="mb-2"><i class="bi bi-circle text-secondary"></i> Gestion des pièces jointes</li>
+                        <li class="mb-2"><i class="bi bi-circle text-secondary"></i> Système de notifications</li>
+                        <li class="mb-2"><i class="bi bi-circle text-secondary"></i> Accusés de réception</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

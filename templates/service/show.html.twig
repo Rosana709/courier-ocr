@@ -1,0 +1,174 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ service.nom }} - {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('service_index') }}">Services</a></li>
+                    <li class="breadcrumb-item active">{{ service.nom }}</li>
+                </ol>
+            </nav>
+
+            <h1 class="h2">
+                <i class="bi bi-building"></i>
+                {{ service.nom }}
+            </h1>
+            <p class="text-muted">Détails du service</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ path('service_edit', {id: service.id}) }}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Modifier
+            </a>
+            <a href="{{ path('service_index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle"></i>
+                        Informations générales
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Identifiant</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            <code class="fs-5">{{ service.id }}</code>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Nom du service</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            {{ service.nom }}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Sigle</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            {% if service.sigle %}
+                                {{ service.sigle }}
+                            {% else %}
+                                <span class="text-muted">Non renseigné</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Localité</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            {% if service.localite %}
+                                <i class="bi bi-geo-alt"></i> {{ service.localite }}
+                            {% else %}
+                                <span class="text-muted">Non renseignée</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Email</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            {% if service.mail %}
+                                <i class="bi bi-envelope"></i> <a href="mailto:{{ service.mail }}">{{ service.mail }}</a>
+                            {% else %}
+                                <span class="text-muted">Non renseigné</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-4">
+                            <strong>Adresse</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            {% if service.adresse %}
+                                <i class="bi bi-house"></i> {{ service.adresse|nl2br }}
+                            {% else %}
+                                <span class="text-muted">Non renseignée</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <strong>Statut</strong>
+                        </div>
+                        <div class="col-sm-8">
+                            {% if service.estActif %}
+                                <span class="badge bg-success fs-6">
+                                    <i class="bi bi-check-circle"></i> Actif
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger fs-6">
+                                    <i class="bi bi-x-circle"></i> Inactif
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-gear"></i>
+                        Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('service_edit', {id: service.id}) }}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Modifier le service
+                        </a>
+                        {% if service.estActif %}
+                            <form method="post" action="{{ path('service_deactivate', {id: service.id}) }}" onsubmit="return confirm('Voulez-vous vraiment désactiver ce service ?');">
+                                <button type="submit" class="btn btn-outline-warning w-100">
+                                    <i class="bi bi-pause-circle"></i> Désactiver le service
+                                </button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="{{ path('service_activate', {id: service.id}) }}" onsubmit="return confirm('Voulez-vous vraiment activer ce service ?');">
+                                <button type="submit" class="btn btn-outline-success w-100">
+                                    <i class="bi bi-play-circle"></i> Activer le service
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-info-circle"></i>
+                        Informations
+                    </h6>
+                    <p class="small mb-0">
+                        Ce service peut être utilisé pour organiser et catégoriser les courriers entrants et sortants de la DGI.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

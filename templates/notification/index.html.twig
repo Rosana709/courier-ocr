@@ -1,0 +1,105 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Notifications - Gestion de Courrier{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">
+                <i class="bi bi-bell"></i> Notifications
+            </h1>
+        </div>
+        <div class="col-auto">
+            {% if notifications|length > 0 %}
+            <form method="post" action="{{ path('notification_marquer_toutes_lues') }}" style="display: inline;">
+                <button type="submit" class="btn btn-secondary">
+                    <i class="bi bi-check-all"></i> Tout marquer comme lu
+                </button>
+            </form>
+            {% endif %}
+            <a href="{{ path('courrier_index') }}" class="btn btn-primary">
+                <i class="bi bi-envelope-paper"></i> Voir les courriers
+            </a>
+        </div>
+    </div>
+
+    {% if notifications|length == 0 %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Vous n'avez aucune notification pour le moment.
+    </div>
+    {% else %}
+    <div class="list-group">
+        {% for notification in notifications %}
+        <div class="list-group-item {% if not notification.estLue() %}list-group-item-primary{% endif %}">
+            <div class="d-flex w-100 justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-2">
+                        {% if notification.type == 'NOUVEAU_COURRIER' %}
+                            <i class="bi bi-envelope-plus text-primary me-2"></i>
+                        {% elseif notification.type == 'STATUT_CHANGE' %}
+                            <i class="bi bi-arrow-repeat text-info me-2"></i>
+                        {% elseif notification.type == 'ACCUSE_RECU' %}
+                            <i class="bi bi-check-circle text-success me-2"></i>
+                        {% endif %}
+
+                        <h6 class="mb-0">
+                            {{ notification.message }}
+                        </h6>
+
+                        {% if not notification.estLue() %}
+                            <span class="badge bg-primary ms-2">Nouveau</span>
+                        {% endif %}
+                    </div>
+
+                    <p class="mb-1 text-muted small">
+                        <i class="bi bi-envelope"></i>
+                        <a href="{{ path('courrier_show', {id: notification.courrier.id}) }}">
+                            {{ notification.courrier.numeroReference }}
+                        </a>
+                        - {{ notification.courrier.objet }}
+                    </p>
+
+                    <small class="text-muted">
+                        {% if notification.courrier %}
+                            De:
+                            {% if notification.courrier.typeExpediteur == 'SERVICE' %}
+                                <i class="bi bi-building"></i> {{ notification.courrier.serviceExpediteur.nom }}
+                            {% else %}
+                                <i class="bi bi-person"></i> {{ notification.courrier.personneExterneExpediteur.nomOuRaisonSociale }}
+                            {% endif %}
+                            |
+                        {% endif %}
+                        <i class="bi bi-clock"></i>
+                        {{ notification.dateCreation|date('d/m/Y à H:i') }}
+                        {% if notification.estRecente() %}
+                            <span class="badge bg-warning text-dark">Récente</span>
+                        {% endif %}
+                    </small>
+                </div>
+
+                <div class="ms-3">
+                    <div class="btn-group-vertical btn-group-sm">
+                        <a href="{{ path('courrier_show', {id: notification.courrier.id}) }}"
+                           class="btn btn-sm btn-outline-primary"
+                           title="Voir le courrier">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        {% if not notification.estLue() %}
+                        <form method="post" action="{{ path('notification_marquer_lue', {id: notification.id}) }}">
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    title="Marquer comme lu">
+                                <i class="bi bi-check"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

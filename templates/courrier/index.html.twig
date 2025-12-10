@@ -1,0 +1,164 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des courriers - Gestion de Courrier{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">
+                <i class="bi bi-envelope-paper"></i> {{ pageTitle|default('Gestion des Courriers') }}
+            </h1>
+        </div>
+        <div class="col-auto">
+            {% if viewType|default('tous') == 'tous' %}
+                {# Exports uniquement dans "Tous les courriers" #}
+                <div class="btn-group me-2">
+                    <a href="{{ path('courrier_export_excel') }}" class="btn btn-success">
+                        <i class="bi bi-file-earmark-excel"></i> Excel
+                    </a>
+                    <a href="{{ path('courrier_export_pdf') }}" class="btn btn-danger">
+                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                    </a>
+                </div>
+            {% endif %}
+            <a href="{{ path('courrier_create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nouveau courrier
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>N° d'arrivée / Référence</th>
+                            <th>Type</th>
+                            <th>Objet</th>
+                            <th>Expéditeur</th>
+                            <th>Destinataire</th>
+                            <th>Statut</th>
+                            <th>Priorité</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set currentUserService = app.user.service %}
+                        {% for courrier in courriers %}
+                        <tr>
+                            <td>
+                                <a href="{{ path('courrier_show', {id: courrier.id}) }}">
+                                    {% if courrier.numeroArrivee %}
+                                        <strong class="text-primary">{{ courrier.numeroArrivee }}</strong>
+                                        <br>
+                                        <small class="text-muted">Réf: {{ courrier.numeroReference }}</small>
+                                    {% else %}
+                                        {{ courrier.numeroReference }}
+                                    {% endif %}
+                                </a>
+                            </td>
+                            <td>
+                                {% if courrier.type == 'ENTRANT' %}
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-arrow-down-circle"></i> Entrant
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-arrow-up-circle"></i> Sortant
+                                    </span>
+                                {% endif %}
+
+                                {# Badge "En copie" dans la vue Entrants #}
+                                {% if viewType|default('tous') == 'entrants'
+                                   and currentUserService
+                                   and courrier.typeDestinataire == 'SERVICE'
+                                   and courrier.serviceDestinataire.id != currentUserService.id %}
+                                    {% for serviceCopie in courrier.destinatairesCopie %}
+                                        {% if serviceCopie.id == currentUserService.id %}
+                                            <span class="badge bg-secondary ms-1">
+                                                <i class="bi bi-clipboard"></i> En copie
+                                            </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </td>
+                            <td>{{ courrier.objet|length > 50 ? courrier.objet|slice(0, 50) ~ '...' : courrier.objet }}</td>
+                            <td>
+                                {% if courrier.typeExpediteur == 'SERVICE' %}
+                                    <i class="bi bi-building"></i> {{ courrier.serviceExpediteur.nom }}
+                                {% else %}
+                                    <i class="bi bi-person"></i> {{ courrier.personneExterneExpediteur.nom }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if courrier.typeDestinataire == 'SERVICE' %}
+                                    <i class="bi bi-building"></i> {{ courrier.serviceDestinataire.nom }}
+                                {% else %}
+                                    <i class="bi bi-person"></i> {{ courrier.personneExterneDestinataire.nom }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% set statutClass = '' %}
+                                {% if courrier.statut == 'ENREGISTRE' %}
+                                    {% set statutClass = 'secondary' %}
+                                {% elseif courrier.statut == 'EN_COURS_TRAITEMENT' %}
+                                    {% set statutClass = 'primary' %}
+                                {% elseif courrier.statut == 'EN_ATTENTE' %}
+                                    {% set statutClass = 'warning' %}
+                                {% elseif courrier.statut == 'CLOS' %}
+                                    {% set statutClass = 'success' %}
+                                {% elseif courrier.statut == 'ARCHIVE' %}
+                                    {% set statutClass = 'dark' %}
+                                {% else %}
+                                    {% set statutClass = 'info' %}
+                                {% endif %}
+                                <span class="badge bg-{{ statutClass }}">
+                                    {{ courrier.statut|replace({'_': ' '}) }}
+                                </span>
+                            </td>
+                            <td>
+                                {% set prioriteClass = '' %}
+                                {% if courrier.priorite == 'URGENTE' %}
+                                    {% set prioriteClass = 'danger' %}
+                                {% elseif courrier.priorite == 'HAUTE' %}
+                                    {% set prioriteClass = 'warning' %}
+                                {% elseif courrier.priorite == 'NORMALE' %}
+                                    {% set prioriteClass = 'info' %}
+                                {% else %}
+                                    {% set prioriteClass = 'secondary' %}
+                                {% endif %}
+                                <span class="badge bg-{{ prioriteClass }}">
+                                    {{ courrier.priorite }}
+                                </span>
+                            </td>
+                            <td>{{ courrier.dateCourrier|date('d/m/Y') }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ path('courrier_show', {id: courrier.id}) }}" class="btn btn-sm btn-outline-primary" title="Voir">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if is_granted('courrier_edit', courrier) %}
+                                    <a href="{{ path('courrier_edit', {id: courrier.id}) }}" class="btn btn-sm btn-outline-secondary" title="Modifier">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">
+                                Aucun courrier trouvé.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
