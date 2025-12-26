@@ -2,6 +2,11 @@
 
 {% block title %}Liste des courriers - Gestion de Courrier{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+{% endblock %}
+
 {% block body %}
 <div class="container-fluid">
     <div class="row mb-4">
@@ -22,20 +27,37 @@
                     </a>
                 </div>
             {% endif %}
-            <a href="{{ path('courrier_create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Nouveau courrier
-            </a>
+            {% if not is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('courrier_create') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nouveau courrier
+                </a>
+            {% endif %}
         </div>
     </div>
 
     <div class="card">
         <div class="card-body">
+            <div class="row g-2 mb-3">
+                <div class="col-md-4">
+                    <label for="filterExpediteur" class="form-label mb-1">
+                        <i class="bi bi-filter"></i> Filtrer par expéditeur
+                    </label>
+                    <input type="text" id="filterExpediteur" class="form-control" placeholder="Nom ou service expéditeur">
+                </div>
+                <div class="col-md-4">
+                    <label for="filterDestinataire" class="form-label mb-1">
+                        <i class="bi bi-filter"></i> Filtrer par destinataire
+                    </label>
+                    <input type="text" id="filterDestinataire" class="form-control" placeholder="Nom ou service destinataire">
+                </div>
+            </div>
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover" id="courriersTable">
                     <thead>
                         <tr>
-                            <th>N° d'arrivée / Référence</th>
-                            <th>Type</th>
+                            {% if not is_granted('ROLE_ADMIN') %}
+                                <th>Type</th>
+                            {% endif %}
                             <th>Objet</th>
                             <th>Expéditeur</th>
                             <th>Destinataire</th>
@@ -49,55 +71,51 @@
                         {% set currentUserService = app.user.service %}
                         {% for courrier in courriers %}
                         <tr>
-                            <td>
-                                <a href="{{ path('courrier_show', {id: courrier.id}) }}">
-                                    {% if courrier.numeroArrivee %}
-                                        <strong class="text-primary">{{ courrier.numeroArrivee }}</strong>
-                                        <br>
-                                        <small class="text-muted">Réf: {{ courrier.numeroReference }}</small>
-                                    {% else %}
-                                        {{ courrier.numeroReference }}
-                                    {% endif %}
-                                </a>
-                            </td>
-                            <td>
-                                {% if courrier.type == 'ENTRANT' %}
-                                    <span class="badge bg-info">
-                                        <i class="bi bi-arrow-down-circle"></i> Entrant
-                                    </span>
-                                {% else %}
-                                    <span class="badge bg-success">
-                                        <i class="bi bi-arrow-up-circle"></i> Sortant
-                                    </span>
-                                {% endif %}
+                            {% if not is_granted('ROLE_ADMIN') %}
+                                <td>
+                                    {# Dans les vues filtrées (entrants/sortants), on force l'affichage du type attendu pour éviter d'afficher "Entrant" dans la liste des sortants en cas de données incohérentes #}
+                                    {% set displayedType = viewType|default('tous') == 'sortants'
+                                        ? 'SORTANT'
+                                        : (viewType|default('tous') == 'entrants' ? 'ENTRANT' : courrier.type) %}
 
-                                {# Badge "En copie" dans la vue Entrants #}
-                                {% if viewType|default('tous') == 'entrants'
-                                   and currentUserService
-                                   and courrier.typeDestinataire == 'SERVICE'
-                                   and courrier.serviceDestinataire.id != currentUserService.id %}
-                                    {% for serviceCopie in courrier.destinatairesCopie %}
-                                        {% if serviceCopie.id == currentUserService.id %}
-                                            <span class="badge bg-secondary ms-1">
-                                                <i class="bi bi-clipboard"></i> En copie
-                                            </span>
-                                        {% endif %}
-                                    {% endfor %}
-                                {% endif %}
-                            </td>
+                                    {% if displayedType == 'ENTRANT' %}
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-arrow-down-circle"></i> Entrant
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-arrow-up-circle"></i> Sortant
+                                        </span>
+                                    {% endif %}
+
+                                    {# Badge "En copie" dans la vue Entrants #}
+                                    {% if viewType|default('tous') == 'entrants'
+                                       and currentUserService
+                                       and courrier.typeDestinataire == 'SERVICE'
+                                       and courrier.serviceDestinataire.id != currentUserService.id %}
+                                        {% for serviceCopie in courrier.destinatairesCopie %}
+                                            {% if serviceCopie.id == currentUserService.id %}
+                                                <span class="badge bg-secondary ms-1">
+                                                    <i class="bi bi-clipboard"></i> En copie
+                                                </span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                </td>
+                            {% endif %}
                             <td>{{ courrier.objet|length > 50 ? courrier.objet|slice(0, 50) ~ '...' : courrier.objet }}</td>
                             <td>
                                 {% if courrier.typeExpediteur == 'SERVICE' %}
                                     <i class="bi bi-building"></i> {{ courrier.serviceExpediteur.nom }}
                                 {% else %}
-                                    <i class="bi bi-person"></i> {{ courrier.personneExterneExpediteur.nom }}
+                                    <i class="bi bi-person"></i> {{ courrier.personneExterneExpediteur.nomOuRaisonSociale }}
                                 {% endif %}
                             </td>
                             <td>
                                 {% if courrier.typeDestinataire == 'SERVICE' %}
                                     <i class="bi bi-building"></i> {{ courrier.serviceDestinataire.nom }}
                                 {% else %}
-                                    <i class="bi bi-person"></i> {{ courrier.personneExterneDestinataire.nom }}
+                                    <i class="bi bi-person"></i> {{ courrier.personneExterneDestinataire.nomOuRaisonSociale }}
                                 {% endif %}
                             </td>
                             <td>
@@ -161,4 +179,42 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const dateColumn = {{ is_granted('ROLE_ADMIN') ? 5 : 6 }};
+            const expediteurColumn = {{ is_granted('ROLE_ADMIN') ? 1 : 2 }};
+            const destinataireColumn = {{ is_granted('ROLE_ADMIN') ? 2 : 3 }};
+
+            const table = $('#courriersTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/fr-FR.json'
+                },
+                responsive: true,
+                pageLength: 25,
+                order: [[dateColumn, 'desc']],
+                columnDefs: [
+                    {
+                        targets: -1, // Actions
+                        orderable: false,
+                        searchable: false
+                    }
+                ]
+            });
+
+            $('#filterExpediteur').on('keyup change', function() {
+                table.column(expediteurColumn).search(this.value).draw();
+            });
+
+            $('#filterDestinataire').on('keyup change', function() {
+                table.column(destinataireColumn).search(this.value).draw();
+            });
+        });
+    </script>
 {% endblock %}

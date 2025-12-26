@@ -36,6 +36,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'boolean', name: 'estactif')]
     private bool $estActif = true;
 
+    #[ORM\Column(type: 'boolean', name: 'must_change_password', options: ['default' => false])]
+    private bool $mustChangePassword = false;
+
     #[ORM\Column(type: 'datetime_immutable', name: 'datecreation')]
     private \DateTimeImmutable $dateCreation;
 
@@ -54,6 +57,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         $this->roles = $this->validateRoles($roles);
         $this->service = $service;
         $this->estActif = true;
+        $this->mustChangePassword = false;
         $this->dateCreation = new \DateTimeImmutable();
     }
 
@@ -156,6 +160,23 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function estActif(): bool
     {
         return $this->estActif;
+    }
+
+    public function mustChangePassword(): bool
+    {
+        return $this->mustChangePassword;
+    }
+
+    public function exigerChangementMotDePasse(): void
+    {
+        $this->mustChangePassword = true;
+        $this->dateModification = new \DateTimeImmutable();
+    }
+
+    public function leverExigenceChangementMotDePasse(): void
+    {
+        $this->mustChangePassword = false;
+        $this->dateModification = new \DateTimeImmutable();
     }
 
     public function activer(): void

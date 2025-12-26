@@ -45,5 +45,8 @@ services:
     App\Domain\Repository\NotificationRepositoryInterface:
         alias: App\Infrastructure\Repository\NotificationRepository
 
+    App\Domain\Repository\SessionTraceRepositoryInterface:
+        alias: App\Infrastructure\Repository\SessionTraceRepository
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

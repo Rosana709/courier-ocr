@@ -32,23 +32,23 @@ class HistoriqueAction
     #[ORM\JoinColumn(name: 'courrier_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private Courrier $courrier;
 
-    #[ORM\Column(type: 'string', length: 50)]
+    #[ORM\Column(name: 'typeaction', type: 'string', length: 50)]
     private string $typeAction;
 
-    #[ORM\Column(type: 'text', nullable: true)]
+    #[ORM\Column(name: 'anciennevaleur', type: 'text', nullable: true)]
     private ?string $ancienneValeur = null;
 
-    #[ORM\Column(type: 'text', nullable: true)]
+    #[ORM\Column(name: 'nouvellevaleur', type: 'text', nullable: true)]
     private ?string $nouvelleValeur = null;
 
     #[ORM\Column(type: 'string', length: 500)]
     private string $description;
 
     #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
-    #[ORM\JoinColumn(name: 'effectueparid', referencedColumnName: 'id', nullable: false)]
+    #[ORM\JoinColumn(name: 'effectue_par_id', referencedColumnName: 'id', nullable: false)]
     private Utilisateur $effectuePar;
 
-    #[ORM\Column(name: 'dateaction', type: 'datetime_immutable')]
+    #[ORM\Column(name: 'date_action', type: 'datetime_immutable')]
     private \DateTimeImmutable $dateAction;
 
     public function __construct(

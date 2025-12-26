@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+﻿{% extends 'base.html.twig' %}
 
 {% block title %}Tableau de bord Administrateur - {{ parent() }}{% endblock %}
 
@@ -72,14 +72,31 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="card-subtitle mb-2 text-white-50">En attente</h6>
-                            <h2 class="card-title mb-0">0</h2>
+                            <h6 class="card-subtitle mb-2 text-white-50">En attente AR</h6>
+                            <h2 class="card-title mb-0">{{ stats.courriers_attente_accuse }}</h2>
                         </div>
                         <div>
                             <i class="bi bi-hourglass-split" style="font-size: 3rem; opacity: 0.3;"></i>
                         </div>
                     </div>
-                    <small class="text-white-50">Courriers en attente</small>
+                    <small class="text-white-50">Accusés de réception en attente</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-secondary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">Utilisateurs connectés</h6>
+                            <h2 class="card-title mb-0">{{ stats.utilisateurs_connectes }}</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-activity" style="font-size: 3rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                    <small class="text-white-50">Sessions actives (&lt; 15 min)</small>
                 </div>
             </div>
         </div>
@@ -101,13 +118,13 @@
                             </a>
                         </div>
                         <div class="col-md-4">
-                            <a href="#" class="btn btn-outline-success w-100 py-3">
+                            <a href="{{ path('admin_utilisateur_create') }}" class="btn btn-outline-success w-100 py-3">
                                 <i class="bi bi-person-plus"></i><br>
                                 Créer un utilisateur
                             </a>
                         </div>
                         <div class="col-md-4">
-                            <a href="#" class="btn btn-outline-info w-100 py-3">
+                            <a href="{{ path('courrier_index') }}" class="btn btn-outline-info w-100 py-3">
                                 <i class="bi bi-file-earmark-text"></i><br>
                                 Voir tous les courriers
                             </a>
@@ -126,7 +143,83 @@
                     <h5 class="mb-0"><i class="bi bi-clock-history"></i> Activité récente</h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted">Aucune activité récente à afficher pour le moment.</p>
+                    {% if actions_recentres is not defined or actions_recentres|length == 0 %}
+                        <p class="text-muted">Aucune activité récente.</p>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Action</th>
+                                        <th>Courrier</th>
+                                        <th>Par</th>
+                                        <th>Date</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for action in actions_recentres %}
+                                        <tr>
+                                            <td><span class="badge bg-secondary">{{ action.typeAction }}</span></td>
+                                            <td>
+                                                {{ action.courrier.objet|slice(0, 40) }}{% if action.courrier.objet|length > 40 %}...{% endif %}
+                                            </td>
+                                            <td>{{ action.effectuePar ? action.effectuePar.email : 'Système' }}</td>
+                                            <td>{{ action.dateAction|date('d/m/Y H:i', 'Africa/Nairobi') }}</td>
+                                            <td>
+                                                <a href="{{ path('courrier_show', {id: action.courrier.id}) }}" class="btn btn-outline-primary btn-sm">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Utilisateurs connectés #}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-people"></i> Utilisateurs connectés (15 dernières minutes)</h5>
+                </div>
+                <div class="card-body">
+                    {% if sessions_connectees is not defined or sessions_connectees|length == 0 %}
+                        <p class="text-muted">Aucun utilisateur connecté actuellement.</p>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Rôle</th>
+                                        <th>Dernière activité</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for session in sessions_connectees %}
+                                        <tr>
+                                            <td>{{ session.utilisateur.email }}</td>
+                                            <td>
+                                                {% if session.utilisateur.isAdmin() %}
+                                                    <span class="badge bg-danger">Admin</span>
+                                                {% else %}
+                                                    <span class="badge bg-info">Service</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ session.derniereActivite|date('d/m/Y H:i:s', 'Africa/Nairobi') }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

@@ -22,7 +22,7 @@ class ListCourriersUseCase
      */
     public function executeAll(): array
     {
-        return $this->courrierRepository->findAll();
+        return $this->filterNonArchived($this->courrierRepository->findAll());
     }
 
     /**
@@ -36,7 +36,7 @@ class ListCourriersUseCase
             throw new \InvalidArgumentException("Service non trouvé");
         }
 
-        return $this->courrierRepository->findByServiceImplique($service);
+        return $this->filterNonArchived($this->courrierRepository->findByServiceImplique($service));
     }
 
     /**
@@ -44,7 +44,7 @@ class ListCourriersUseCase
      */
     public function executeWithFilters(array $filters): array
     {
-        return $this->courrierRepository->findByFilters($filters);
+        return $this->filterNonArchived($this->courrierRepository->findByFilters($filters));
     }
 
     /**
@@ -52,7 +52,7 @@ class ListCourriersUseCase
      */
     public function executeRecent(int $limit = 10): array
     {
-        return $this->courrierRepository->findRecent($limit);
+        return $this->filterNonArchived($this->courrierRepository->findRecent($limit));
     }
 
     /**
@@ -66,7 +66,7 @@ class ListCourriersUseCase
             throw new \InvalidArgumentException("Service non trouvé");
         }
 
-        return $this->courrierRepository->findRecentByService($service, $limit);
+        return $this->filterNonArchived($this->courrierRepository->findRecentByService($service, $limit));
     }
 
     /**
@@ -74,7 +74,7 @@ class ListCourriersUseCase
      */
     public function executeUrgents(): array
     {
-        return $this->courrierRepository->findUrgents();
+        return $this->filterNonArchived($this->courrierRepository->findUrgents());
     }
 
     /**
@@ -88,7 +88,7 @@ class ListCourriersUseCase
             throw new \InvalidArgumentException("Service non trouvé");
         }
 
-        return $this->courrierRepository->findUrgentsByService($service);
+        return $this->filterNonArchived($this->courrierRepository->findUrgentsByService($service));
     }
 
     /**
@@ -120,6 +120,20 @@ class ListCourriersUseCase
             }
         }
 
+        // Filtrer : un courrier entrant interne n'apparaît qu'après accusé de réception
+        $uniqueCourriers = array_values(array_filter($uniqueCourriers, function($courrier) {
+            if ($courrier->getTypeExpediteur() === Courrier::ACTEUR_SERVICE
+                && $courrier->getTypeDestinataire() === Courrier::ACTEUR_SERVICE) {
+                return in_array($courrier->getStatut(), [
+                    Courrier::STATUT_ACCUSE_RECEPTION_RECU,
+                    Courrier::STATUT_RECU_CONFIRME
+                ]);
+            }
+            return true;
+        }));
+
+        $uniqueCourriers = $this->filterNonArchived($uniqueCourriers);
+
         // Trier par date (plus récent en premier)
         usort($uniqueCourriers, function($a, $b) {
             return $b->getDateEnregistrement() <=> $a->getDateEnregistrement();
@@ -139,6 +153,37 @@ class ListCourriersUseCase
             throw new \InvalidArgumentException("Service non trouvé");
         }
 
-        return $this->courrierRepository->findByServiceExpediteur($service);
+        return $this->filterNonArchived($this->courrierRepository->findByServiceExpediteur($service));
+    }
+
+    /**
+     * Liste des courriers archivés
+     */
+    public function executeArchivedAll(): array
+    {
+        return $this->filterArchived($this->courrierRepository->findAll());
+    }
+
+    public function executeArchivedByService(string $serviceId): array
+    {
+        $service = $this->serviceRepository->findById($serviceId);
+
+        if (!$service) {
+            throw new \InvalidArgumentException("Service non trouvé");
+        }
+
+        return $this->filterArchived($this->courrierRepository->findByServiceImplique($service));
+    }
+
+    private function filterNonArchived(array $courriers): array
+    {
+        return array_values(array_filter($courriers, fn($c) => $c->getStatut() !== Courrier::STATUT_ARCHIVE));
+    }
+
+    private function filterArchived(array $courriers): array
+    {
+        $filtered = array_values(array_filter($courriers, fn($c) => $c->getStatut() === Courrier::STATUT_ARCHIVE));
+        usort($filtered, fn($a, $b) => $b->getDateEnregistrement() <=> $a->getDateEnregistrement());
+        return $filtered;
     }
 }

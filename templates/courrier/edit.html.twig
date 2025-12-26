@@ -118,7 +118,7 @@
                     {% if courrier.typeExpediteur == 'SERVICE' %}
                         <i class="bi bi-building"></i> {{ courrier.serviceExpediteur.nom }}
                     {% else %}
-                        <i class="bi bi-person"></i> {{ courrier.personneExterneExpediteur.nom }}
+                        <i class="bi bi-person"></i> {{ courrier.personneExterneExpediteur.nomOuRaisonSociale }}
                     {% endif %}
                 </dd>
 
@@ -127,7 +127,7 @@
                     {% if courrier.typeDestinataire == 'SERVICE' %}
                         <i class="bi bi-building"></i> {{ courrier.serviceDestinataire.nom }}
                     {% else %}
-                        <i class="bi bi-person"></i> {{ courrier.personneExterneDestinataire.nom }}
+                        <i class="bi bi-person"></i> {{ courrier.personneExterneDestinataire.nomOuRaisonSociale }}
                     {% endif %}
                 </dd>
 

@@ -11,5 +11,7 @@ interface HistoriqueActionRepositoryInterface
 {
     public function findByCourrier(Courrier $courrier): array;
 
+    public function findLast(int $limit = 5): array;
+
     public function save(HistoriqueAction $action): void;
 }

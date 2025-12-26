@@ -64,12 +64,11 @@ class CreateCourrierUseCase
                 $numeroReference = sprintf('EXT-%s-%s', date('Y'), uniqid());
             }
         } else {
-            // Courrier entrant : utiliser le numéro fourni ou générer un numéro temporaire
+            // Courrier entrant : le numéro de référence doit provenir de l'expéditeur (courrier sortant d'origine)
             if (!empty($dto->numeroReference)) {
                 $numeroReference = $dto->numeroReference;
             } else {
-                // Si pas de numéro fourni, générer un numéro temporaire
-                $numeroReference = sprintf('REF-%s-%s', date('Ymd'), uniqid());
+                throw new InvalidCourierDataException('Le numero de reference expediteur est requis pour un courrier entrant.');
             }
         }
 
@@ -178,6 +177,10 @@ class CreateCourrierUseCase
 
     private function creerNotification(Courrier $courrier): void
     {
+        $expLabel = $courrier->getTypeExpediteur() === Courrier::ACTEUR_SERVICE
+            ? ($courrier->getServiceExpediteur()?->getNom() ?? 'Expéditeur inconnu')
+            : ($courrier->getPersonneExterneExpediteur()?->getNomOuRaisonSociale() ?? 'Expéditeur externe');
+
         $notification = new Notification(
             service: $courrier->getServiceDestinataire(),
             courrier: $courrier,
@@ -185,7 +188,7 @@ class CreateCourrierUseCase
             message: sprintf(
                 'Nouveau courrier reçu: %s de %s',
                 $courrier->getObjet(),
-                $courrier->getServiceExpediteur()->getNom()
+                $expLabel
             )
         );
 

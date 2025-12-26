@@ -79,12 +79,29 @@
                 </div>
 
                 <div class="ms-3">
+                    {% set courrier = notification.courrier %}
+                    {% set peutConfirmer = courrier
+                        and courrier.typeExpediteur == 'SERVICE'
+                        and courrier.typeDestinataire == 'SERVICE'
+                        and courrier.statut in ['EN_ATTENTE_ACCUSE_RECEPTION', 'RECU_NON_CONFIRME'] %}
+
                     <div class="btn-group-vertical btn-group-sm">
-                        <a href="{{ path('courrier_show', {id: notification.courrier.id}) }}"
+                        <a href="{{ path('courrier_show', {id: courrier.id}) }}"
                            class="btn btn-sm btn-outline-primary"
                            title="Voir le courrier">
                             <i class="bi bi-eye"></i>
                         </a>
+
+                        {% if peutConfirmer %}
+                            <form method="post" action="{{ path('courrier_accuse_reception', {id: courrier.id}) }}">
+                                <button type="submit"
+                                        class="btn btn-sm btn-success"
+                                        title="Marquer accusé de réception">
+                                    <i class="bi bi-check-circle"></i> Accusé
+                                </button>
+                            </form>
+                        {% endif %}
+
                         {% if not notification.estLue() %}
                         <form method="post" action="{{ path('notification_marquer_lue', {id: notification.id}) }}">
                             <button type="submit"

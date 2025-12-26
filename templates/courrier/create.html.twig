@@ -40,7 +40,7 @@
                         <div class="mb-3" id="numeroReferenceField" style="display: none;">
                             <label for="numeroReference" class="form-label">
                                 Numéro de référence de l'expéditeur
-                                <small class="text-muted">(optionnel)</small>
+                                <small class="text-muted">(obligatoire pour un courrier entrant)</small>
                             </label>
                             <input type="text"
                                    class="form-control"
@@ -49,7 +49,7 @@
                                    maxlength="100"
                                    placeholder="Ex: 123/2025/EXP">
                             <div class="form-text">
-                                Le numéro de référence du courrier fourni par l'expéditeur (si disponible)
+                                Le numéro de référence fourni par l'expéditeur (courrier sortant d'origine)
                             </div>
                         </div>
                     </div>
@@ -80,37 +80,48 @@
                 <hr>
 
                 <h5>Expéditeur</h5>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="typeExpediteur" class="form-label">Type d'expéditeur *</label>
-                            <select class="form-select" id="typeExpediteur" name="typeExpediteur" required>
-                                <option value="">-- Sélectionnez --</option>
-                                <option value="SERVICE">Service interne</option>
-                                <option value="PERSONNE_EXTERNE">Personne externe</option>
-                            </select>
-                        </div>
+                <input type="hidden" id="hiddenTypeExpediteur" name="typeExpediteur" value="SERVICE">
+                <input type="hidden" id="hiddenServiceExpediteurId" name="serviceExpediteurId" value="{{ userService.id }}">
+                <input type="hidden" id="hiddenPersonneExpediteurId" name="personneExterneExpediteurId" value="">
+
+                <div class="mb-3" id="expediteurLockedInfo" style="display:none;">
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-lock-fill"></i>
+                        Pour un courrier sortant, l'expéditeur est votre service : <strong>{{ userService.nom }}</strong>
                     </div>
+                </div>
 
-                    <div class="col-md-6">
-                        <div class="mb-3" id="serviceExpediteurGroup" style="display:none;">
-                            <label for="serviceExpediteurId" class="form-label">Service expéditeur *</label>
-                            <select class="form-select" id="serviceExpediteurId" name="serviceExpediteurId">
-                                <option value="">-- Sélectionnez --</option>
-                                {% for service in services %}
-                                    <option value="{{ service.id }}">{{ service.nom }}</option>
-                                {% endfor %}
-                            </select>
+                <div id="expediteurFields">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="typeExpediteur" class="form-label">Type d'expéditeur *</label>
+                                <select class="form-select" id="typeExpediteur" name="typeExpediteur_select">
+                                    <option value="">-- Sélectionnez --</option>
+                                    <option value="SERVICE">Service interne</option>
+                                    <option value="PERSONNE_EXTERNE">Personne externe</option>
+                                </select>
+                            </div>
                         </div>
-
-                        <div class="mb-3" id="personneExterneExpediteurGroup" style="display:none;">
-                            <label for="personneExterneExpediteurId" class="form-label">Personne externe expéditrice *</label>
-                            <select class="form-select" id="personneExterneExpediteurId" name="personneExterneExpediteurId">
-                                <option value="">-- Sélectionnez --</option>
-                                {% for personne in personnesExternes %}
-                                    <option value="{{ personne.id }}">{{ personne.nomOuRaisonSociale }}</option>
-                                {% endfor %}
-                            </select>
+                        <div class="col-md-6">
+                            <div class="mb-3" id="serviceExpediteurGroup" style="display:none;">
+                                <label for="serviceExpediteurId" class="form-label">Service expéditeur *</label>
+                                <select class="form-select" id="serviceExpediteurId" name="serviceExpediteurId_select">
+                                    <option value="">-- Sélectionnez --</option>
+                                    {% for service in services %}
+                                        <option value="{{ service.id }}">{{ service.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3" id="personneExterneExpediteurGroup" style="display:none;">
+                                <label for="personneExterneExpediteurId" class="form-label">Personne externe expéditeur *</label>
+                                <select class="form-select" id="personneExterneExpediteurId" name="personneExterneExpediteurId_select">
+                                    <option value="">-- Sélectionnez --</option>
+                                    {% for personne in personnesExternes %}
+                                        <option value="{{ personne.id }}">{{ personne.nomOuRaisonSociale }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -118,6 +129,16 @@
                 <hr>
 
                 <h5>Destinataire</h5>
+                <input type="hidden" id="hiddenTypeDestinataire" name="typeDestinataire" value="">
+                <input type="hidden" id="hiddenServiceDestinataireId" name="serviceDestinataireId" value="">
+                <input type="hidden" id="hiddenPersonneDestinataireId" name="personneExterneDestinataireId" value="">
+
+                <div class="mb-3" id="destinataireLockInfo" style="display:none;">
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-lock-fill"></i>
+                        Pour un courrier entrant, le destinataire est votre service : <strong>{{ userService.nom }}</strong>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -219,7 +240,7 @@
                         <li>• Vérifiez le type de courrier (Entrant/Sortant)</li>
                         <li>• <strong>Courrier ENTRANT :</strong> Saisissez le numéro de référence de l'expéditeur si disponible. Un numéro d'arrivée sera généré automatiquement : N° XXX-2025/DG/SERVICE</li>
                         <li>• <strong>Courrier SORTANT :</strong> Le numéro de référence sera généré automatiquement au format DGI</li>
-                        <li>• Sélectionnez d'abord le type d'expéditeur et destinataire</li>
+                        <li>• Sélectionnez d'abord le type de destinataire</li>
                         <li>• Utilisez "Services en copie" pour informer d'autres services</li>
                         <li>• Rédigez un objet clair et précis</li>
                         <li>• Les pièces jointes peuvent être ajoutées après la création</li>
@@ -237,69 +258,203 @@
     document.addEventListener('DOMContentLoaded', function() {
         const typeSelect = document.getElementById('type');
         const numeroRefField = document.getElementById('numeroReferenceField');
-
-        const typeExpediteur = document.getElementById('typeExpediteur');
-        const serviceExpediteurGroup = document.getElementById('serviceExpediteurGroup');
-        const personneExterneExpediteurGroup = document.getElementById('personneExterneExpediteurGroup');
+        const numeroRefInput = document.getElementById('numeroReference');
 
         const typeDestinataire = document.getElementById('typeDestinataire');
         const serviceDestinataireGroup = document.getElementById('serviceDestinataireGroup');
         const personneExterneDestinataireGroup = document.getElementById('personneExterneDestinataireGroup');
+        const serviceDestinataireSelect = document.getElementById('serviceDestinataireId');
+        const destinataireLockInfo = document.getElementById('destinataireLockInfo');
+        const hiddenTypeDest = document.getElementById('hiddenTypeDestinataire');
+        const hiddenServiceDest = document.getElementById('hiddenServiceDestinataireId');
+        const hiddenPersonneDest = document.getElementById('hiddenPersonneDestinataireId');
 
-        // Fonction pour afficher/masquer le champ numéro de référence
+        const typeExpSelect = document.getElementById('typeExpediteur');
+        const serviceExpGroup = document.getElementById('serviceExpediteurGroup');
+        const personneExpGroup = document.getElementById('personneExterneExpediteurGroup');
+        const serviceExpSelect = document.getElementById('serviceExpediteurId');
+        const personneExpSelect = document.getElementById('personneExterneExpediteurId');
+        const hiddenTypeExp = document.getElementById('hiddenTypeExpediteur');
+        const hiddenServiceExp = document.getElementById('hiddenServiceExpediteurId');
+        const hiddenPersonneExp = document.getElementById('hiddenPersonneExpediteurId');
+        const expediteurFields = document.getElementById('expediteurFields');
+        const expediteurLockedInfo = document.getElementById('expediteurLockedInfo');
+
+        const userServiceId = "{{ userService.id }}";
+
         function toggleNumeroReference() {
             if (typeSelect && numeroRefField) {
                 if (typeSelect.value === 'ENTRANT') {
                     numeroRefField.style.display = 'block';
+                    numeroRefInput.required = true;
                 } else {
                     numeroRefField.style.display = 'none';
+                    numeroRefInput.required = false;
                 }
             }
         }
 
-        // Écouter les changements du type de courrier
         if (typeSelect) {
             typeSelect.addEventListener('change', toggleNumeroReference);
-            toggleNumeroReference(); // Initialiser
+            toggleNumeroReference();
         }
 
-        typeExpediteur.addEventListener('change', function() {
-            if (this.value === 'SERVICE') {
-                serviceExpediteurGroup.style.display = 'block';
-                personneExterneExpediteurGroup.style.display = 'none';
-                document.getElementById('serviceExpediteurId').required = true;
-                document.getElementById('personneExterneExpediteurId').required = false;
-            } else if (this.value === 'PERSONNE_EXTERNE') {
-                serviceExpediteurGroup.style.display = 'none';
-                personneExterneExpediteurGroup.style.display = 'block';
-                document.getElementById('serviceExpediteurId').required = false;
-                document.getElementById('personneExterneExpediteurId').required = true;
+        function applyDestinataireLock() {
+            const type = typeSelect.value;
+
+            if (type === 'ENTRANT') {
+                typeDestinataire.value = 'SERVICE';
+                hiddenTypeDest.value = 'SERVICE';
+                destinataireLockInfo.style.display = 'block';
+
+                serviceDestinataireGroup.style.display = 'block';
+                personneExterneDestinataireGroup.style.display = 'none';
+                serviceDestinataireSelect.required = true;
+                document.getElementById('personneExterneDestinataireId').required = false;
+
+                serviceDestinataireSelect.value = userServiceId;
+                serviceDestinataireSelect.setAttribute('disabled', 'disabled');
+                hiddenServiceDest.value = userServiceId;
+                hiddenPersonneDest.value = '';
+                typeDestinataire.setAttribute('disabled', 'disabled');
             } else {
-                serviceExpediteurGroup.style.display = 'none';
-                personneExterneExpediteurGroup.style.display = 'none';
-                document.getElementById('serviceExpediteurId').required = false;
-                document.getElementById('personneExterneExpediteurId').required = false;
+                typeDestinataire.removeAttribute('disabled');
+                destinataireLockInfo.style.display = 'none';
+                serviceDestinataireGroup.style.display = 'none';
+                personneExterneDestinataireGroup.style.display = 'none';
+                serviceDestinataireSelect.required = false;
+                document.getElementById('personneExterneDestinataireId').required = false;
+                serviceDestinataireSelect.removeAttribute('disabled');
+                serviceDestinataireSelect.value = '';
+                hiddenTypeDest.value = typeDestinataire.value;
+                hiddenServiceDest.value = '';
+                hiddenPersonneDest.value = '';
             }
-        });
+        }
+
+        function syncDestinataireFields() {
+            hiddenTypeDest.value = typeDestinataire.value || '';
+            if (typeDestinataire.value === 'SERVICE') {
+                hiddenServiceDest.value = serviceDestinataireSelect.value || '';
+                hiddenPersonneDest.value = '';
+            } else if (typeDestinataire.value === 'PERSONNE_EXTERNE') {
+                hiddenServiceDest.value = '';
+                hiddenPersonneDest.value = document.getElementById('personneExterneDestinataireId').value || '';
+            } else {
+                hiddenServiceDest.value = '';
+                hiddenPersonneDest.value = '';
+            }
+        }
+
+        function applyExpediteurLock() {
+            const type = typeSelect.value;
+            if (type === 'SORTANT') {
+                // verrouillage expéditeur = service connecté
+                expediteurLockedInfo.style.display = 'block';
+                expediteurFields.style.display = 'none';
+
+                typeExpSelect.value = 'SERVICE';
+                serviceExpSelect.value = userServiceId;
+                personneExpSelect.value = '';
+
+                typeExpSelect.setAttribute('disabled', 'disabled');
+                serviceExpSelect.setAttribute('disabled', 'disabled');
+                personneExpSelect.setAttribute('disabled', 'disabled');
+
+                hiddenTypeExp.value = 'SERVICE';
+                hiddenServiceExp.value = userServiceId;
+                hiddenPersonneExp.value = '';
+            } else {
+                expediteurLockedInfo.style.display = 'none';
+                expediteurFields.style.display = 'block';
+
+                typeExpSelect.removeAttribute('disabled');
+                serviceExpSelect.removeAttribute('disabled');
+                personneExpSelect.removeAttribute('disabled');
+
+                typeExpSelect.value = '';
+                serviceExpSelect.value = '';
+                personneExpSelect.value = '';
+
+                hiddenTypeExp.value = '';
+                hiddenServiceExp.value = '';
+                hiddenPersonneExp.value = '';
+            }
+        }
+
+        function syncExpediteurFields() {
+            hiddenTypeExp.value = typeExpSelect.value || '';
+            if (typeExpSelect.value === 'SERVICE') {
+                hiddenServiceExp.value = serviceExpSelect.value || '';
+                hiddenPersonneExp.value = '';
+            } else if (typeExpSelect.value === 'PERSONNE_EXTERNE') {
+                hiddenServiceExp.value = '';
+                hiddenPersonneExp.value = personneExpSelect.value || '';
+            } else {
+                hiddenServiceExp.value = '';
+                hiddenPersonneExp.value = '';
+            }
+
+            if (typeExpSelect.value === 'SERVICE') {
+                serviceExpGroup.style.display = 'block';
+                personneExpGroup.style.display = 'none';
+            } else if (typeExpSelect.value === 'PERSONNE_EXTERNE') {
+                serviceExpGroup.style.display = 'none';
+                personneExpGroup.style.display = 'block';
+            } else {
+                serviceExpGroup.style.display = 'none';
+                personneExpGroup.style.display = 'none';
+            }
+        }
 
         typeDestinataire.addEventListener('change', function() {
             if (this.value === 'SERVICE') {
                 serviceDestinataireGroup.style.display = 'block';
                 personneExterneDestinataireGroup.style.display = 'none';
-                document.getElementById('serviceDestinataireId').required = true;
+                serviceDestinataireSelect.required = true;
                 document.getElementById('personneExterneDestinataireId').required = false;
+                syncDestinataireFields();
             } else if (this.value === 'PERSONNE_EXTERNE') {
                 serviceDestinataireGroup.style.display = 'none';
                 personneExterneDestinataireGroup.style.display = 'block';
-                document.getElementById('serviceDestinataireId').required = false;
+                serviceDestinataireSelect.required = false;
                 document.getElementById('personneExterneDestinataireId').required = true;
+                syncDestinataireFields();
             } else {
                 serviceDestinataireGroup.style.display = 'none';
                 personneExterneDestinataireGroup.style.display = 'none';
-                document.getElementById('serviceDestinataireId').required = false;
+                serviceDestinataireSelect.required = false;
                 document.getElementById('personneExterneDestinataireId').required = false;
+                syncDestinataireFields();
             }
         });
+
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function() {
+                toggleNumeroReference();
+                applyDestinataireLock();
+                applyExpediteurLock();
+            });
+        }
+
+        if (typeExpSelect) {
+            typeExpSelect.addEventListener('change', syncExpediteurFields);
+            serviceExpSelect.addEventListener('change', syncExpediteurFields);
+            personneExpSelect.addEventListener('change', syncExpediteurFields);
+        }
+
+        if (typeDestinataire) {
+            typeDestinataire.addEventListener('change', syncDestinataireFields);
+            serviceDestinataireSelect.addEventListener('change', syncDestinataireFields);
+            document.getElementById('personneExterneDestinataireId').addEventListener('change', syncDestinataireFields);
+        }
+
+        // Initial state
+        toggleNumeroReference();
+        applyDestinataireLock();
+        applyExpediteurLock();
+        syncExpediteurFields();
+        syncDestinataireFields();
     });
 </script>
 {% endblock %}

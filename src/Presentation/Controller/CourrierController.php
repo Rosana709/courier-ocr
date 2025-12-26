@@ -49,11 +49,9 @@ class CourrierController extends AbstractController
     {
         $user = $this->getUser();
 
-        // Si admin, afficher tous les courriers
         if ($this->isGranted('ROLE_ADMIN')) {
             $courriers = $this->listCourriersUseCase->executeAll();
         } else {
-            // Sinon, afficher uniquement les courriers du service de l'utilisateur
             $serviceId = $user->getService()->getId();
             $courriers = $this->listCourriersUseCase->executeByService($serviceId);
         }
@@ -71,11 +69,9 @@ class CourrierController extends AbstractController
         $user = $this->getUser();
 
         if ($this->isGranted('ROLE_ADMIN')) {
-            // Admin voit tous les courriers de TYPE ENTRANT
             $courriers = $this->listCourriersUseCase->executeAll();
             $courriers = array_filter($courriers, fn($c) => $c->getType() === Courrier::TYPE_ENTRANT);
         } else {
-            // Service voit ses courriers entrants
             $serviceId = $user->getService()->getId();
             $courriers = $this->listCourriersUseCase->executeEntrantsByService($serviceId);
         }
@@ -93,11 +89,9 @@ class CourrierController extends AbstractController
         $user = $this->getUser();
 
         if ($this->isGranted('ROLE_ADMIN')) {
-            // Admin voit tous les courriers de TYPE SORTANT
             $courriers = $this->listCourriersUseCase->executeAll();
             $courriers = array_filter($courriers, fn($c) => $c->getType() === Courrier::TYPE_SORTANT);
         } else {
-            // Service voit ses courriers sortants
             $serviceId = $user->getService()->getId();
             $courriers = $this->listCourriersUseCase->executeSortantsByService($serviceId);
         }
@@ -109,20 +103,60 @@ class CourrierController extends AbstractController
         ]);
     }
 
+    #[Route('/archives', name: 'courrier_archives', methods: ['GET'])]
+    public function archives(): Response
+    {
+        $user = $this->getUser();
+
+        if ($this->isGranted('ROLE_ADMIN')) {
+            $courriers = $this->listCourriersUseCase->executeArchivedAll();
+        } else {
+            $serviceId = $user->getService()->getId();
+            $courriers = $this->listCourriersUseCase->executeArchivedByService($serviceId);
+        }
+
+        return $this->render('courrier/index.html.twig', [
+            'courriers' => $courriers,
+            'viewType' => 'archives',
+            'pageTitle' => 'Courriers Archivés',
+        ]);
+    }
+
     #[Route('/create', name: 'courrier_create', methods: ['GET', 'POST'])]
     public function create(Request $request): Response
     {
+        $user = $this->getUser();
+        $userService = $user?->getService();
+
+        if (!$userService) {
+            $this->addFlash('error', "Votre compte n'est associ?? ?? aucun service.");
+            return $this->redirectToRoute('courrier_index');
+        }
+
         if ($request->isMethod('POST')) {
             try {
+                $type = $request->request->get('type', '');
+
+                // Exp??diteur : verrouill?? sur service connect?? pour SORTANT, s??lectionnable pour ENTRANT
+                $typeExpediteur = $request->request->get('typeExpediteur', Courrier::ACTEUR_SERVICE);
+                $serviceExpediteurId = $request->request->get('serviceExpediteurId');
+                $personneExterneExpediteurId = $request->request->get('personneExterneExpediteurId');
+
+                if ($type === Courrier::TYPE_SORTANT) {
+                    $typeExpediteur = Courrier::ACTEUR_SERVICE;
+                    $serviceExpediteurId = $userService->getId();
+                    $personneExterneExpediteurId = null;
+                }
+
                 $dto = new CreateCourrierDTO(
-                    type: $request->request->get('type', ''),
+                    type: $type,
                     objet: $request->request->get('objet', ''),
                     contenu: $request->request->get('contenu'),
                     dateCourrier: $request->request->get('dateCourrier', date('Y-m-d')),
                     priorite: $request->request->get('priorite', Courrier::PRIORITE_NORMALE),
-                    typeExpediteur: $request->request->get('typeExpediteur', ''),
-                    serviceExpediteurId: $request->request->get('serviceExpediteurId'),
-                    personneExterneExpediteurId: $request->request->get('personneExterneExpediteurId'),
+                    typeExpediteur: $typeExpediteur,
+                    serviceExpediteurId: $serviceExpediteurId,
+                    personneExterneExpediteurId: $personneExterneExpediteurId,
                     typeDestinataire: $request->request->get('typeDestinataire', ''),
                     serviceDestinataireId: $request->request->get('serviceDestinataireId'),
                     personneExterneDestinataireId: $request->request->get('personneExterneDestinataireId'),
@@ -132,9 +166,9 @@ class CourrierController extends AbstractController
                     numeroReference: $request->request->get('numeroReference')
                 );
 
-                $courrier = $this->createCourrierUseCase->execute($dto, $this->getUser()->getId());
+                $courrier = $this->createCourrierUseCase->execute($dto, $user->getId());
 
-                $this->addFlash('success', 'Courrier créé avec succès.');
+                $this->addFlash('success', 'Courrier cr???? avec succ??s.');
                 return $this->redirectToRoute('courrier_show', ['id' => $courrier->getId()]);
 
             } catch (DomainException $e) {
@@ -142,7 +176,6 @@ class CourrierController extends AbstractController
             }
         }
 
-        // Récupérer les listes pour les formulaires
         $services = $this->serviceRepository->findAll();
         $personnesExternes = $this->personneExterneRepository->findAll();
 
@@ -151,6 +184,7 @@ class CourrierController extends AbstractController
             'personnesExternes' => $personnesExternes,
             'priorites' => Courrier::getValidPriorites(),
             'types' => Courrier::getValidTypes(),
+            'userService' => $userService,
         ]);
     }
 
@@ -160,10 +194,8 @@ class CourrierController extends AbstractController
         try {
             $courrier = $this->getCourrierUseCase->execute($id);
 
-            // Vérifier les permissions
             $this->denyAccessUnlessGranted('courrier_view', $courrier);
 
-            // Charger les pièces jointes
             $piecesJointes = $this->listPiecesJointesUseCase->execute($id);
 
             return $this->render('courrier/show.html.twig', [
@@ -182,7 +214,6 @@ class CourrierController extends AbstractController
         try {
             $courrier = $this->getCourrierUseCase->execute($id);
 
-            // Vérifier les permissions
             $this->denyAccessUnlessGranted('courrier_edit', $courrier);
 
             if ($request->isMethod('POST')) {
@@ -197,7 +228,7 @@ class CourrierController extends AbstractController
 
                 $this->updateCourrierUseCase->execute($id, $dto);
 
-                $this->addFlash('success', 'Courrier modifié avec succès.');
+                $this->addFlash('success', 'Courrier modifi?? avec succ??s.');
                 return $this->redirectToRoute('courrier_show', ['id' => $id]);
             }
 
@@ -216,20 +247,6 @@ class CourrierController extends AbstractController
         }
     }
 
-    #[Route('/{id}/delete', name: 'courrier_delete', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
-    public function delete(string $id): Response
-    {
-        try {
-            $this->deleteCourrierUseCase->execute($id);
-            $this->addFlash('success', 'Courrier supprimé avec succès.');
-        } catch (DomainException $e) {
-            $this->addFlash('error', $e->getMessage());
-        }
-
-        return $this->redirectToRoute('courrier_index');
-    }
-
     #[Route('/{id}/accuse-reception', name: 'courrier_accuse_reception', methods: ['POST'])]
     public function accuseReception(string $id): Response
     {
@@ -239,7 +256,7 @@ class CourrierController extends AbstractController
 
             $this->accuseReceptionUseCase->execute($id, $serviceId, $user->getId());
 
-            $this->addFlash('success', 'Accusé de réception confirmé avec succès.');
+            $this->addFlash('success', 'Accus?? de r??ception confirm?? avec succ??s.');
         } catch (DomainException $e) {
             $this->addFlash('error', $e->getMessage());
         }
@@ -252,14 +269,12 @@ class CourrierController extends AbstractController
     {
         $user = $this->getUser();
 
-        // Récupérer les courriers selon le rôle
         if ($this->isGranted('ROLE_ADMIN')) {
             $courriers = $this->listCourriersUseCase->executeAll();
         } else {
             $courriers = $this->listCourriersUseCase->executeByService($user->getService()->getId());
         }
 
-        // Préparer les données pour l'export
         $data = [];
         foreach ($courriers as $courrier) {
             $data[] = [
@@ -274,7 +289,7 @@ class CourrierController extends AbstractController
             ];
         }
 
-        $headers = ['N° Arrivée', 'N° Référence', 'Type', 'Objet', 'Priorité', 'Statut', 'Date Courrier', 'Date Enregistrement'];
+        $headers = ['N?? Arriv??e', 'N?? R??f??rence', 'Type', 'Objet', 'Priorit??', 'Statut', 'Date Courrier', 'Date Enregistrement'];
 
         return $this->excelExportService->export($data, $headers, 'Liste_Courriers_' . date('Y-m-d'));
     }
@@ -284,14 +299,12 @@ class CourrierController extends AbstractController
     {
         $user = $this->getUser();
 
-        // Récupérer les courriers selon le rôle
         if ($this->isGranted('ROLE_ADMIN')) {
             $courriers = $this->listCourriersUseCase->executeAll();
         } else {
             $courriers = $this->listCourriersUseCase->executeByService($user->getService()->getId());
         }
 
-        // Préparer les données pour l'export
         $data = [];
         foreach ($courriers as $courrier) {
             $data[] = [
@@ -305,8 +318,36 @@ class CourrierController extends AbstractController
             ];
         }
 
-        $headers = ['N° Arrivée', 'N° Référence', 'Type', 'Objet', 'Priorité', 'Statut', 'Date'];
+        $headers = ['N?? Arriv??e', 'N?? R??f??rence', 'Type', 'Objet', 'Priorit??', 'Statut', 'Date'];
 
         return $this->pdfExportService->export($data, $headers, 'Liste_Courriers_' . date('Y-m-d'), 'Liste des Courriers');
     }
+
+    #[Route('/{id}/archiver', name: 'courrier_archiver', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function archiver(string $id): Response
+    {
+        try {
+            $this->getCourrierUseCase->execute($id); // assure existence
+            $dto = new UpdateCourrierDTO(
+                statut: Courrier::STATUT_ARCHIVE
+            );
+            $this->updateCourrierUseCase->execute($id, $dto);
+            $this->addFlash('success', 'Courrier archiv??.');
+        } catch (DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('courrier_show', ['id' => $id]);
+    }
+
+    #[Route('/{id}/delete', name: 'courrier_delete', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function delete(string $id): Response
+    {
+        $this->addFlash('error', 'La suppression de courrier est interdite. Utilisez l\'archivage.');
+        return $this->redirectToRoute('courrier_show', ['id' => $id]);
+    }
 }
+
+

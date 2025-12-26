@@ -184,7 +184,6 @@
                 <table class="table table-hover" id="utilisateursTable">
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Email</th>
                             <th>Rôle</th>
                             <th>Service</th>
@@ -195,7 +194,6 @@
                     <tbody>
                         {% for utilisateur in utilisateurs %}
                             <tr class="{{ not utilisateur.estActif() ? 'inactive-row' : '' }}">
-                                <td><code>{{ utilisateur.id }}</code></td>
                                 <td>
                                     <i class="bi bi-envelope"></i>
                                     {{ utilisateur.email }}
@@ -280,6 +278,7 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script>
@@ -290,7 +289,7 @@
                 },
                 responsive: true,
                 pageLength: 25,
-                order: [[1, 'asc']], // Order by email
+                order: [[0, 'asc']], // Tri par email (1ère colonne)
                 columnDefs: [
                     {
                         targets: -1, // Last column (Actions)

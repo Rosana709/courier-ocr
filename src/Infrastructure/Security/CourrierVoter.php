@@ -10,9 +10,9 @@ use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
- * Voter pour contrôler l'accès aux courriers selon les règles métier:
- * - Admin: accès complet à tous les courriers
- * - Service: accès uniquement aux courriers où il est impliqué (expéditeur, destinataire, ou en copie)
+ * Voter pour contr??ler l'acc??s aux courriers selon les r??gles m??tier:
+ * - Admin: acc??s complet ?? tous les courriers
+ * - Service: acc??s uniquement aux courriers o?? il est impliqu?? (exp??diteur, destinataire, ou en copie)
  */
 class CourrierVoter extends Voter
 {
@@ -37,7 +37,7 @@ class CourrierVoter extends Voter
         /** @var Courrier $courrier */
         $courrier = $subject;
 
-        // L'admin a accès à tout
+        // L'admin a acc??s ?? tout
         if ($user->isAdmin()) {
             return true;
         }
@@ -63,7 +63,7 @@ class CourrierVoter extends Voter
             return false;
         }
 
-        // Le service peut voir le courrier s'il est expéditeur
+        // Le service peut voir le courrier s'il est exp??diteur
         if ($courrier->getTypeExpediteur() === Courrier::ACTEUR_SERVICE
             && $courrier->getServiceExpediteur()
             && $courrier->getServiceExpediteur()->getId() === $service->getId()) {
@@ -95,12 +95,12 @@ class CourrierVoter extends Voter
             return false;
         }
 
-        // Vérifier d'abord si le service peut voir le courrier
+        // V??rifier d'abord si le service peut voir le courrier
         if (!$this->canView($courrier, $user)) {
             return false;
         }
 
-        // Ne peut pas modifier un courrier clos ou archivé
+        // Ne peut pas modifier un courrier clos ou archiv??
         if (in_array($courrier->getStatut(), [Courrier::STATUT_CLOS, Courrier::STATUT_ARCHIVE])) {
             return false;
         }
@@ -108,3 +108,4 @@ class CourrierVoter extends Voter
         return true;
     }
 }
+

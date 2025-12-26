@@ -1,6 +1,7 @@
 <?php
 
 use Symfony\Component\Dotenv\Dotenv;
+use Symfony\Component\Dotenv\Exception\PathException;
 use App\ErrorHandler\CompatibilityErrorHandler;
 
 require dirname(__DIR__).'/vendor/autoload.php';
@@ -18,7 +19,23 @@ if (is_array($env = @include dirname(__DIR__).'/.env.local.php') && (!isset($env
     (new Dotenv(false))->populate($env);
 } else {
     // load all the .env files
-    (new Dotenv(false))->loadEnv(dirname(__DIR__).'/.env');
+    $dotenv = new Dotenv(false);
+    $envPath = dirname(__DIR__).'/.env';
+
+    try {
+        $dotenv->loadEnv($envPath);
+    } catch (PathException $e) {
+        // Fallback pour environnements oÃ¹ is_readable() retourne faux (certains contextes Windows)
+        if (file_exists($envPath)) {
+            $dotenv->populate($dotenv->parse(file_get_contents($envPath), $envPath));
+            $localPath = $envPath.'.local';
+            if (file_exists($localPath)) {
+                $dotenv->populate($dotenv->parse(file_get_contents($localPath), $localPath));
+            }
+        } else {
+            throw $e;
+        }
+    }
 }
 
 $_SERVER += $_ENV;

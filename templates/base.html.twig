@@ -41,6 +41,9 @@
                                 <li><a class="dropdown-item" href="{{ path('courrier_index') }}">
                                     <i class="bi bi-list-ul"></i> Tous les courriers
                                 </a></li>
+                                <li><a class="dropdown-item" href="{{ path('courrier_archives') }}">
+                                    <i class="bi bi-archive"></i> Courriers archivés
+                                </a></li>
                                 <li><hr class="dropdown-divider"></li>
                             {% else %}
                                 {# Service: menu avec 3 vues #}
@@ -53,11 +56,16 @@
                                 <li><a class="dropdown-item" href="{{ path('courrier_sortants') }}">
                                     <i class="bi bi-send"></i> Courriers Sortants
                                 </a></li>
+                                <li><a class="dropdown-item" href="{{ path('courrier_archives') }}">
+                                    <i class="bi bi-archive"></i> Courriers archivés
+                                </a></li>
                                 <li><hr class="dropdown-divider"></li>
                             {% endif %}
-                            <li><a class="dropdown-item" href="{{ path('courrier_create') }}">
-                                <i class="bi bi-plus-circle"></i> Nouveau courrier
-                            </a></li>
+                            {% if not is_granted('ROLE_ADMIN') %}
+                                <li><a class="dropdown-item" href="{{ path('courrier_create') }}">
+                                    <i class="bi bi-plus-circle"></i> Nouveau courrier
+                                </a></li>
+                            {% endif %}
                         </ul>
                     </li>
                     <li class="nav-item dropdown">

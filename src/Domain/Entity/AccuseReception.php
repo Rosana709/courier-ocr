@@ -20,14 +20,14 @@ class AccuseReception
     private Courrier $courrier;
 
     #[ORM\ManyToOne(targetEntity: Service::class)]
-    #[ORM\JoinColumn(name: 'servicerecepteurid', referencedColumnName: 'id', nullable: false)]
+    #[ORM\JoinColumn(name: 'service_recepteur_id', referencedColumnName: 'id', nullable: false)]
     private Service $serviceRecepteur;
 
     #[ORM\Column(type: 'datetime_immutable', name: 'datereceptionphysique')]
     private \DateTimeImmutable $dateReceptionPhysique;
 
     #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
-    #[ORM\JoinColumn(name: 'confirmeparid', referencedColumnName: 'id', nullable: false)]
+    #[ORM\JoinColumn(name: 'confirme_par_id', referencedColumnName: 'id', nullable: false)]
     private Utilisateur $confirmeParUtilisateur;
 
     #[ORM\Column(type: 'datetime_immutable', name: 'dateconfirmation')]

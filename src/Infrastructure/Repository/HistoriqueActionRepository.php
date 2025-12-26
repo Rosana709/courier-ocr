@@ -29,6 +29,19 @@ class HistoriqueActionRepository extends ServiceEntityRepository implements Hist
             ->getResult();
     }
 
+    public function findLast(int $limit = 5): array
+    {
+        return $this->createQueryBuilder('h')
+            ->leftJoin('h.courrier', 'c')
+            ->addSelect('c')
+            ->leftJoin('h.effectuePar', 'u')
+            ->addSelect('u')
+            ->orderBy('h.dateAction', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function save(HistoriqueAction $action): void
     {
         $this->getEntityManager()->persist($action);

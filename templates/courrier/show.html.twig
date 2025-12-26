@@ -43,9 +43,6 @@
                         <dt class="col-sm-4">Numéro de référence</dt>
                         <dd class="col-sm-8">
                             <strong>{{ courrier.numeroReference }}</strong>
-                            {% if courrier.type == 'ENTRANT' and courrier.numeroReference starts with 'REF-' %}
-                                <small class="text-muted">(généré automatiquement)</small>
-                            {% endif %}
                         </dd>
 
                         <dt class="col-sm-4">Type</dt>
@@ -127,7 +124,7 @@
                                     <span class="badge bg-secondary">{{ courrier.serviceExpediteur.sigle }}</span>
                                 {% endif %}
                             {% else %}
-                                <i class="bi bi-person"></i> {{ courrier.personneExterneExpediteur.nom }}
+                                <i class="bi bi-person"></i> {{ courrier.personneExterneExpediteur.nomOuRaisonSociale }}
                             {% endif %}
                         </dd>
 
@@ -139,7 +136,7 @@
                                     <span class="badge bg-secondary">{{ courrier.serviceDestinataire.sigle }}</span>
                                 {% endif %}
                             {% else %}
-                                <i class="bi bi-person"></i> {{ courrier.personneExterneDestinataire.nom }}
+                                <i class="bi bi-person"></i> {{ courrier.personneExterneDestinataire.nomOuRaisonSociale }}
                             {% endif %}
                         </dd>
 
@@ -230,7 +227,8 @@
         </div>
 
         <div class="col-md-4">
-            {% if courrier.typeDestinataire == 'SERVICE'
+            {% if courrier.typeExpediteur == 'SERVICE'
+               and courrier.typeDestinataire == 'SERVICE'
                and (courrier.statut == 'RECU_NON_CONFIRME' or courrier.statut == 'EN_ATTENTE_ACCUSE_RECEPTION') %}
             <div class="card mb-3 border-warning">
                 <div class="card-header bg-warning text-dark">
@@ -276,16 +274,15 @@
             </div>
 
             {% if is_granted('ROLE_ADMIN') %}
-            <div class="card border-danger">
-                <div class="card-header bg-danger text-white">
+            <div class="card border-secondary">
+                <div class="card-header bg-secondary text-white">
                     <h6 class="mb-0">Zone Administrateur</h6>
                 </div>
                 <div class="card-body">
-                    <form method="post" action="{{ path('courrier_delete', {id: courrier.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce courrier ?');">
-                        <button type="submit" class="btn btn-danger btn-sm w-100">
-                            <i class="bi bi-trash"></i> Supprimer
-                        </button>
-                    </form>
+                    <button type="button" class="btn btn-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#archiveModal">
+                        <i class="bi bi-archive"></i> Archiver
+                    </button>
+                    <p class="small text-muted mb-0 mt-2">La suppression est désactivée. Utilisez l'archivage.</p>
                 </div>
             </div>
             {% endif %}
@@ -293,6 +290,28 @@
     </div>
 </div>
 
+<!-- Modal confirmation archivage -->
+<div class="modal fade" id="archiveModal" tabindex="-1" aria-labelledby="archiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="archiveModalLabel"><i class="bi bi-archive"></i> Confirmation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Archiver ce courrier ? Il sera conservé en lecture seule dans la liste des archives.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="post" action="{{ path('courrier_archiver', {id: courrier.id}) }}">
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="bi bi-archive"></i> Confirmer l'archivage
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Modal d'upload de pièce jointe -->
 <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
     <div class="modal-dialog">
