@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdminMail - Système de Gestion de Courrier</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- PDF.js for PDF to Image conversion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Set worker path for PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+</head>
+
+<body class="">
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <span class="gradient-text">Admin</span> <span class="nav-text">Mail</span>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <nav>
+                    <button id="nav-archive" class="nav-btn active">Historique</button>
+                    <button id="nav-incoming" class="nav-btn">Entrée</button>
+                    <button id="nav-outgoing" class="nav-btn">Sortie</button>
+                </nav>
+                <button id="theme-toggle" class="theme-toggle-btn" title="Changer de thème">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Incoming View (OCR) -->
+            <section id="view-incoming" class="view hidden">
+                <div class="hero">
+                    <h1>Nouveau courrier <span class="gradient-text">entrant</span></h1>
+                    <p>Importez une photo ou un PDF pour numériser vos courriers.</p>
+                </div>
+                <div class="upload-container" id="drop-zone">
+                    <div class="upload-card glass">
+                        <div class="upload-icon">
+                            <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="2"
+                                fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <h3>Numériser un courrier</h3>
+                        <p>Glissez-déposez ou cliquez (PNG, JPG, PDF)</p>
+                        <input type="file" id="file-input" accept="image/*,application/pdf" hidden>
+                        <button class="primary-btn"
+                            onclick="document.getElementById('file-input').click()">Scanner</button>
+                    </div>
+                </div>
+
+                <div id="processing-state" class="hidden">
+                    <div class="loader-container">
+                        <div class="loader"></div>
+                        <p>Analyse OCR en cours...</p>
+                    </div>
+                </div>
+
+                <div id="result-view" class="hidden">
+                    <div class="result-layout">
+                        <div class="image-preview-container glass">
+                            <img id="image-preview" src="" alt="Aperçu">
+                        </div>
+                        <div class="data-form-container glass">
+                            <h2>Résultat de l'OCR</h2>
+                            <form id="extract-form">
+                                <div class="form-group">
+                                    <label>Service Expéditeur</label>
+                                    <input type="text" name="senderService" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Service Destinataire</label>
+                                    <input type="text" name="receiverService" required>
+                                </div>
+                                <div class="date-num-grid">
+                                    <div class="form-group">
+                                        <label>Date</label>
+                                        <input type="text" name="date" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Numéro de la lettre</label>
+                                        <input type="text" name="letterNumber" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Objet</label>
+                                    <input type="text" name="subject" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Degré d'Importance</label>
+                                    <select name="importance">
+                                        <option value="Normal">Normal</option>
+                                        <option value="Urgent">Urgent</option>
+                                        <option value="Très Urgent">Très Urgent</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Corps de la lettre</label>
+                                    <textarea name="body" rows="6" required></textarea>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="secondary-btn" id="cancel-btn">Annuler</button>
+                                    <button type="submit" class="primary-btn">Archiver</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Outgoing View (AI Generation) -->
+            <section id="view-outgoing" class="view hidden">
+                <div class="hero">
+                    <h1>Nouveau courrier <span class="gradient-text">sortant</span></h1>
+                    <p>Rédigez et générez vos courriers officiels en quelques secondes.</p>
+                </div>
+
+                <div class="generate-container">
+                    <div class="data-form-container glass">
+                        <h2>Générer un Nouveau Courrier</h2>
+                        <form id="generate-form">
+                            <div class="form-group">
+                                <label>Votre Service (Expéditeur)</label>
+                                <input type="text" name="senderService" value="SERVICE DU SYSTEME D'INFORMATION FISCALE"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label>Service Destinataire</label>
+                                <input type="text" name="receiverService"
+                                    placeholder="ex: MONSIEUR LE CHEF DU SERVICE REGIONAL..." required>
+                            </div>
+                            <div class="date-num-grid">
+                                <div class="form-group">
+                                    <label>Numéro de la lettre</label>
+                                    <input type="text" name="letterNumber" placeholder="ex: 231/MEF/SG/DGI/SSIF"
+                                        required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Degré d'Importance</label>
+                                    <select name="importance">
+                                        <option value="Normal">Normal</option>
+                                        <option value="Urgent">Urgent</option>
+                                        <option value="Très Urgent">Très Urgent</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Instructions / Prompt pour l'IA</label>
+                                <textarea name="prompt" rows="4"
+                                    placeholder="Décrivez le contenu souhaité du courrier..." required></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="primary-btn">Générer avec l'IA</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="gen-processing-state" class="hidden">
+                        <div class="loader-container">
+                            <div class="loader"></div>
+                            <p>Génération par Groq AI en cours...</p>
+                        </div>
+                    </div>
+
+                    <div id="gen-result-view" class="hidden">
+                        <div class="data-form-container glass">
+                            <h2>Aperçu et Modification</h2>
+                            <form id="gen-edit-form">
+                                <div class="form-group">
+                                    <label>Service Expéditeur</label>
+                                    <input type="text" name="senderService" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Service Destinataire</label>
+                                    <input type="text" name="receiverService" required>
+                                </div>
+                                <div class="date-num-grid">
+                                    <div class="form-group">
+                                        <label>Date</label>
+                                        <input type="text" name="date" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Numéro de la lettre</label>
+                                        <input type="text" name="letterNumber" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Objet</label>
+                                    <input type="text" name="subject" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Degré d'Importance</label>
+                                    <select name="importance">
+                                        <option value="Normal">Normal</option>
+                                        <option value="Urgent">Urgent</option>
+                                        <option value="Très Urgent">Très Urgent</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Corps de la lettre</label>
+                                    <textarea name="body" rows="10" required></textarea>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="secondary-btn" id="gen-retry-btn">Recommencer</button>
+                                    <button type="button" class="primary-btn" id="gen-pdf-btn">Télécharger PDF</button>
+                                    <button type="button" class="primary-btn" id="gen-archive-btn">Archiver</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Archive View -->
+            <section id="view-archive" class="view">
+                <div class="archive-header">
+                    <h1>Registre des Courriers</h1>
+                    <div class="search-bar">
+                        <input type="text" id="search-input" placeholder="Rechercher par objet, numéro...">
+                    </div>
+                </div>
+                <div id="archive-list" class="archive-grid">
+                    <!-- Cards will be injected here -->
+                </div>
+                <div id="empty-archive" class="hidden">
+                    <p>Aucune lettre archivée pour le moment.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-content glass">
+            <span class="close-modal">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>
