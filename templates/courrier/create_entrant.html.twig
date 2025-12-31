@@ -1,0 +1,367 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau courrier entrant - Gestion de Courrier{% endblock %}
+
+{% block body %}
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="text-center">
+        <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Chargement...</span>
+        </div>
+        <div class="mt-2 fw-bold">Analyse OCR en cours...</div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">
+                <i class="bi bi-box-arrow-in-right"></i> Nouveau Courrier Entrant
+            </h1>
+        </div>
+        <div class="col-auto">
+            <a href="{{ path('courrier_index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Smart Dashboard OCR -->
+            <div id="smartDashboard" class="smart-card">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-stars smart-gradient-text fs-4 me-2"></i>
+                    <h5 class="mb-0 smart-gradient-text">Assistant OCR</h5>
+                </div>
+                <div>
+                    <p class="small text-muted mb-3">Analysez un document PDF ou image pour pré-remplir automatiquement le formulaire.</p>
+                    <input type="file" id="smartOcrFileInput" style="display: none;" accept="image/*,application/pdf">
+                    <button type="button" class="btn btn-smart" id="btnSmartOCR">
+                        <i class="bi bi-camera"></i> Analyser un document (OCR)
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {# On force le type en hidden s'il n'est pas choisi via select #}
+                        <input type="hidden" name="type" value="ENTRANT">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="numeroReference" class="form-label">
+                                        Numéro de référence de l'expéditeur *
+                                    </label>
+                                    <input type="text"
+                                           class="form-control"
+                                           id="numeroReference"
+                                           name="numeroReference"
+                                           required
+                                           maxlength="100"
+                                           placeholder="Ex: 123/2025/EXP">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="priorite" class="form-label">Priorité *</label>
+                                    <select class="form-select" id="priorite" name="priorite" required>
+                                        {% for prioriteValue in priorites %}
+                                            <option value="{{ prioriteValue }}" {% if prioriteValue == 'NORMALE' %}selected{% endif %}>
+                                                {{ prioriteValue }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="dateCourrier" class="form-label">Date du courrier *</label>
+                                    <input type="date" class="form-control" id="dateCourrier" name="dateCourrier" value="{{ 'now'|date('Y-m-d') }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <h5>Expéditeur</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="typeExpediteur" class="form-label">Type d'expéditeur *</label>
+                                    <select class="form-select" id="typeExpediteur" name="typeExpediteur" required>
+                                        <option value="SERVICE">Service interne</option>
+                                        <option value="PERSONNE_EXTERNE" selected>Personne externe</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3" id="serviceExpediteurGroup" style="display:none;">
+                                    <label for="serviceExpediteurId" class="form-label">Service expéditeur *</label>
+                                    <select class="form-select" id="serviceExpediteurId" name="serviceExpediteurId">
+                                        <option value="">-- Sélectionnez --</option>
+                                        {% for service in services %}
+                                            <option value="{{ service.id }}">{{ service.nom }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="personneExterneExpediteurGroup">
+                                    <label for="personneExterneExpediteurId" class="form-label">Personne externe expéditeur *</label>
+                                    <select class="form-select" id="personneExterneExpediteurId" name="personneExterneExpediteurId" required>
+                                        <option value="">-- Sélectionnez --</option>
+                                        {% for personne in personnesExternes %}
+                                            <option value="{{ personne.id }}">{{ personne.nomOuRaisonSociale }}</option>
+                                        {% endfor %}
+                                        <option value="NEW_EXTERNAL">Autre</option>
+                                    </select>
+                                </div>
+                                <div id="nomNouvellePersonneGroup" style="display:none;" class="p-3 bg-light border rounded mb-3">
+                                    <h6 class="text-primary mb-3"><i class="bi bi-person-plus"></i> Ajouter une personne externe</h6>
+                                    <div class="mb-3">
+                                        <label for="nomNouvellePersonne" class="form-label">Nom / Raison Sociale *</label>
+                                        <input type="text" class="form-control" id="nomNouvellePersonne" name="nomNouvellePersonne" placeholder="Entrez le nom complet">
+                                    </div>
+                                    <div class="mb-0">
+                                        <label for="typeNouvellePersonne" class="form-label">Type de personne *</label>
+                                        <select class="form-select" id="typeNouvellePersonne" name="typeNouvellePersonne">
+                                            <option value="ORGANISME">Organisme</option>
+                                            <option value="ADMINISTRATION">Administration</option>
+                                            <option value="ENTREPRISE">Entreprise</option>
+                                            <option value="CONTRIBUABLE">Particulier / Contribuable</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <h5>Destinataire</h5>
+                        <div class="alert alert-info">
+                            <i class="bi bi-lock-fill"></i>
+                            Pour un courrier entrant, le destinataire est votre service : <strong>{{ userService.nom }}</strong>
+                        </div>
+                        <input type="hidden" name="typeDestinataire" value="SERVICE">
+                        <input type="hidden" name="serviceDestinataireId" value="{{ userService.id }}">
+
+                        <div class="mb-3">
+                            <label for="destinatairesCopieIds" class="form-label">Services en copie</label>
+                            <select class="form-select" id="destinatairesCopieIds" name="destinatairesCopieIds[]" multiple>
+                                {% for service in services %}
+                                    <option value="{{ service.id }}">{{ service.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <hr>
+                        <div class="mb-3">
+                            <label for="objet" class="form-label">Objet *</label>
+                            <input type="text" class="form-control" id="objet" name="objet" required maxlength="500">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="contenu" class="form-label">Contenu</label>
+                            <textarea class="form-control" id="contenu" name="contenu" rows="5"></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ path('courrier_index') }}" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Enregistrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeExpSelect = document.getElementById('typeExpediteur');
+        const serviceExpGroup = document.getElementById('serviceExpediteurGroup');
+        const personneExpGroup = document.getElementById('personneExterneExpediteurGroup');
+        const serviceExpSelect = document.getElementById('serviceExpediteurId');
+        const personneExpSelect = document.getElementById('personneExterneExpediteurId');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        const nomNouvellePersonneGroup = document.getElementById('nomNouvellePersonneGroup');
+        const nomNouvellePersonneInput = document.getElementById('nomNouvellePersonne');
+
+        function syncExpediteurFields() {
+            if (typeExpSelect.value === 'SERVICE') {
+                serviceExpGroup.style.display = 'block';
+                personneExpGroup.style.display = 'none';
+                nomNouvellePersonneGroup.style.display = 'none';
+                serviceExpSelect.required = true;
+                personneExpSelect.required = false;
+                nomNouvellePersonneInput.required = false;
+            } else if (typeExpSelect.value === 'PERSONNE_EXTERNE') {
+                serviceExpGroup.style.display = 'none';
+                personneExpGroup.style.display = 'block';
+                serviceExpSelect.required = false;
+                personneExpSelect.required = true;
+                syncNouvellePersonne();
+            } else {
+                serviceExpGroup.style.display = 'none';
+                personneExpGroup.style.display = 'none';
+                nomNouvellePersonneGroup.style.display = 'none';
+            }
+        }
+
+        function syncNouvellePersonne() {
+            if (personneExpSelect.value === 'NEW_EXTERNAL') {
+                nomNouvellePersonneGroup.style.display = 'block';
+                nomNouvellePersonneInput.required = true;
+            } else {
+                nomNouvellePersonneGroup.style.display = 'none';
+                nomNouvellePersonneInput.required = false;
+            }
+        }
+
+        typeExpSelect.addEventListener('change', syncExpediteurFields);
+        personneExpSelect.addEventListener('change', syncNouvellePersonne);
+        
+        // Init state
+        syncExpediteurFields();
+
+        // OCR Logic
+        const smartOcrFileInput = document.getElementById('smartOcrFileInput');
+        document.getElementById('btnSmartOCR')?.addEventListener('click', () => smartOcrFileInput.click());
+        
+        smartOcrFileInput?.addEventListener('change', async (e) => {
+            if (!e.target.files.length) return;
+            const formData = new FormData();
+            formData.append('file', e.target.files[0]);
+            loadingOverlay.style.display = 'flex';
+            try {
+                const response = await fetch('{{ path('smart_extract') }}', { method: 'POST', body: formData });
+                if (!response.ok) throw new Error("Erreur OCR");
+                const result = await response.json();
+                const data = result.data || {};
+                
+                if (data.subject) document.getElementById('objet').value = data.subject;
+                if (data.body) document.getElementById('contenu').value = data.body;
+                if (data.letterNumber) document.getElementById('numeroReference').value = data.letterNumber;
+                if (data.date) {
+                    const dVal = data.date.match(/\d{4}-\d{2}-\d{2}/);
+                    if (dVal) document.getElementById('dateCourrier').value = dVal[0];
+                }
+                
+                // Tentative de mapping expéditeur
+                if (data.senderService) {
+                    const sName = data.senderService.toLowerCase();
+                    let found = false;
+
+                    // 1. Chercher dans les services
+                    const sOpts = serviceExpSelect.options;
+                    for (let i = 0; i < sOpts.length; i++) {
+                        if (sOpts[i].text.toLowerCase().includes(sName) || sName.includes(sOpts[i].text.toLowerCase())) {
+                            typeExpSelect.value = 'SERVICE';
+                            syncExpediteurFields();
+                            serviceExpSelect.value = sOpts[i].value;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    // 2. Chercher dans les personnes externes
+                    if (!found) {
+                        const pOpts = personneExpSelect.options;
+                        for (let i = 0; i < pOpts.length; i++) {
+                            if (pOpts[i].value !== 'NEW_EXTERNAL' && (pOpts[i].text.toLowerCase().includes(sName) || sName.includes(pOpts[i].text.toLowerCase()))) {
+                                typeExpSelect.value = 'PERSONNE_EXTERNE';
+                                syncExpediteurFields();
+                                personneExpSelect.value = pOpts[i].value;
+                                syncNouvellePersonne();
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // 3. Sinon, marquer comme nouveau
+                    if (!found) {
+                        typeExpSelect.value = 'PERSONNE_EXTERNE';
+                        syncExpediteurFields();
+                        personneExpSelect.value = 'NEW_EXTERNAL';
+                        syncNouvellePersonne();
+                        nomNouvellePersonneInput.value = data.senderService;
+                    }
+                }
+                
+                let msg = "Analyse terminée !";
+                if (!data.letterNumber || !data.subject) {
+                    msg += "\nNote : Certaines informations n'ont pas pu être extraites automatiquement.";
+                }
+                alert(msg);
+            } catch (err) { alert(err.message); } 
+            finally { loadingOverlay.style.display = 'none'; smartOcrFileInput.value = ''; }
+        });
+
+        // URL Params Logic
+        const urlParams = new URLSearchParams(window.location.search);
+        const ocrDataRaw = urlParams.get('ocr_data');
+        if (ocrDataRaw) {
+            try {
+                const ocrData = JSON.parse(decodeURIComponent(ocrDataRaw));
+                if (ocrData.subject) document.getElementById('objet').value = ocrData.subject;
+                if (ocrData.body) document.getElementById('contenu').value = ocrData.body;
+                if (ocrData.letterNumber) document.getElementById('numeroReference').value = ocrData.letterNumber;
+                if (ocrData.date) {
+                    const dVal = ocrData.date.match(/\d{4}-\d{2}-\d{2}/);
+                    if (dVal) document.getElementById('dateCourrier').value = dVal[0];
+                }
+                if (ocrData.senderService) {
+                    const sName = ocrData.senderService.toLowerCase();
+                    let found = false;
+
+                    // 1. Chercher dans les services
+                    const sOpts = serviceExpSelect.options;
+                    for (let i = 0; i < sOpts.length; i++) {
+                        if (sOpts[i].text.toLowerCase().includes(sName) || sName.includes(sOpts[i].text.toLowerCase())) {
+                            typeExpSelect.value = 'SERVICE';
+                            syncExpediteurFields();
+                            serviceExpSelect.value = sOpts[i].value;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    // 2. Chercher dans les personnes externes
+                    if (!found) {
+                        const pOpts = personneExpSelect.options;
+                        for (let i = 0; i < pOpts.length; i++) {
+                            if (pOpts[i].value !== 'NEW_EXTERNAL' && (pOpts[i].text.toLowerCase().includes(sName) || sName.includes(pOpts[i].text.toLowerCase()))) {
+                                typeExpSelect.value = 'PERSONNE_EXTERNE';
+                                syncExpediteurFields();
+                                personneExpSelect.value = pOpts[i].value;
+                                syncNouvellePersonne();
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // 3. Sinon, marquer comme nouveau
+                    if (!found) {
+                        typeExpSelect.value = 'PERSONNE_EXTERNE';
+                        syncExpediteurFields();
+                        personneExpSelect.value = 'NEW_EXTERNAL';
+                        syncNouvellePersonne();
+                        nomNouvellePersonneInput.value = ocrData.senderService;
+                    }
+                }
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } catch (e) { console.error(e); }
+        }
+    });
+</script>
+{% endblock %}

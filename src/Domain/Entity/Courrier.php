@@ -213,9 +213,44 @@ class Courrier
         return $this->type === self::TYPE_ENTRANT;
     }
 
-    public function estSortant(): bool
+    public function getTypeRelatif(Service $service): string
     {
-        return $this->type === self::TYPE_SORTANT;
+        // Si le service est l'expéditeur, c'est un courrier SORTANT pour lui
+        if ($this->typeExpediteur === self::ACTEUR_SERVICE && $this->serviceExpediteur?->getId() === $service->getId()) {
+            return self::TYPE_SORTANT;
+        }
+
+        // Si le service est le destinataire ou en copie, c'est un courrier ENTRANT pour lui
+        if (($this->typeDestinataire === self::ACTEUR_SERVICE && $this->serviceDestinataire?->getId() === $service->getId())) {
+            return self::TYPE_ENTRANT;
+        }
+
+        // Vérification dans les destinataires en copie
+        foreach ($this->destinatairesCopie as $serviceCopie) {
+            if ($serviceCopie->getId() === $service->getId()) {
+                return self::TYPE_ENTRANT;
+            }
+        }
+
+        // Par défaut, retourner le type original (pour les admins ou acteurs externes)
+        return $this->type;
+    }
+
+    public function getStatutRelatif(Service $service): string
+    {
+        // Liste des statuts considérés comme "confirmés" ou terminaux
+        $statutsTerminaux = [
+            self::STATUT_RECU_CONFIRME,
+            self::STATUT_ACCUSE_RECEPTION_RECU,
+            self::STATUT_CLOS,
+            self::STATUT_ARCHIVE
+        ];
+
+        if (in_array($this->statut, $statutsTerminaux)) {
+            return 'ACCUSÉ RÉCEPTION REÇU';
+        }
+
+        return 'EN ATTENTE ACCUSÉ RÉCEPTION';
     }
 
     public function estInterne(): bool

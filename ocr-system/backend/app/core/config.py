@@ -12,18 +12,18 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 DATA_SCHEMA = {
     "type": "object",
     "properties": {
-        "senderService": { "type": "string", "description": "Le nom du service qui envoie la lettre" },
-        "receiverService": { "type": "string", "description": "Le nom du service à qui la lettre est adressée" },
-        "date": { "type": "string", "description": "La date de la lettre" },
-        "letterNumber": { "type": "string", "description": "Le numéro de référence de la lettre" },
-        "subject": { "type": "string", "description": "L'objet de la lettre" },
+        "senderService": { "type": "string", "description": "L'expéditeur mentionné sur la lettre (Service ou Direction)" },
+        "receiverService": { "type": "string", "description": "Le destinataire mentionné sur la lettre (Service ou Direction)" },
+        "date": { "type": "string", "description": "La date du courrier" },
+        "letterNumber": { "type": "string", "description": "Le numéro de référence ou numéro d'ordre du courrier" },
+        "subject": { "type": "string", "description": "L'objet du courrier" },
         "importance": { 
             "type": "string", 
             "enum": ["Normal", "Urgent", "Très Urgent"]
         },
-        "body": { "type": "string", "description": "Le corps(les paragraphes) de la lettre" }
+        "body": { "type": "string", "description": "Le texte principal ou corps de la lettre" }
     },
-    "required": ["senderService", "receiverService", "date", "letterNumber", "subject", "importance", "body"],
+    "required": ["letterNumber", "subject", "body"],
     "additionalProperties": False
 }
 
@@ -34,7 +34,7 @@ EXTRACTION_CONFIG = {
         "parse_model": None,
         "extract_model": None,
         "multimodal_fast_mode": False,
-        "system_prompt": None,
+        "system_prompt": "Extraire les informations du courrier administratif avec précision. Ne pas filtrer ou rejeter les données si le destinataire (receiverService) ou l'expéditeur ne semble pas correspondre à une liste connue. Extraire ce qui est écrit littéralement sur le document.",
         "use_reasoning": False,
         "cite_sources": False,
         "citation_bbox": False,

@@ -15,7 +15,7 @@ class NumeroReferenceGenerator
     }
 
     /**
-     * Génère un numéro de référence au format : N° XXX – année/DGI/SERVICE
+     * Génère un numéro de référence au format : XXX/MEF/SG/DGI/SERVICE
      * XXX : compteur par service et par année (001, 002...)
      */
     public function generer(Service $service, int $annee): string
@@ -32,7 +32,7 @@ class NumeroReferenceGenerator
         // Utiliser le sigle du service s'il existe, sinon l'ID
         $codeService = $service->getSigle() ?? $service->getId();
 
-        // Format : N° XXX – année/DGI/SERVICE
-        return sprintf('N° %s – %d/DGI/%s', $numeroFormate, $annee, $codeService);
+        // Format : XXX/MEF/SG/DGI/SERVICE
+        return sprintf('%s/MEF/SG/DGI/%s', $numeroFormate, $codeService);
     }
 }

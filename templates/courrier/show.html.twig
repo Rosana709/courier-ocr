@@ -3,7 +3,16 @@
 {% block title %}{{ courrier.numeroReference }} - Gestion de Courrier{% endblock %}
 
 {% block body %}
-<div class="container">
+<!-- Loading Overlay for OCR -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white;">
+    <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Chargement...</span>
+    </div>
+    <div class="mt-3 fw-bold fs-5">Validation OCR en cours...</div>
+    <div class="small">Vérification de la cohérence du document...</div>
+</div>
+
+<div class="container py-4">
     <div class="row mb-4">
         <div class="col">
             <h1 class="h2">
@@ -47,7 +56,12 @@
 
                         <dt class="col-sm-4">Type</dt>
                         <dd class="col-sm-8">
-                            {% if courrier.type == 'ENTRANT' %}
+                            {% set currentUserService = app.user.service %}
+                            {% set displayedType = (not is_granted('ROLE_ADMIN') and currentUserService)
+                                ? courrier.getTypeRelatif(currentUserService)
+                                : courrier.type %}
+
+                            {% if displayedType == 'ENTRANT' %}
                                 <span class="badge bg-info">
                                     <i class="bi bi-arrow-down-circle"></i> Entrant
                                 </span>
@@ -65,22 +79,20 @@
 
                         <dt class="col-sm-4">Statut</dt>
                         <dd class="col-sm-8">
-                            {% set statutClass = '' %}
-                            {% if courrier.statut == 'ENREGISTRE' %}
-                                {% set statutClass = 'secondary' %}
-                            {% elseif courrier.statut == 'EN_COURS_TRAITEMENT' %}
-                                {% set statutClass = 'primary' %}
-                            {% elseif courrier.statut == 'EN_ATTENTE' %}
-                                {% set statutClass = 'warning' %}
-                            {% elseif courrier.statut == 'CLOS' %}
+                            {% set currentUserService = app.user.service %}
+                            {% set displayedStatut = (not is_granted('ROLE_ADMIN') and currentUserService)
+                                ? courrier.getStatutRelatif(currentUserService)
+                                : courrier.statut|replace({'_': ' '}) %}
+
+                            {% set statutClass = 'info' %}
+                            {% if displayedStatut == 'ACCUSÉ RÉCEPTION REÇU' or courrier.statut in ['CLOS', 'ARCHIVE', 'RECU_CONFIRME', 'ACCUSE_RECEPTION_RECU'] %}
                                 {% set statutClass = 'success' %}
-                            {% elseif courrier.statut == 'ARCHIVE' %}
-                                {% set statutClass = 'dark' %}
-                            {% else %}
-                                {% set statutClass = 'info' %}
+                            {% elseif displayedStatut == 'EN ATTENTE ACCUSÉ RÉCEPTION' %}
+                                {% set statutClass = 'warning' %}
                             {% endif %}
-                            <span class="badge bg-{{ statutClass }}">
-                                {{ courrier.statut|replace({'_': ' '}) }}
+
+                            <span class="badge bg-{{ statutClass }} fs-6">
+                                {{ displayedStatut }}
                             </span>
                         </dd>
 
@@ -177,50 +189,190 @@
             </div>
 
             <div class="card mb-3">
+                {% set currentUserService = app.user.service %}
+                {% set estExpediteur = currentUserService and courrier.serviceExpediteur and currentUserService.id == courrier.serviceExpediteur.id %}
+                {% set estDestinatairePrincipal = currentUserService and courrier.serviceDestinataire and currentUserService.id == courrier.serviceDestinataire.id %}
+                {% set estEnCopie = false %}
+                {% if currentUserService %}
+                    {% for serviceCopie in courrier.destinatairesCopie %}
+                        {% if serviceCopie.id == currentUserService.id %}
+                            {% set estEnCopie = true %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+
+                {% set isRecipient = estDestinatairePrincipal or estEnCopie %}
+                {% set isIncomingForRecipient = isRecipient and (courrier.type == 'ENTRANT' or courrier.getTypeRelatif(currentUserService) == 'ENTRANT') %}
+                {% set isConfirmed = courrier.statut in ['RECU_CONFIRME', 'ACCUSE_RECEPTION_RECU', 'CLOS', 'ARCHIVE'] %}
+
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Pièces jointes</h5>
+                    <h5 class="mb-0">
+                        {% if isIncomingForRecipient %}
+                            <i class="bi bi-file-earmark-check"></i> Digitalisation du courrier
+                        {% else %}
+                            Document{% if courrier.type != 'SORTANT' %}s joints{% endif %}
+                        {% endif %}
+                    </h5>
                     {% if is_granted('courrier_edit', courrier) %}
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                        <i class="bi bi-paperclip"></i> Ajouter
-                    </button>
+                        {% if not isIncomingForRecipient %}
+                            {% if courrier.type == 'SORTANT' %}
+                                {% set officialPdf = null %}
+                                {% for piece in piecesJointes %}
+                                    {% if piece.nomFichierOriginal starts with 'Courrier_Officiel_' %}
+                                        {% set officialPdf = piece %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if not officialPdf %}
+                                    <a href="{{ path('courrier_generate_official_pdf', {id: courrier.id}) }}" class="btn btn-sm btn-danger shadow-sm">
+                                        <i class="bi bi-file-earmark-pdf"></i> Générer PDF
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                    <i class="bi bi-paperclip"></i> Ajouter
+                                </button>
+                            {% endif %}
+                        {% endif %}
                     {% endif %}
                 </div>
                 <div class="card-body">
-                    {% if piecesJointes is empty %}
-                        <p class="text-muted mb-0">Aucune pièce jointe</p>
-                    {% else %}
-                        <div class="list-group">
-                            {% for piece in piecesJointes %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <i class="bi bi-file-earmark-{{ piece.extension == 'pdf' ? 'pdf' : 'text' }}"></i>
-                                    <strong>{{ piece.nomFichierOriginal }}</strong>
-                                    <small class="text-muted d-block">
-                                        {{ piece.tailleFichierFormate }} -
-                                        Ajouté le {{ piece.dateTelechargement|date('d/m/Y à H:i') }}
-                                        par {{ piece.telechargeParUtilisateur.email }}
-                                    </small>
-                                </div>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="{{ path('piece_jointe_download', {courrierId: courrier.id, id: piece.id}) }}"
-                                       class="btn btn-outline-primary"
-                                       title="Télécharger">
-                                        <i class="bi bi-download"></i>
-                                    </a>
-                                    {% if is_granted('courrier_edit', courrier) %}
-                                    <form method="post"
-                                          action="{{ path('piece_jointe_delete', {courrierId: courrier.id, id: piece.id}) }}"
-                                          onsubmit="return confirm('Supprimer cette pièce jointe ?');"
-                                          style="display: inline;">
-                                        <button type="submit" class="btn btn-outline-danger" title="Supprimer">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                    {% if isIncomingForRecipient %}
+                        {% if isConfirmed %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-file-earmark-check text-success display-4"></i>
+                                <h6 class="mt-3">Version numérique validée</h6>
+                                <p class="text-muted small">Ce courrier a été numérisé et la référence a été vérifiée par OCR.</p>
+                                
+                                {% set confirmedPiece = null %}
+                                {% for piece in piecesJointes %}
+                                    {% if piece.nomFichierOriginal starts with 'Courrier_Recu_Confirme_' %}
+                                        {% set confirmedPiece = piece %}
                                     {% endif %}
+                                {% endfor %}
+
+                                {% if confirmedPiece %}
+                                    <div class="mt-3">
+                                        <a href="{{ path('piece_jointe_download', {courrierId: courrier.id, id: confirmedPiece.id, inline: 1}) }}" 
+                                           class="btn btn-primary" target="_blank">
+                                            <i class="bi bi-eye"></i> Voir le courrier numérisé
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <p class="text-danger small">Erreur: Le fichier numérisé est introuvable.</p>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5 border-2 border-dashed rounded bg-light" id="ocrVerificationArea">
+                                <i class="bi bi-camera text-primary display-4"></i>
+                                <h6 class="mt-3">Vérification de la version numérique</h6>
+                                <p class="text-muted px-4">
+                                    Pour confirmer la réception physique de ce courrier, veuillez importer sa version numérique scannée. 
+                                    Le système vérifiera la cohérence des données par OCR.
+                                </p>
+                                <input type="file" id="recipientOcrInput" style="display: none;" accept="application/pdf,image/*">
+                                <button type="button" class="btn btn-lg btn-primary shadow-sm" id="btnRecipientOCR">
+                                    <i class="bi bi-cloud-arrow-up"></i> Importer le document
+                                </button>
+                                <div class="mt-3 text-info small">
+                                    <i class="bi bi-info-circle"></i> La référence du document scanné doit correspondre à : <strong>{{ courrier.numeroReference }}</strong>
                                 </div>
                             </div>
-                            {% endfor %}
-                        </div>
+                        {% endif %}
+                    {% elseif courrier.type == 'SORTANT' %}
+                        {# Special view for Outgoing mail: ONLY one PDF (the official one) #}
+                        {% set officialPdf = null %}
+                        {% for piece in piecesJointes %}
+                            {% if piece.nomFichierOriginal starts with 'Courrier_Officiel_' %}
+                                {% set officialPdf = piece %}
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if officialPdf %}
+                            <div class="text-center py-4">
+                                <div class="mb-3">
+                                    <i class="bi bi-file-earmark-pdf text-danger" style="font-size: 4rem;"></i>
+                                </div>
+                                <h5>Courrier Officiel</h5>
+                                <p class="text-muted small mb-4">
+                                    Généré le {{ officialPdf.dateTelechargement|date('d/m/Y à H:i') }}
+                                </p>
+                                
+                                <div class="d-grid gap-2 col-mx-auto">
+                                    <a href="{{ path('piece_jointe_download', {courrierId: courrier.id, id: officialPdf.id, inline: 1}) }}" 
+                                       class="btn btn-outline-primary" target="_blank">
+                                        <i class="bi bi-eye"></i> Visualiser le PDF
+                                    </a>
+                                    <a href="{{ path('piece_jointe_download', {courrierId: courrier.id, id: officialPdf.id}) }}" 
+                                       class="btn btn-link btn-sm">
+                                        <i class="bi bi-download"></i> Télécharger
+                                    </a>
+                                </div>
+
+                                {% if courrier.statut in ['ACCUSE_RECEPTION_RECU', 'RECU_CONFIRME', 'CLOS', 'ARCHIVE'] %}
+                                    <div class="mt-4 pt-3 border-top">
+                                        <span class="badge bg-success py-2 px-3">
+                                            <i class="bi bi-check-circle-fill"></i> REÇU PAR LE DESTINATAIRE
+                                        </span>
+                                        <div class="mt-2 small text-muted">
+                                            L'accusé de réception a été envoyé et validé.
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5 border-2 border-dashed rounded bg-light">
+                                <i class="bi bi-file-earmark-x text-muted display-4"></i>
+                                <h6 class="mt-3">Aucun document généré</h6>
+                                <p class="text-muted small mb-4">Le courrier officiel n'a pas encore été généré pour cet envoi.</p>
+                                {% if is_granted('courrier_edit', courrier) %}
+                                    <a href="{{ path('courrier_generate_official_pdf', {id: courrier.id}) }}" class="btn btn-primary">
+                                        <i class="bi bi-gear-fill"></i> Générer le courrier officiel
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        {# Default list view for Incoming mail viewed by sender/admin #}
+                        {% if piecesJointes is empty %}
+                            <p class="text-muted mb-0">Aucune pièce jointe</p>
+                        {% else %}
+                            <div class="list-group">
+                                {% for piece in piecesJointes %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="bi bi-file-earmark-{{ piece.extension == 'pdf' ? 'pdf' : 'text' }}"></i>
+                                        <strong>{{ piece.nomFichierOriginal }}</strong>
+                                        <small class="text-muted d-block">
+                                            {{ piece.tailleFichierFormate }} -
+                                            Ajouté le {{ piece.dateTelechargement|date('d/m/Y à H:i') }}
+                                        </small>
+                                    </div>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ path('piece_jointe_download', {courrierId: courrier.id, id: piece.id, inline: 1}) }}"
+                                           class="btn btn-outline-success"
+                                           target="_blank">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{{ path('piece_jointe_download', {courrierId: courrier.id, id: piece.id}) }}"
+                                           class="btn btn-outline-primary">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                        {% if is_granted('courrier_edit', courrier) %}
+                                        <form method="post"
+                                              action="{{ path('piece_jointe_delete', {courrierId: courrier.id, id: piece.id}) }}"
+                                              onsubmit="return confirm('Supprimer cette pièce jointe ?');"
+                                              class="d-inline-block">
+                                            <button type="submit" class="btn btn-outline-danger" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>
@@ -340,4 +492,58 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('download_pdf')) {
+            const btnView = document.getElementById('btnViewOfficialPdf');
+            if (btnView) {
+                window.location.href = btnView.href;
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+            }
+        }
+
+        // Recipient OCR Validation
+        const btnRecipientOCR = document.getElementById('btnRecipientOCR');
+        const recipientOcrInput = document.getElementById('recipientOcrInput');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        btnRecipientOCR?.addEventListener('click', () => recipientOcrInput.click());
+
+        recipientOcrInput?.addEventListener('change', async (e) => {
+            if (!e.target.files.length) return;
+
+            const formData = new FormData();
+            formData.append('fichier', e.target.files[0]);
+            
+            loadingOverlay.style.display = 'flex';
+
+            try {
+                const response = await fetch('{{ path('courrier_verify_ocr', {id: courrier.id}) }}', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    location.reload();
+                } else {
+                    alert(result.message);
+                }
+            } catch (err) {
+                alert("Une erreur technique est survenue lors de la vérification.");
+                console.error(err);
+            } finally {
+                loadingOverlay.style.display = 'none';
+                recipientOcrInput.value = '';
+            }
+        });
+    });
+</script>
 {% endblock %}

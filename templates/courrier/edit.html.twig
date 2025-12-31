@@ -18,8 +18,7 @@
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-body">
+            {% set isStatutVerrouille = courrier.statut in ['RECU_CONFIRME', 'ACCUSE_RECEPTION_RECU', 'CLOS', 'ARCHIVE'] %}
             <form method="post">
                 <div class="row">
                     <div class="col-md-6">
@@ -43,36 +42,51 @@
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="statut" class="form-label">Statut *</label>
-                    <select class="form-select" id="statut" name="statut" required>
-                        {% for statutValue in statuts %}
-                            <option value="{{ statutValue }}" {% if statutValue == courrier.statut %}selected{% endif %}>
-                                {{ statutValue|replace({'_': ' '}) }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
+                {% if is_granted('ROLE_ADMIN') %}
+                    <div class="mb-3">
+                        <label for="statut" class="form-label">Statut * (Admin)</label>
+                        <select class="form-select" id="statut" name="statut" required>
+                            {% for statutValue in statuts %}
+                                <option value="{{ statutValue }}" {% if statutValue == courrier.statut %}selected{% endif %}>
+                                    {{ statutValue|replace({'_': ' '}) }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% else %}
+                    {# Le statut n'est plus modifiable pour les services dans ce formulaire #}
+                    <input type="hidden" name="statut" value="{{ courrier.statut }}">
+                {% endif %}
 
                 <div class="mb-3">
                     <label for="contenu" class="form-label">Contenu</label>
                     <textarea class="form-control" id="contenu" name="contenu" rows="5">{{ courrier.contenu }}</textarea>
                 </div>
 
-                <div class="mb-3">
-                    <label for="destinatairesCopieIds" class="form-label">Services en copie</label>
-                    <select class="form-select" id="destinatairesCopieIds" name="destinatairesCopieIds[]" multiple>
-                        {% for service in services %}
-                            <option value="{{ service.id }}"
-                                {% for copie in courrier.destinatairesCopie %}
-                                    {% if copie.id == service.id %}selected{% endif %}
-                                {% endfor %}>
-                                {{ service.nom }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    <small class="form-text text-muted">Maintenez Ctrl pour sélectionner plusieurs services</small>
-                </div>
+                {% set currentUserService = app.user.service %}
+                {% set estExpediteur = currentUserService and courrier.serviceExpediteur and currentUserService.id == courrier.serviceExpediteur.id %}
+                
+                {% if is_granted('ROLE_ADMIN') or estExpediteur %}
+                    <div class="mb-3">
+                        <label for="destinatairesCopieIds" class="form-label">Services en copie</label>
+                        <select class="form-select" id="destinatairesCopieIds" name="destinatairesCopieIds[]" multiple>
+                            {% for service in services %}
+                                <option value="{{ service.id }}"
+                                    {% for copie in courrier.destinatairesCopie %}
+                                        {% if copie.id == service.id %}selected{% endif %}
+                                    {% endfor %}>
+                                    {{ service.nom }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Maintenez Ctrl pour sélectionner plusieurs services</small>
+                    </div>
+                {% else %}
+                    {# Conserver les copies existantes sans permettre de les modifier #}
+                    {% for copie in courrier.destinatairesCopie %}
+                        <input type="hidden" name="destinatairesCopieIds[]" value="{{ copie.id }}">
+                    {% endfor %}
+                {% endif %}
 
                 <div class="mb-3">
                     <label for="notes" class="form-label">Ajouter des notes</label>
@@ -106,7 +120,12 @@
             <dl class="row mb-0">
                 <dt class="col-sm-3">Type</dt>
                 <dd class="col-sm-9">
-                    {% if courrier.type == 'ENTRANT' %}
+                    {% set currentUserService = app.user.service %}
+                    {% set displayedType = (not is_granted('ROLE_ADMIN') and currentUserService)
+                        ? courrier.getTypeRelatif(currentUserService)
+                        : courrier.type %}
+
+                    {% if displayedType == 'ENTRANT' %}
                         <span class="badge bg-info">Entrant</span>
                     {% else %}
                         <span class="badge bg-success">Sortant</span>
@@ -132,7 +151,26 @@
                 </dd>
 
                 <dt class="col-sm-3">Date du courrier</dt>
-                <dd class="col-sm-9 mb-0">{{ courrier.dateCourrier|date('d/m/Y') }}</dd>
+                <dd class="col-sm-9">{{ courrier.dateCourrier|date('d/m/Y') }}</dd>
+
+                <dt class="col-sm-3">Statut actuel</dt>
+                <dd class="col-sm-9 mb-0">
+                    {% set currentUserService = app.user.service %}
+                    {% set displayedStatut = (not is_granted('ROLE_ADMIN') and currentUserService)
+                        ? courrier.getStatutRelatif(currentUserService)
+                        : courrier.statut|replace({'_': ' '}) %}
+
+                    {% set statutClass = 'info' %}
+                    {% if displayedStatut == 'ACCUSÉ RÉCEPTION REÇU' or courrier.statut in ['CLOS', 'ARCHIVE', 'RECU_CONFIRME', 'ACCUSE_RECEPTION_RECU'] %}
+                        {% set statutClass = 'success' %}
+                    {% elseif displayedStatut == 'EN ATTENTE ACCUSÉ RÉCEPTION' %}
+                        {% set statutClass = 'warning' %}
+                    {% endif %}
+
+                    <span class="badge bg-{{ statutClass }}">
+                        {{ displayedStatut }}
+                    </span>
+                </dd>
             </dl>
         </div>
     </div>

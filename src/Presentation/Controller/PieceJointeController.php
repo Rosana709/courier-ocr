@@ -56,10 +56,11 @@ class PieceJointeController extends AbstractController
     }
 
     #[Route('/{id}/download', name: 'piece_jointe_download', methods: ['GET'])]
-    public function download(string $courrierId, string $id): Response
+    public function download(string $courrierId, string $id, Request $request): Response
     {
         try {
             $pieceJointe = $this->downloadPieceJointeUseCase->execute($id);
+            $inline = $request->query->getBoolean('inline', false);
 
             $response = new StreamedResponse(function () use ($pieceJointe) {
                 if (is_resource($pieceJointe->getContenuFichier())) {
@@ -70,9 +71,11 @@ class PieceJointeController extends AbstractController
                 }
             });
 
+            $disposition = $inline ? 'inline' : 'attachment';
+
             $response->headers->set('Content-Type', $pieceJointe->getTypeMime());
             $response->headers->set('Content-Disposition',
-                'attachment; filename="' . $pieceJointe->getNomFichierOriginal() . '"');
+                $disposition . '; filename="' . $pieceJointe->getNomFichierOriginal() . '"');
             $response->headers->set('Content-Length', (string) $pieceJointe->getTailleFichier());
 
             return $response;

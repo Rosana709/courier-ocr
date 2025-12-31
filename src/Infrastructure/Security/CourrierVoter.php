@@ -100,7 +100,7 @@ class CourrierVoter extends Voter
             return false;
         }
 
-        // Ne peut pas modifier un courrier clos ou archiv??
+        // Ne peut pas modifier un courrier clos ou archivé
         if (in_array($courrier->getStatut(), [Courrier::STATUT_CLOS, Courrier::STATUT_ARCHIVE])) {
             return false;
         }

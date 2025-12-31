@@ -3,6 +3,16 @@
 {% block title %}Nouveau courrier - Gestion de Courrier{% endblock %}
 
 {% block body %}
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="text-center">
+        <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Chargement...</span>
+        </div>
+        <div class="mt-2 fw-bold">Traitement intelligent en cours...</div>
+    </div>
+</div>
+
 <div class="container">
     <div class="row mb-4">
         <div class="col">
@@ -19,6 +29,36 @@
 
     <div class="row">
         <div class="col-md-8">
+            <!-- Smart Dashboard -->
+            <div id="smartDashboard" class="smart-card" style="display: none;">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-stars smart-gradient-text fs-4 me-2"></i>
+                    <h5 class="mb-0 smart-gradient-text">Assistant Intelligent</h5>
+                </div>
+                
+                <!-- OCR Section (For Incoming) -->
+                <div id="smartOcrSection" style="display: none;">
+                    <p class="small text-muted mb-3">Analysez un document PDF ou image pour pré-remplir automatiquement le formulaire.</p>
+                    <input type="file" id="smartOcrFileInput" style="display: none;" accept="image/*,application/pdf">
+                    <button type="button" class="btn btn-smart" id="btnSmartOCR">
+                        <i class="bi bi-camera"></i> Analyser un document (OCR)
+                    </button>
+                </div>
+
+                <!-- AI Writing Section (For Outgoing) -->
+                <div id="smartAiSection" style="display: none;">
+                    <p class="small text-muted mb-3">Utilisez l'IA pour rédiger le contenu formel basé sur l'objet de votre courrier.</p>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-smart" id="btnSmartAI">
+                            <i class="bi bi-robot"></i> Rédiger via IA
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" id="btnSmartPDF">
+                            <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-body">
                     <form method="post">
@@ -256,145 +296,48 @@
 {% block javascripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --- Core Elements ---
         const typeSelect = document.getElementById('type');
         const numeroRefField = document.getElementById('numeroReferenceField');
-        const numeroRefInput = document.getElementById('numeroReference');
-
-        const typeDestinataire = document.getElementById('typeDestinataire');
-        const serviceDestinataireGroup = document.getElementById('serviceDestinataireGroup');
-        const personneExterneDestinataireGroup = document.getElementById('personneExterneDestinataireGroup');
-        const serviceDestinataireSelect = document.getElementById('serviceDestinataireId');
-        const destinataireLockInfo = document.getElementById('destinataireLockInfo');
-        const hiddenTypeDest = document.getElementById('hiddenTypeDestinataire');
-        const hiddenServiceDest = document.getElementById('hiddenServiceDestinataireId');
-        const hiddenPersonneDest = document.getElementById('hiddenPersonneDestinataireId');
-
         const typeExpSelect = document.getElementById('typeExpediteur');
-        const serviceExpGroup = document.getElementById('serviceExpediteurGroup');
-        const personneExpGroup = document.getElementById('personneExterneExpediteurGroup');
         const serviceExpSelect = document.getElementById('serviceExpediteurId');
         const personneExpSelect = document.getElementById('personneExterneExpediteurId');
-        const hiddenTypeExp = document.getElementById('hiddenTypeExpediteur');
-        const hiddenServiceExp = document.getElementById('hiddenServiceExpediteurId');
-        const hiddenPersonneExp = document.getElementById('hiddenPersonneExpediteurId');
-        const expediteurFields = document.getElementById('expediteurFields');
-        const expediteurLockedInfo = document.getElementById('expediteurLockedInfo');
-
+        const serviceExpGroup = document.getElementById('serviceExpediteurGroup');
+        const personneExpGroup = document.getElementById('personneExterneExpediteurGroup');
+        const typeDestinataire = document.getElementById('typeDestinataire');
+        const serviceDestinataireSelect = document.getElementById('serviceDestinataireId');
+        const serviceDestinataireGroup = document.getElementById('serviceDestinataireGroup');
+        const personneExterneDestinataireGroup = document.getElementById('personneExterneDestinataireGroup');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const smartDashboard = document.getElementById('smartDashboard');
+        const smartOcrSection = document.getElementById('smartOcrSection');
+        const smartAiSection = document.getElementById('smartAiSection');
         const userServiceId = "{{ userService.id }}";
+
+        // --- Functions ---
+        function toggleSmartDashboard() {
+            if (!smartDashboard) return;
+            if (typeSelect.value === 'ENTRANT') {
+                smartDashboard.style.display = 'block';
+                smartOcrSection.style.display = 'block';
+                smartAiSection.style.display = 'none';
+            } else if (typeSelect.value === 'SORTANT') {
+                smartDashboard.style.display = 'block';
+                smartOcrSection.style.display = 'none';
+                smartAiSection.style.display = 'block';
+            } else {
+                smartDashboard.style.display = 'none';
+            }
+        }
 
         function toggleNumeroReference() {
             if (typeSelect && numeroRefField) {
-                if (typeSelect.value === 'ENTRANT') {
-                    numeroRefField.style.display = 'block';
-                    numeroRefInput.required = true;
-                } else {
-                    numeroRefField.style.display = 'none';
-                    numeroRefInput.required = false;
-                }
-            }
-        }
-
-        if (typeSelect) {
-            typeSelect.addEventListener('change', toggleNumeroReference);
-            toggleNumeroReference();
-        }
-
-        function applyDestinataireLock() {
-            const type = typeSelect.value;
-
-            if (type === 'ENTRANT') {
-                typeDestinataire.value = 'SERVICE';
-                hiddenTypeDest.value = 'SERVICE';
-                destinataireLockInfo.style.display = 'block';
-
-                serviceDestinataireGroup.style.display = 'block';
-                personneExterneDestinataireGroup.style.display = 'none';
-                serviceDestinataireSelect.required = true;
-                document.getElementById('personneExterneDestinataireId').required = false;
-
-                serviceDestinataireSelect.value = userServiceId;
-                serviceDestinataireSelect.setAttribute('disabled', 'disabled');
-                hiddenServiceDest.value = userServiceId;
-                hiddenPersonneDest.value = '';
-                typeDestinataire.setAttribute('disabled', 'disabled');
-            } else {
-                typeDestinataire.removeAttribute('disabled');
-                destinataireLockInfo.style.display = 'none';
-                serviceDestinataireGroup.style.display = 'none';
-                personneExterneDestinataireGroup.style.display = 'none';
-                serviceDestinataireSelect.required = false;
-                document.getElementById('personneExterneDestinataireId').required = false;
-                serviceDestinataireSelect.removeAttribute('disabled');
-                serviceDestinataireSelect.value = '';
-                hiddenTypeDest.value = typeDestinataire.value;
-                hiddenServiceDest.value = '';
-                hiddenPersonneDest.value = '';
-            }
-        }
-
-        function syncDestinataireFields() {
-            hiddenTypeDest.value = typeDestinataire.value || '';
-            if (typeDestinataire.value === 'SERVICE') {
-                hiddenServiceDest.value = serviceDestinataireSelect.value || '';
-                hiddenPersonneDest.value = '';
-            } else if (typeDestinataire.value === 'PERSONNE_EXTERNE') {
-                hiddenServiceDest.value = '';
-                hiddenPersonneDest.value = document.getElementById('personneExterneDestinataireId').value || '';
-            } else {
-                hiddenServiceDest.value = '';
-                hiddenPersonneDest.value = '';
-            }
-        }
-
-        function applyExpediteurLock() {
-            const type = typeSelect.value;
-            if (type === 'SORTANT') {
-                // verrouillage expéditeur = service connecté
-                expediteurLockedInfo.style.display = 'block';
-                expediteurFields.style.display = 'none';
-
-                typeExpSelect.value = 'SERVICE';
-                serviceExpSelect.value = userServiceId;
-                personneExpSelect.value = '';
-
-                typeExpSelect.setAttribute('disabled', 'disabled');
-                serviceExpSelect.setAttribute('disabled', 'disabled');
-                personneExpSelect.setAttribute('disabled', 'disabled');
-
-                hiddenTypeExp.value = 'SERVICE';
-                hiddenServiceExp.value = userServiceId;
-                hiddenPersonneExp.value = '';
-            } else {
-                expediteurLockedInfo.style.display = 'none';
-                expediteurFields.style.display = 'block';
-
-                typeExpSelect.removeAttribute('disabled');
-                serviceExpSelect.removeAttribute('disabled');
-                personneExpSelect.removeAttribute('disabled');
-
-                typeExpSelect.value = '';
-                serviceExpSelect.value = '';
-                personneExpSelect.value = '';
-
-                hiddenTypeExp.value = '';
-                hiddenServiceExp.value = '';
-                hiddenPersonneExp.value = '';
+                numeroRefField.style.display = typeSelect.value === 'ENTRANT' ? 'block' : 'none';
+                document.getElementById('numeroReference').required = typeSelect.value === 'ENTRANT';
             }
         }
 
         function syncExpediteurFields() {
-            hiddenTypeExp.value = typeExpSelect.value || '';
-            if (typeExpSelect.value === 'SERVICE') {
-                hiddenServiceExp.value = serviceExpSelect.value || '';
-                hiddenPersonneExp.value = '';
-            } else if (typeExpSelect.value === 'PERSONNE_EXTERNE') {
-                hiddenServiceExp.value = '';
-                hiddenPersonneExp.value = personneExpSelect.value || '';
-            } else {
-                hiddenServiceExp.value = '';
-                hiddenPersonneExp.value = '';
-            }
-
             if (typeExpSelect.value === 'SERVICE') {
                 serviceExpGroup.style.display = 'block';
                 personneExpGroup.style.display = 'none';
@@ -407,54 +350,158 @@
             }
         }
 
-        typeDestinataire.addEventListener('change', function() {
-            if (this.value === 'SERVICE') {
+        function syncDestinataireFields() {
+            if (typeDestinataire.value === 'SERVICE') {
                 serviceDestinataireGroup.style.display = 'block';
                 personneExterneDestinataireGroup.style.display = 'none';
-                serviceDestinataireSelect.required = true;
-                document.getElementById('personneExterneDestinataireId').required = false;
-                syncDestinataireFields();
-            } else if (this.value === 'PERSONNE_EXTERNE') {
+            } else if (typeDestinataire.value === 'PERSONNE_EXTERNE') {
                 serviceDestinataireGroup.style.display = 'none';
                 personneExterneDestinataireGroup.style.display = 'block';
-                serviceDestinataireSelect.required = false;
-                document.getElementById('personneExterneDestinataireId').required = true;
-                syncDestinataireFields();
             } else {
                 serviceDestinataireGroup.style.display = 'none';
                 personneExterneDestinataireGroup.style.display = 'none';
-                serviceDestinataireSelect.required = false;
-                document.getElementById('personneExterneDestinataireId').required = false;
-                syncDestinataireFields();
             }
+        }
+
+        function applyExpediteurLock() {
+            const isSortant = typeSelect.value === 'SORTANT';
+            typeExpSelect.disabled = isSortant;
+            serviceExpSelect.disabled = isSortant;
+            if (personneExpSelect) personneExpSelect.disabled = isSortant;
+            if (isSortant) {
+                typeExpSelect.value = 'SERVICE';
+                syncExpediteurFields();
+                serviceExpSelect.value = userServiceId;
+            }
+        }
+
+        // --- Smart Logic (OCR, AI, PDF) ---
+        const smartOcrFileInput = document.getElementById('smartOcrFileInput');
+        document.getElementById('btnSmartOCR')?.addEventListener('click', () => smartOcrFileInput.click());
+        smartOcrFileInput?.addEventListener('change', async (e) => {
+            if (!e.target.files.length) return;
+            const formData = new FormData();
+            formData.append('file', e.target.files[0]);
+            loadingOverlay.style.display = 'flex';
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/extract', { method: 'POST', body: formData });
+                if (!response.ok) throw new Error("Erreur lors de l'analyse OCR");
+                const result = await response.json();
+                const data = result.data || {};
+                if (data.subject) document.getElementById('objet').value = data.subject;
+                if (data.body) document.getElementById('contenu').value = data.body;
+                if (data.letterNumber) document.getElementById('numeroReference').value = data.letterNumber;
+                if (data.date) {
+                    const dateVal = data.date.match(/\d{4}-\d{2}-\d{2}/);
+                    if (dateVal) document.getElementById('dateCourrier').value = dateVal[0];
+                }
+                alert("Analyse réussie !");
+            } catch (error) { alert("Erreur: " + error.message); } 
+            finally { loadingOverlay.style.display = 'none'; smartOcrFileInput.value = ''; }
         });
 
-        if (typeSelect) {
-            typeSelect.addEventListener('change', function() {
-                toggleNumeroReference();
-                applyDestinataireLock();
-                applyExpediteurLock();
-            });
+        document.getElementById('btnSmartAI')?.addEventListener('click', async () => {
+            const objetField = document.getElementById('objet');
+            if (!objetField.value) { alert("Saisissez un objet d'abord."); return; }
+            const sSelect = typeExpSelect.value === 'SERVICE' ? serviceExpSelect : personneExpSelect;
+            const rSelect = typeDestinataire.value === 'SERVICE' ? serviceDestinataireSelect : document.getElementById('personneExterneDestinataireId');
+            const params = {
+                senderService: sSelect.options[sSelect.selectedIndex]?.text || "Expéditeur",
+                receiverService: rSelect.options[rSelect.selectedIndex]?.text || "Destinataire",
+                letterNumber: document.getElementById('numeroReference').value || "N/A",
+                importance: document.getElementById('priorite').value || "HAUTE",
+                prompt: objetField.value
+            };
+            loadingOverlay.style.display = 'flex';
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/generate-content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(params) });
+                if (!response.ok) throw new Error("Erreur AI");
+                const result = await response.json();
+                if (result.subject) document.getElementById('objet').value = result.subject;
+                if (result.body) document.getElementById('contenu').value = result.body;
+                alert("Rédigé !");
+            } catch (error) { alert("Erreur: " + error.message); } 
+            finally { loadingOverlay.style.display = 'none'; }
+        });
+
+        document.getElementById('btnSmartPDF')?.addEventListener('click', async () => {
+            const sSelect = typeExpSelect.value === 'SERVICE' ? serviceExpSelect : personneExpSelect;
+            const rSelect = typeDestinataire.value === 'SERVICE' ? serviceDestinataireSelect : document.getElementById('personneExterneDestinataireId');
+            const mailData = {
+                senderService: sSelect.options[sSelect.selectedIndex]?.text || "",
+                receiverService: rSelect.options[rSelect.selectedIndex]?.text || "",
+                letterNumber: document.getElementById('numeroReference').value || "",
+                subject: document.getElementById('objet').value || "",
+                importance: document.getElementById('priorite').value || "NORMALE",
+                date: document.getElementById('dateCourrier').value || "",
+                body: document.getElementById('contenu').value || ""
+            };
+            loadingOverlay.style.display = 'flex';
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/generate-pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(mailData) });
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url;
+                a.download = `courrier_${Date.now()}.pdf`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            } catch (error) { alert("Erreur PDF: " + error.message); } 
+            finally { loadingOverlay.style.display = 'none'; }
+        });
+
+        // --- URL Parameter Handling (OCR Data) ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const ocrDataRaw = urlParams.get('ocr_data');
+        if (ocrDataRaw) {
+            try {
+                const ocrData = JSON.parse(decodeURIComponent(ocrDataRaw));
+                if (typeSelect) {
+                    typeSelect.value = 'ENTRANT';
+                    typeSelect.dispatchEvent(new Event('change'));
+                }
+                if (ocrData.subject) document.getElementById('objet').value = ocrData.subject;
+                if (ocrData.body) document.getElementById('contenu').value = ocrData.body;
+                if (ocrData.letterNumber) document.getElementById('numeroReference').value = ocrData.letterNumber;
+                if (ocrData.date) {
+                    const dVal = ocrData.date.match(/\d{4}-\d{2}-\d{2}/);
+                    if (dVal) document.getElementById('dateCourrier').value = dVal[0];
+                }
+                const importanceMap = { 'Normal': 'NORMALE', 'Urgent': 'HAUTE', 'Très Urgent': 'URGENTE' };
+                if (ocrData.importance && importanceMap[ocrData.importance]) document.getElementById('priorite').value = importanceMap[ocrData.importance];
+                if (ocrData.senderService && typeExpSelect) {
+                    typeExpSelect.value = 'SERVICE';
+                    typeExpSelect.dispatchEvent(new Event('change'));
+                    const sName = ocrData.senderService.toLowerCase();
+                    const opts = serviceExpSelect.options;
+                    for (let i = 0; i < opts.length; i++) {
+                        if (opts[i].text.toLowerCase().includes(sName) || sName.includes(opts[i].text.toLowerCase())) {
+                            serviceExpSelect.value = opts[i].value;
+                            serviceExpSelect.dispatchEvent(new Event('change'));
+                            break;
+                        }
+                    }
+                }
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } catch (e) { console.error("OCR Data parse error", e); }
         }
 
-        if (typeExpSelect) {
-            typeExpSelect.addEventListener('change', syncExpediteurFields);
-            serviceExpSelect.addEventListener('change', syncExpediteurFields);
-            personneExpSelect.addEventListener('change', syncExpediteurFields);
-        }
+        // --- Initial State & Listeners ---
+        typeSelect?.addEventListener('change', () => {
+            toggleNumeroReference();
+            applyExpediteurLock();
+            toggleSmartDashboard();
+        });
+        typeExpSelect?.addEventListener('change', syncExpediteurFields);
+        serviceExpSelect?.addEventListener('change', syncExpediteurFields);
+        personneExpSelect?.addEventListener('change', syncExpediteurFields);
+        typeDestinataire?.addEventListener('change', syncDestinataireFields);
+        serviceDestinataireSelect?.addEventListener('change', syncDestinataireFields);
+        document.getElementById('personneExterneDestinataireId')?.addEventListener('change', syncDestinataireFields);
 
-        if (typeDestinataire) {
-            typeDestinataire.addEventListener('change', syncDestinataireFields);
-            serviceDestinataireSelect.addEventListener('change', syncDestinataireFields);
-            document.getElementById('personneExterneDestinataireId').addEventListener('change', syncDestinataireFields);
-        }
-
-        // Initial state
         toggleNumeroReference();
-        applyDestinataireLock();
         applyExpediteurLock();
         syncExpediteurFields();
         syncDestinataireFields();
+        toggleSmartDashboard();
     });
 </script>
 {% endblock %}

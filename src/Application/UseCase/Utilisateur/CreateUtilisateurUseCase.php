@@ -13,9 +13,10 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 class CreateUtilisateurUseCase
 {
     public function __construct(
-        private readonly UtilisateurRepositoryInterface $utilisateurRepository,
-        private readonly ServiceRepositoryInterface $serviceRepository,
-        private readonly UserPasswordHasherInterface $passwordHasher
+        private readonly \App\Domain\Repository\UtilisateurRepositoryInterface $utilisateurRepository,
+        private readonly \App\Domain\Repository\ServiceRepositoryInterface $serviceRepository,
+        private readonly \Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface $passwordHasher,
+        private readonly \App\Infrastructure\Service\MailService $mailService
     ) {
     }
 
@@ -55,6 +56,15 @@ class CreateUtilisateurUseCase
 
         // Sauvegarder
         $this->utilisateurRepository->save($utilisateur);
+
+        // Envoyer l'email de bienvenue
+        try {
+            $serviceName = $utilisateur->getService()?->getNom();
+            $this->mailService->sendWelcomeEmail($dto->email, $dto->password, $serviceName);
+        } catch (\Exception $e) {
+            // On log l'erreur mais on ne bloque pas la création du compte si l'envoi d'email échoue
+            // Dans un vrai projet, on pourrait utiliser un Messenger pour gérer ça en arrière-plan
+        }
 
         return $utilisateur;
     }

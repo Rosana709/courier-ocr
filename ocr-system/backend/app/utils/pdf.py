@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
@@ -10,77 +11,64 @@ class PDFGenerator:
         self.width, self.height = A4
         self.assets_dir = "assets"
 
+    def format_date_fr(self, date_str):
+        try:
+            # Assume date_str is YYYY-MM-DD
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            months = [
+                "janvier", "février", "mars", "avril", "mai", "juin",
+                "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+            ]
+            return f"{dt.day} {months[dt.month-1]} {dt.year}"
+        except Exception as e:
+            return date_str
+
     def draw_header(self, sender_service, date_str):
-        # Coordinates usually start from bottom-left in PDF, but we often think top-down.
-        # A4 is 210mm x 297mm.
-        
         # == TOP CENTER: REPUBLIC == 
-        # Logo Republic
         logo_rep = os.path.join(self.assets_dir, "logo_republic.png")
         if not os.path.exists(logo_rep):
             logo_rep = os.path.join(self.assets_dir, "logo_republic.jpg")
             
         if os.path.exists(logo_rep):
-            # Centered at ~105mm. Width ~25mm
             self.c.drawImage(logo_rep, 92.5 * mm, 270 * mm, width=25*mm, height=20*mm, mask='auto', preserveAspectRatio=True)
         
-        # Text Republic
         self.c.setFont("Times-Bold", 9)
         self.c.drawCentredString(105 * mm, 266 * mm, "REPOBLIKAN'I MADAGASIKARA")
         self.c.setFont("Times-Roman", 8)
         self.c.drawCentredString(105 * mm, 263 * mm, "Fitiavana - Tanindrazana - Fandrosoana")
         
-        # Line Separator
         self.c.setLineWidth(0.5)
         self.c.line(25 * mm, 260 * mm, 185 * mm, 260 * mm)
 
         # == LEFT: MINISTRY ==
-        # Logo MEF
         logo_mef = os.path.join(self.assets_dir, "logo_mef.png")
         if os.path.exists(logo_mef):
-            # Position: Left side, around Y=230mm?
-            # Image shows it top-left relative to the text block
             self.c.drawImage(logo_mef, 35 * mm, 235 * mm, width=22*mm, height=22*mm, mask='auto', preserveAspectRatio=True)
             
-        # Ministry Hierarchy Text
         self.c.setFont("Times-Roman", 9)
-        # Center this text block around X=45mm?
-        # The logo is also centered relative to this block effectively.
-        
         text_y = 232 * mm
         line_height = 4 * mm
         
-        # Helper to center text at specific X
         def draw_centered_text(text, x, y, font="Times-Roman", size=9):
             self.c.setFont(font, size)
             self.c.drawCentredString(x, y, text)
 
         center_x_left = 46 * mm
-        
         draw_centered_text("MINISTERE DE L'ECONOMIE ET DES FINANCES", center_x_left, text_y)
         text_y -= line_height
         draw_centered_text("SECRETARIAT GENERAL", center_x_left, text_y)
         text_y -= line_height
         draw_centered_text("DIRECTION GENERALE DES IMPOTS", center_x_left, text_y)
         text_y -= line_height
-        # Service name (Sender)
         draw_centered_text(sender_service.upper(), center_x_left, text_y, font="Times-Bold")
         text_y -= 3 * mm
         draw_centered_text("---", center_x_left, text_y)
 
         # == RIGHT: DATE & SENDER TITLE ==
-        # Date
-        # Aligned to the right block. 
-        # Position: "Antananarivo, le ..."
-        # X start approx 110mm?
-        
-        # In the image, "Antananarivo..." is aligned with the top of the Ministry text or slightly above.
-        # Let's say Y=235mm
         self.c.setFont("Times-Roman", 11)
-        # Date is often handwritten or stamped, here typed in red in the example, but we do black.
-        # User input date_str
-        self.c.drawString(120 * mm, 235 * mm, f"Antananarivo, le {date_str}")
-        
+        formatted_date = self.format_date_fr(date_str)
+        self.c.drawString(120 * mm, 235 * mm, f"Antananarivo, le {formatted_date}")
+
         # Sender generic title (LE CHEF DU SERVICE...)
         # Approx 15mm below date
         self.c.setFont("Times-Bold", 10)
@@ -101,18 +89,15 @@ class PDFGenerator:
         # "MONSIEUR LE CHEF DU SERVICE REGIONAL..."
         self.c.setFont("Times-Bold", 10)
         self.draw_wrapped_text(f"MONSIEUR LE CHEF DU {receiver_service.upper()}", 120 * mm, 200 * mm, 80 * mm, 5 * mm)
-
+        
     def draw_ref_and_object(self, letter_number, subject, importance):
         # == REF NUMBER ==
         # Left side, lower down. Y approx 180mm?
         self.c.setFont("Times-Roman", 11)
         
-        # Construct full ref string roughly like image
-        # Image: N° 231 /MEF/SG/DGI/SSIF
-        full_ref = f"N° {letter_number} /MEF/SG/DGI/SSIF"
+        # User requested exact letter_number without extra prefixes/suffixes added by PDF template
+        full_ref = f"N° {letter_number}"
         
-        # We need to underline the number part potentially, but here we just write it.
-        # The image has "231" handwritten on a line. We'll simulate typed.
         self.c.drawString(25 * mm, 180 * mm, full_ref)
         
         # == OBJECT ==

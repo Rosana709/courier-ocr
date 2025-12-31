@@ -7,6 +7,7 @@ namespace App\Application\UseCase\Courrier;
 use App\Application\DTO\CreateCourrierDTO;
 use App\Domain\Entity\Courrier;
 use App\Domain\Entity\Notification;
+use App\Domain\Entity\Service;
 use App\Domain\Exception\InvalidCourierDataException;
 use App\Domain\Repository\CourrierRepositoryInterface;
 use App\Domain\Repository\PersonneExterneRepositoryInterface;
@@ -134,8 +135,13 @@ class CreateCourrierUseCase
             $serviceDestinataire = $courrier->getServiceDestinataire();
 
             if ($serviceDestinataire) {
-                $this->creerNotification($courrier);
+                $this->creerNotification($courrier, $serviceDestinataire);
             }
+        }
+
+        // Créer des notifications pour les services en copie
+        foreach ($courrier->getDestinatairesCopie() as $serviceCopie) {
+            $this->creerNotification($courrier, $serviceCopie, true);
         }
 
         return $courrier;
@@ -175,20 +181,24 @@ class CreateCourrierUseCase
         throw new InvalidCourierDataException("Type d'acteur invalide pour {$role}");
     }
 
-    private function creerNotification(Courrier $courrier): void
+    private function creerNotification(Courrier $courrier, Service $service, bool $isCopie = false): void
     {
         $expLabel = $courrier->getTypeExpediteur() === Courrier::ACTEUR_SERVICE
             ? ($courrier->getServiceExpediteur()?->getNom() ?? 'Expéditeur inconnu')
             : ($courrier->getPersonneExterneExpediteur()?->getNomOuRaisonSociale() ?? 'Expéditeur externe');
 
+        $typeLabel = $isCopie ? 'en COPIE' : 'reçu';
+
         $notification = new Notification(
-            service: $courrier->getServiceDestinataire(),
+            service: $service,
             courrier: $courrier,
             type: Notification::TYPE_NOUVEAU_COURRIER,
             message: sprintf(
-                'Nouveau courrier reçu: %s de %s',
+                'Nouveau courrier %s: %s de %s (Réf: %s)',
+                $typeLabel,
                 $courrier->getObjet(),
-                $expLabel
+                $expLabel,
+                $courrier->getNumeroReference()
             )
         );
 

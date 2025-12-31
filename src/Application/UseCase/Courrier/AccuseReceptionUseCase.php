@@ -49,19 +49,19 @@ class AccuseReceptionUseCase
             throw new EntityNotFoundException("Utilisateur non trouvé");
         }
 
-        // Vérifier que le service confirmant est bien le destinataire (si destinataire = service)
-        if ($courrier->getTypeDestinataire() === Courrier::ACTEUR_SERVICE) {
-            $serviceDestinataire = $courrier->getServiceDestinataire();
-
-            if (!$serviceDestinataire) {
-                throw new InvalidCourierDataException("Service destinataire introuvable");
+        // Vérifier que le service confirmant est bien le destinataire principal ou en copie
+        $estDestinatairePrincipal = $courrier->getServiceDestinataire() && $courrier->getServiceDestinataire()->getId() === $service->getId();
+        
+        $estEnCopie = false;
+        foreach ($courrier->getDestinatairesCopie() as $serviceCopie) {
+            if ($serviceCopie->getId() === $service->getId()) {
+                $estEnCopie = true;
+                break;
             }
+        }
 
-            if ($serviceDestinataire->getId() !== $service->getId()) {
-                throw new InvalidCourierDataException("Seul le service destinataire peut confirmer la réception");
-            }
-        } else {
-            throw new InvalidCourierDataException("La confirmation de réception n'est disponible que pour les services destinataires");
+        if (!$estDestinatairePrincipal && !$estEnCopie) {
+            throw new InvalidCourierDataException("Seul le destinataire principal ou un service en copie peut confirmer la réception");
         }
 
         // Vérifier le statut du courrier

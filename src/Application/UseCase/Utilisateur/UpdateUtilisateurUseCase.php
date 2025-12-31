@@ -14,9 +14,10 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 class UpdateUtilisateurUseCase
 {
     public function __construct(
-        private readonly UtilisateurRepositoryInterface $utilisateurRepository,
-        private readonly ServiceRepositoryInterface $serviceRepository,
-        private readonly UserPasswordHasherInterface $passwordHasher
+        private readonly \App\Domain\Repository\UtilisateurRepositoryInterface $utilisateurRepository,
+        private readonly \App\Domain\Repository\ServiceRepositoryInterface $serviceRepository,
+        private readonly \Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface $passwordHasher,
+        private readonly \App\Infrastructure\Service\MailService $mailService
     ) {
     }
 
@@ -48,7 +49,18 @@ class UpdateUtilisateurUseCase
             if ($service === null) {
                 throw new \DomainException('Le service spécifié n\'existe pas');
             }
-            $utilisateur->updateService($service);
+
+            $currentServiceId = $utilisateur->getService()?->getId();
+            if ($currentServiceId !== $service->getId()) {
+                $utilisateur->updateService($service);
+                
+                // Envoyer l'email d'affectation
+                try {
+                    $this->mailService->sendServiceAssignmentEmail($utilisateur->getEmail(), $service->getNom());
+                } catch (\Exception $e) {
+                    // Log error but don't block
+                }
+            }
         }
 
         // Mettre à jour le statut si fourni

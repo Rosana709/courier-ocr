@@ -1,0 +1,210 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau courrier sortant - Gestion de Courrier{% endblock %}
+
+{% block body %}
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="text-center">
+        <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Chargement...</span>
+        </div>
+        <div class="mt-2 fw-bold">Traitement intelligent en cours...</div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h2">
+                <i class="bi bi-box-arrow-right"></i> Nouveau courrier
+            </h1>
+        </div>
+        <div class="col-auto">
+            <a href="{{ path('courrier_index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        <input type="hidden" name="type" value="SORTANT">
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="priorite" class="form-label">Priorité *</label>
+                                    <select class="form-select" id="priorite" name="priorite" required>
+                                        {% for prioriteValue in priorites %}
+                                            <option value="{{ prioriteValue }}" {% if prioriteValue == 'NORMALE' %}selected{% endif %}>
+                                                {{ prioriteValue }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="dateCourrier" class="form-label">Date du courrier *</label>
+                                    <input type="date" class="form-control" id="dateCourrier" name="dateCourrier" value="{{ 'now'|date('Y-m-d') }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="numeroReference" class="form-label">N° Référence</label>
+                                    <input type="text" class="form-control" id="numeroReference" placeholder="Généré automatiquement" readonly title="Le numéro sera généré au format : XXX/MEF/SG/DGI/{{ userService.sigle ?? userService.id }}">
+                                    <div class="form-text small">Attribué après enregistrement</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <h5>Expéditeur</h5>
+                        <div class="alert alert-info">
+                            <i class="bi bi-lock-fill"></i>
+                            Pour un courrier sortant, l'expéditeur est votre service : <strong>{{ userService.nom }}</strong>
+                        </div>
+                        <input type="hidden" name="typeExpediteur" value="SERVICE">
+                        <input type="hidden" name="serviceExpediteurId" value="{{ userService.id }}">
+
+                        <hr>
+                        <h5>Destinataire</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="typeDestinataire" class="form-label">Type de destinataire *</label>
+                                    <select class="form-select" id="typeDestinataire" name="typeDestinataire" required>
+                                        <option value="">-- Sélectionnez --</option>
+                                        <option value="SERVICE">Service interne</option>
+                                        <option value="PERSONNE_EXTERNE">Personne externe</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3" id="serviceDestinataireGroup" style="display:none;">
+                                    <label for="serviceDestinataireId" class="form-label">Service destinataire *</label>
+                                    <select class="form-select" id="serviceDestinataireId" name="serviceDestinataireId">
+                                        <option value="">-- Sélectionnez --</option>
+                                        {% for service in services %}
+                                            <option value="{{ service.id }}">{{ service.nom }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3" id="personneDestinataireGroup" style="display:none;">
+                                    <label for="personneExterneDestinataireId" class="form-label">Personne externe destinataire *</label>
+                                    <select class="form-select" id="personneExterneDestinataireId" name="personneExterneDestinataireId">
+                                        <option value="">-- Sélectionnez --</option>
+                                        {% for personne in personnesExternes %}
+                                            <option value="{{ personne.id }}">{{ personne.nomOuRaisonSociale }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="destinatairesCopieIds" class="form-label">Services en copie</label>
+                            <select class="form-select" id="destinatairesCopieIds" name="destinatairesCopieIds[]" multiple>
+                                {% for service in services %}
+                                    <option value="{{ service.id }}">{{ service.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <hr>
+                        <div class="mb-3">
+                            <label for="objet" class="form-label">Objet *</label>
+                            <input type="text" class="form-control" id="objet" name="objet" required maxlength="500">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="contenu" class="form-label">Contenu</label>
+                            <textarea class="form-control" id="contenu" name="contenu" rows="10"></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ path('courrier_index') }}" class="btn btn-secondary">Annuler</a>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-smart" id="btnSmartAI">
+                                    <i class="bi bi-robot"></i> Rédiger via IA
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> Enregistrer
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeDestSelect = document.getElementById('typeDestinataire');
+        const serviceDestGroup = document.getElementById('serviceDestinataireGroup');
+        const personneDestGroup = document.getElementById('personneDestinataireGroup');
+        const serviceDestSelect = document.getElementById('serviceDestinataireId');
+        const personneDestSelect = document.getElementById('personneExterneDestinataireId');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        function syncDestinataireFields() {
+            if (typeDestSelect.value === 'SERVICE') {
+                serviceDestGroup.style.display = 'block';
+                personneDestGroup.style.display = 'none';
+                serviceDestSelect.required = true;
+                personneDestSelect.required = false;
+            } else if (typeDestSelect.value === 'PERSONNE_EXTERNE') {
+                serviceDestGroup.style.display = 'none';
+                personneDestGroup.style.display = 'block';
+                serviceDestSelect.required = false;
+                personneDestSelect.required = true;
+            } else {
+                serviceDestGroup.style.display = 'none';
+                personneDestGroup.style.display = 'none';
+            }
+        }
+
+        typeDestSelect.addEventListener('change', syncDestinataireFields);
+
+        // AI Logic
+        document.getElementById('btnSmartAI')?.addEventListener('click', async () => {
+            const objet = document.getElementById('objet').value;
+            if (!objet) { alert("Saisissez un objet d'abord."); return; }
+            
+            const rSelect = typeDestSelect.value === 'SERVICE' ? serviceDestSelect : personneDestSelect;
+            
+            const params = {
+                senderService: "{{ userService.nom }}",
+                receiverService: rSelect.options[rSelect.selectedIndex]?.text || "Destinataire",
+                letterNumber: "N/A",
+                importance: document.getElementById('priorite').value || "HAUTE",
+                prompt: objet
+            };
+
+            loadingOverlay.style.display = 'flex';
+            try {
+                const res = await fetch('{{ path('smart_generate_content') }}', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(params) 
+                });
+                if (!res.ok) throw new Error("Erreur AI");
+                const result = await res.json();
+                if (result.subject) document.getElementById('objet').value = result.subject;
+                if (result.body) document.getElementById('contenu').value = result.body;
+                alert("Rédigé avec succès !");
+            } catch (err) { alert(err.message); } 
+            finally { loadingOverlay.style.display = 'none'; }
+        });
+    });
+</script>
+{% endblock %}

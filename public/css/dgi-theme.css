@@ -211,3 +211,69 @@ footer {
     background-color: #f8f9fa;
     border-top: 3px solid var(--color-primary-lighter);
 }
+
+/* --- SMART INTEGRATION (IA/OCR) --- */
+:root {
+    --smart-primary: #D4AF37;
+    /* Gold */
+    --smart-primary-hover: #B8860B;
+    --smart-glass-bg: rgba(255, 255, 255, 0.7);
+    --smart-glass-border: rgba(212, 175, 55, 0.2);
+}
+
+.smart-gradient-text {
+    background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: bold;
+}
+
+.smart-card {
+    background: var(--smart-glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--smart-glass-border);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 32px rgba(212, 175, 55, 0.1);
+}
+
+.btn-smart {
+    background: linear-gradient(135deg, var(--smart-primary) 0%, var(--smart-primary-hover) 100%);
+    color: white;
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-smart:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+    color: white;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    color: white;
+}
+
+.smart-badge {
+    background: rgba(212, 175, 55, 0.1);
+    color: var(--smart-primary);
+    border: 1px solid var(--smart-glass-border);
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}

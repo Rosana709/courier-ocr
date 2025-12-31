@@ -28,9 +28,15 @@
                 </div>
             {% endif %}
             {% if not is_granted('ROLE_ADMIN') %}
-                <a href="{{ path('courrier_create') }}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Nouveau courrier
-                </a>
+                {% if viewType|default('tous') == 'sortants' %}
+                    <a href="{{ path('courrier_create', {type: 'SORTANT'}) }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Nouveau courrier
+                    </a>
+                {% elseif viewType|default('tous') == 'entrants' %}
+                    <a href="{{ path('courrier_create', {type: 'ENTRANT'}) }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Nouveau courrier
+                    </a>
+                {% endif %}
             {% endif %}
         </div>
     </div>
@@ -73,10 +79,10 @@
                         <tr>
                             {% if not is_granted('ROLE_ADMIN') %}
                                 <td>
-                                    {# Dans les vues filtrées (entrants/sortants), on force l'affichage du type attendu pour éviter d'afficher "Entrant" dans la liste des sortants en cas de données incohérentes #}
-                                    {% set displayedType = viewType|default('tous') == 'sortants'
-                                        ? 'SORTANT'
-                                        : (viewType|default('tous') == 'entrants' ? 'ENTRANT' : courrier.type) %}
+                                    {# Utiliser le type relatif au service de l'utilisateur connecté #}
+                                    {% set displayedType = (not is_granted('ROLE_ADMIN') and currentUserService)
+                                        ? courrier.getTypeRelatif(currentUserService)
+                                        : courrier.type %}
 
                                     {% if displayedType == 'ENTRANT' %}
                                         <span class="badge bg-info">
@@ -119,22 +125,20 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% set statutClass = '' %}
-                                {% if courrier.statut == 'ENREGISTRE' %}
-                                    {% set statutClass = 'secondary' %}
-                                {% elseif courrier.statut == 'EN_COURS_TRAITEMENT' %}
-                                    {% set statutClass = 'primary' %}
-                                {% elseif courrier.statut == 'EN_ATTENTE' %}
-                                    {% set statutClass = 'warning' %}
-                                {% elseif courrier.statut == 'CLOS' %}
+                                {% set currentUserService = app.user.service %}
+                                {% set displayedStatut = (not is_granted('ROLE_ADMIN') and currentUserService)
+                                    ? courrier.getStatutRelatif(currentUserService)
+                                    : courrier.statut|replace({'_': ' '}) %}
+
+                                {% set statutClass = 'info' %}
+                                {% if displayedStatut == 'ACCUSÉ RÉCEPTION REÇU' or courrier.statut in ['CLOS', 'ARCHIVE', 'RECU_CONFIRME', 'ACCUSE_RECEPTION_RECU'] %}
                                     {% set statutClass = 'success' %}
-                                {% elseif courrier.statut == 'ARCHIVE' %}
-                                    {% set statutClass = 'dark' %}
-                                {% else %}
-                                    {% set statutClass = 'info' %}
+                                {% elseif displayedStatut == 'EN ATTENTE ACCUSÉ RÉCEPTION' %}
+                                    {% set statutClass = 'warning' %}
                                 {% endif %}
+
                                 <span class="badge bg-{{ statutClass }}">
-                                    {{ courrier.statut|replace({'_': ' '}) }}
+                                    {{ displayedStatut }}
                                 </span>
                             </td>
                             <td>
@@ -179,6 +183,38 @@
         </div>
     </div>
 </div>
+
+{# Modal OCR #}
+<div class="modal fade" id="ocrModal" tabindex="-1" aria-labelledby="ocrModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ocrModalLabel">Importer un courrier via OCR</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sélectionnez un fichier PDF pour extraire automatiquement les informations du courrier.</p>
+                <div class="mb-3">
+                    <label for="ocrFile" class="form-label">Fichier PDF</label>
+                    <input class="form-control" type="file" id="ocrFile" accept=".pdf">
+                </div>
+                <div id="ocrStatus" class="mt-3" style="display: none;">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <span id="ocrStatusText">Analyse en cours...</span>
+                    </div>
+                </div>
+                <div id="ocrError" class="alert alert-danger mt-3" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="startOcrBtn">Démarrer l'extraction</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
@@ -214,6 +250,55 @@
 
             $('#filterDestinataire').on('keyup change', function() {
                 table.column(destinataireColumn).search(this.value).draw();
+            });
+
+            // OCR Logic
+            const startOcrBtn = document.getElementById('startOcrBtn');
+            const ocrFile = document.getElementById('ocrFile');
+            const ocrStatus = document.getElementById('ocrStatus');
+            const ocrError = document.getElementById('ocrError');
+            const ocrStatusText = document.getElementById('ocrStatusText');
+
+            startOcrBtn.addEventListener('click', async () => {
+                const file = ocrFile.files[0];
+                if (!file) {
+                    ocrError.textContent = "Veuillez sélectionner un fichier.";
+                    ocrError.style.display = 'block';
+                    return;
+                }
+
+                ocrError.style.display = 'none';
+                ocrStatus.style.display = 'block';
+                startOcrBtn.disabled = true;
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch('{{ path('smart_extract') }}', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error || "Erreur lors de l'extraction OCR.");
+                    }
+
+                    const result = await response.json();
+                    if (result.data) {
+                        // Redirect to create page with data
+                        const ocrData = encodeURIComponent(JSON.stringify(result.data));
+                        window.location.href = `{{ path('courrier_create') }}?ocr_data=${ocrData}`;
+                    } else {
+                        throw new Error("Aucune donnée extraite.");
+                    }
+                } catch (error) {
+                    ocrError.textContent = error.message;
+                    ocrError.style.display = 'block';
+                    ocrStatus.style.display = 'none';
+                    startOcrBtn.disabled = false;
+                }
             });
         });
     </script>
