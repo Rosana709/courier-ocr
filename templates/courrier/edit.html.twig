@@ -66,27 +66,6 @@
                 {% set currentUserService = app.user.service %}
                 {% set estExpediteur = currentUserService and courrier.serviceExpediteur and currentUserService.id == courrier.serviceExpediteur.id %}
                 
-                {% if is_granted('ROLE_ADMIN') or estExpediteur %}
-                    <div class="mb-3">
-                        <label for="destinatairesCopieIds" class="form-label">Services en copie</label>
-                        <select class="form-select" id="destinatairesCopieIds" name="destinatairesCopieIds[]" multiple>
-                            {% for service in services %}
-                                <option value="{{ service.id }}"
-                                    {% for copie in courrier.destinatairesCopie %}
-                                        {% if copie.id == service.id %}selected{% endif %}
-                                    {% endfor %}>
-                                    {{ service.nom }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                        <small class="form-text text-muted">Maintenez Ctrl pour sélectionner plusieurs services</small>
-                    </div>
-                {% else %}
-                    {# Conserver les copies existantes sans permettre de les modifier #}
-                    {% for copie in courrier.destinatairesCopie %}
-                        <input type="hidden" name="destinatairesCopieIds[]" value="{{ copie.id }}">
-                    {% endfor %}
-                {% endif %}
 
                 <div class="mb-3">
                     <label for="notes" class="form-label">Ajouter des notes</label>

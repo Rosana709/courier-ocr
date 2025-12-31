@@ -14,6 +14,7 @@ use App\Domain\Repository\PersonneExterneRepositoryInterface;
 use App\Domain\Repository\ServiceRepositoryInterface;
 use App\Domain\Repository\UtilisateurRepositoryInterface;
 use App\Domain\Repository\NotificationRepositoryInterface;
+use App\Domain\Repository\HistoriqueActionRepositoryInterface;
 use App\Domain\Service\NumeroReferenceGenerator;
 use App\Domain\Service\NumeroArriveeGenerator;
 
@@ -25,6 +26,7 @@ class CreateCourrierUseCase
         private readonly PersonneExterneRepositoryInterface $personneExterneRepository,
         private readonly UtilisateurRepositoryInterface $utilisateurRepository,
         private readonly NotificationRepositoryInterface $notificationRepository,
+        private readonly HistoriqueActionRepositoryInterface $historiqueActionRepository,
         private readonly NumeroReferenceGenerator $numeroReferenceGenerator,
         private readonly NumeroArriveeGenerator $numeroArriveeGenerator
     ) {
@@ -103,18 +105,18 @@ class CreateCourrierUseCase
             $courrier->ajouterNotes($dto->notes);
         }
 
-        // Ajouter les destinataires en copie
-        if ($dto->destinatairesCopieIds) {
-            foreach ($dto->destinatairesCopieIds as $serviceId) {
-                $service = $this->serviceRepository->findById($serviceId);
-                if ($service) {
-                    $courrier->ajouterDestinataireCopie($service);
-                }
-            }
-        }
-
         // Sauvegarder le courrier
         $this->courrierRepository->save($courrier);
+
+        // Enregistrer la création
+        $historiqueAction = new \App\Domain\Entity\HistoriqueAction(
+            courrier: $courrier,
+            typeAction: \App\Domain\Entity\HistoriqueAction::TYPE_CREATION,
+            description: sprintf('Courrier créé par le service %s', $utilisateur->getService() ? $utilisateur->getService()->getNom() : 'Administrateur'),
+            effectuePar: $utilisateur,
+            nouvelleValeur: $courrier->getStatut()
+        );
+        $this->historiqueActionRepository->save($historiqueAction);
 
         // Générer le numéro d'arrivée pour les courriers entrants vers un SERVICE
         if ($courrier->getType() === Courrier::TYPE_ENTRANT
@@ -139,10 +141,7 @@ class CreateCourrierUseCase
             }
         }
 
-        // Créer des notifications pour les services en copie
-        foreach ($courrier->getDestinatairesCopie() as $serviceCopie) {
-            $this->creerNotification($courrier, $serviceCopie, true);
-        }
+        return $courrier;
 
         return $courrier;
     }

@@ -22,8 +22,6 @@ class DeleteUtilisateurUseCase
             throw new EntityNotFoundException('Utilisateur non trouvé');
         }
 
-        // Désactiver plutôt que supprimer pour garder l'historique
-        $utilisateur->desactiver();
-        $this->utilisateurRepository->save($utilisateur);
+        $this->utilisateurRepository->delete($utilisateur);
     }
 }

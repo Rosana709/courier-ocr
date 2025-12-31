@@ -14,6 +14,7 @@ use App\Domain\Repository\CourrierRepositoryInterface;
 use App\Domain\Repository\NotificationRepositoryInterface;
 use App\Domain\Repository\ServiceRepositoryInterface;
 use App\Domain\Repository\UtilisateurRepositoryInterface;
+use App\Domain\Repository\HistoriqueActionRepositoryInterface;
 
 class AccuseReceptionUseCase
 {
@@ -22,7 +23,8 @@ class AccuseReceptionUseCase
         private readonly AccuseReceptionRepositoryInterface $accuseReceptionRepository,
         private readonly NotificationRepositoryInterface $notificationRepository,
         private readonly ServiceRepositoryInterface $serviceRepository,
-        private readonly UtilisateurRepositoryInterface $utilisateurRepository
+        private readonly UtilisateurRepositoryInterface $utilisateurRepository,
+        private readonly HistoriqueActionRepositoryInterface $historiqueActionRepository
     ) {
     }
 
@@ -49,19 +51,10 @@ class AccuseReceptionUseCase
             throw new EntityNotFoundException("Utilisateur non trouvé");
         }
 
-        // Vérifier que le service confirmant est bien le destinataire principal ou en copie
-        $estDestinatairePrincipal = $courrier->getServiceDestinataire() && $courrier->getServiceDestinataire()->getId() === $service->getId();
-        
-        $estEnCopie = false;
-        foreach ($courrier->getDestinatairesCopie() as $serviceCopie) {
-            if ($serviceCopie->getId() === $service->getId()) {
-                $estEnCopie = true;
-                break;
-            }
-        }
+        $estDestinatairePrincipal = ($courrier->getServiceDestinataire() && $courrier->getServiceDestinataire()->getId() === $service->getId());
 
-        if (!$estDestinatairePrincipal && !$estEnCopie) {
-            throw new InvalidCourierDataException("Seul le destinataire principal ou un service en copie peut confirmer la réception");
+        if (!$estDestinatairePrincipal) {
+            throw new InvalidCourierDataException("Seul le destinataire principal peut confirmer la réception");
         }
 
         // Vérifier le statut du courrier
@@ -80,14 +73,22 @@ class AccuseReceptionUseCase
 
         $this->accuseReceptionRepository->save($accuseReception);
 
-        // Mettre à jour le statut du courrier
-        if ($courrier->getType() === Courrier::TYPE_ENTRANT) {
-            $courrier->updateStatut(Courrier::STATUT_RECU_CONFIRME);
-        } else {
-            $courrier->updateStatut(Courrier::STATUT_ACCUSE_RECEPTION_RECU);
-        }
+        // Mettre à jour le statut du courrier : l'expéditeur doit voir que c'est fini immédiatement
+        $ancienStatut = $courrier->getStatut();
+        $courrier->updateStatut(Courrier::STATUT_CLOS);
 
         $this->courrierRepository->save($courrier);
+
+        // Enregistrer l'action
+        $historiqueAction = new \App\Domain\Entity\HistoriqueAction(
+            courrier: $courrier,
+            typeAction: \App\Domain\Entity\HistoriqueAction::TYPE_ENVOI_ACCUSE_RECEPTION,
+            description: sprintf('Réception confirmée par le service %s (Utilisateur: %s)', $service->getNom(), $utilisateur->getEmail()),
+            effectuePar: $utilisateur,
+            ancienneValeur: $ancienStatut,
+            nouvelleValeur: Courrier::STATUT_CLOS
+        );
+        $this->historiqueActionRepository->save($historiqueAction);
 
         // Créer une notification pour le service expéditeur (si expéditeur = SERVICE)
         if ($courrier->getTypeExpediteur() === Courrier::ACTEUR_SERVICE) {

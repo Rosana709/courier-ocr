@@ -42,6 +42,16 @@ class HistoriqueActionRepository extends ServiceEntityRepository implements Hist
             ->getResult();
     }
 
+    public function countSince(\DateTimeImmutable $date): int
+    {
+        return (int) $this->createQueryBuilder('h')
+            ->select('COUNT(h.id)')
+            ->where('h.dateAction > :date')
+            ->setParameter('date', $date)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function save(HistoriqueAction $action): void
     {
         $this->getEntityManager()->persist($action);

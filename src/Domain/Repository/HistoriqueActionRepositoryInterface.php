@@ -13,5 +13,7 @@ interface HistoriqueActionRepositoryInterface
 
     public function findLast(int $limit = 5): array;
 
+    public function countSince(\DateTimeImmutable $date): int;
+
     public function save(HistoriqueAction $action): void;
 }

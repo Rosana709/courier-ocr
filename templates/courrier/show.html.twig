@@ -152,16 +152,6 @@
                             {% endif %}
                         </dd>
 
-                        {% if courrier.destinatairesCopie|length > 0 %}
-                        <dt class="col-sm-4">En copie</dt>
-                        <dd class="col-sm-8">
-                            {% for service in courrier.destinatairesCopie %}
-                                <span class="badge bg-light text-dark">
-                                    <i class="bi bi-building"></i> {{ service.nom }}
-                                </span>
-                            {% endfor %}
-                        </dd>
-                        {% endif %}
                     </dl>
                 </div>
             </div>
@@ -192,16 +182,8 @@
                 {% set currentUserService = app.user.service %}
                 {% set estExpediteur = currentUserService and courrier.serviceExpediteur and currentUserService.id == courrier.serviceExpediteur.id %}
                 {% set estDestinatairePrincipal = currentUserService and courrier.serviceDestinataire and currentUserService.id == courrier.serviceDestinataire.id %}
-                {% set estEnCopie = false %}
-                {% if currentUserService %}
-                    {% for serviceCopie in courrier.destinatairesCopie %}
-                        {% if serviceCopie.id == currentUserService.id %}
-                            {% set estEnCopie = true %}
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
 
-                {% set isRecipient = estDestinatairePrincipal or estEnCopie %}
+                {% set isRecipient = estDestinatairePrincipal %}
                 {% set isIncomingForRecipient = isRecipient and (courrier.type == 'ENTRANT' or courrier.getTypeRelatif(currentUserService) == 'ENTRANT') %}
                 {% set isConfirmed = courrier.statut in ['RECU_CONFIRME', 'ACCUSE_RECEPTION_RECU', 'CLOS', 'ARCHIVE'] %}
 
@@ -222,12 +204,13 @@
                                         {% set officialPdf = piece %}
                                     {% endif %}
                                 {% endfor %}
-
+                                
                                 {% if not officialPdf %}
                                     <a href="{{ path('courrier_generate_official_pdf', {id: courrier.id}) }}" class="btn btn-sm btn-danger shadow-sm">
                                         <i class="bi bi-file-earmark-pdf"></i> Générer PDF
                                     </a>
                                 {% endif %}
+
                             {% else %}
                                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
                                     <i class="bi bi-paperclip"></i> Ajouter
@@ -323,13 +306,8 @@
                         {% else %}
                             <div class="text-center py-5 border-2 border-dashed rounded bg-light">
                                 <i class="bi bi-file-earmark-x text-muted display-4"></i>
-                                <h6 class="mt-3">Aucun document généré</h6>
-                                <p class="text-muted small mb-4">Le courrier officiel n'a pas encore été généré pour cet envoi.</p>
-                                {% if is_granted('courrier_edit', courrier) %}
-                                    <a href="{{ path('courrier_generate_official_pdf', {id: courrier.id}) }}" class="btn btn-primary">
-                                        <i class="bi bi-gear-fill"></i> Générer le courrier officiel
-                                    </a>
-                                {% endif %}
+                                <h6 class="mt-3">Aucun document</h6>
+                                <p class="text-muted small mb-0">Aucun document n'est associé à ce courrier.</p>
                             </div>
                         {% endif %}
                     {% else %}
@@ -431,10 +409,14 @@
                     <h6 class="mb-0">Zone Administrateur</h6>
                 </div>
                 <div class="card-body">
-                    <button type="button" class="btn btn-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#archiveModal">
-                        <i class="bi bi-archive"></i> Archiver
-                    </button>
-                    <p class="small text-muted mb-0 mt-2">La suppression est désactivée. Utilisez l'archivage.</p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#archiveModal">
+                            <i class="bi bi-archive"></i> Archiver
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash"></i> Supprimer
+                        </button>
+                    </div>
                 </div>
             </div>
             {% endif %}
@@ -458,6 +440,32 @@
                 <form method="post" action="{{ path('courrier_archiver', {id: courrier.id}) }}">
                     <button type="submit" class="btn btn-secondary">
                         <i class="bi bi-archive"></i> Confirmer l'archivage
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal confirmation suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger" id="deleteModalLabel"><i class="bi bi-exclamation-triangle"></i> Confirmation de suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer définitivement ce courrier ?</p>
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-circle-fill"></i> Cette action est irréversible et supprimera toutes les pièces jointes associées.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="post" action="{{ path('courrier_delete', {id: courrier.id}) }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Confirmer la suppression
                     </button>
                 </form>
             </div>

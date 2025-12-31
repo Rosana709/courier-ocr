@@ -18,7 +18,8 @@ class NotificationController extends AbstractController
 {
     public function __construct(
         private readonly ListNotificationsUseCase $listNotificationsUseCase,
-        private readonly MarquerNotificationCommeLueUseCase $marquerNotificationCommeLueUseCase
+        private readonly MarquerNotificationCommeLueUseCase $marquerNotificationCommeLueUseCase,
+        private readonly \App\Domain\Repository\HistoriqueActionRepositoryInterface $historiqueActionRepository
     ) {
     }
 
@@ -26,6 +27,12 @@ class NotificationController extends AbstractController
     public function index(): Response
     {
         $user = $this->getUser();
+        
+        if ($this->isGranted('ROLE_ADMIN')) {
+            // Pour l'admin, les "notifications" sont le rapport d'activité sur le dashboard
+            return $this->redirectToRoute('admin_dashboard');
+        }
+
         $serviceId = $user->getService()?->getId();
 
         if (!$serviceId) {
@@ -44,6 +51,17 @@ class NotificationController extends AbstractController
     public function count(): JsonResponse
     {
         $user = $this->getUser();
+
+        if ($this->isGranted('ROLE_ADMIN')) {
+            $lastCheck = $user->getLastActivityCheckedAt();
+            // Si jamais consulté, on propose un count de 0 ou on prend une date par défaut (ex: 24h)
+            if (!$lastCheck) {
+                return new JsonResponse(['count' => 0]);
+            }
+            $count = $this->historiqueActionRepository->countSince($lastCheck);
+            return new JsonResponse(['count' => $count]);
+        }
+
         $serviceId = $user->getService()?->getId();
 
         if (!$serviceId) {

@@ -45,6 +45,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'datetime_immutable', nullable: true, name: 'datemodification')]
     private ?\DateTimeImmutable $dateModification = null;
 
+    #[ORM\Column(type: 'datetime_immutable', nullable: true, name: 'last_activity_checked_at')]
+    private ?\DateTimeImmutable $lastActivityCheckedAt = null;
+
     private function __construct(
         string $email,
         string $password,
@@ -199,6 +202,16 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function getDateModification(): ?\DateTimeImmutable
     {
         return $this->dateModification;
+    }
+
+    public function getLastActivityCheckedAt(): ?\DateTimeImmutable
+    {
+        return $this->lastActivityCheckedAt;
+    }
+
+    public function updateLastActivityCheckedAt(): void
+    {
+        $this->lastActivityCheckedAt = new \DateTimeImmutable();
     }
 
     // Méthodes UserInterface

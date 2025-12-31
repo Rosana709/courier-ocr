@@ -148,14 +148,6 @@
                         <input type="hidden" name="typeDestinataire" value="SERVICE">
                         <input type="hidden" name="serviceDestinataireId" value="{{ userService.id }}">
 
-                        <div class="mb-3">
-                            <label for="destinatairesCopieIds" class="form-label">Services en copie</label>
-                            <select class="form-select" id="destinatairesCopieIds" name="destinatairesCopieIds[]" multiple>
-                                {% for service in services %}
-                                    <option value="{{ service.id }}">{{ service.nom }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
 
                         <hr>
                         <div class="mb-3">

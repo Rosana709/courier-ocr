@@ -1,19 +1,30 @@
 <?php
 use App\Kernel;
-use App\Domain\Entity\Service;
-use Symfony\Bundle\FrameworkBundle\Console\Application;
-use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Dotenv\Dotenv;
 
-require 'vendor/autoload.php';
+require __DIR__.'/vendor/autoload.php';
 
-$kernel = new Kernel('prod', false);
+$dotenv = new Dotenv();
+$dotenv->loadEnv(__DIR__.'/.env');
+
+$kernel = new Kernel($_SERVER['APP_ENV'], (bool) $_SERVER['APP_DEBUG']);
 $kernel->boot();
 $container = $kernel->getContainer();
 $em = $container->get('doctrine.orm.entity_manager');
+$conn = $em->getConnection();
 
-$services = $em->getRepository(Service::class)->findAll();
-
-foreach ($services as $service) {
-    echo sprintf("ID: %s, Nom: %s\n", $service->getId(), $service->getNom());
+echo "--- SERVICES ---\n";
+$services = $conn->fetchAllAssociative("SELECT * FROM service");
+foreach ($services as $s) {
+    echo json_encode($s) . "\n";
 }
-echo "Count: " . count($services) . "\n";
+
+echo "--- TARGET USER ---\n";
+$user = $conn->fetchAssociative("SELECT * FROM utilisateur WHERE email = 'razanajatovolucienne@gmail.com'");
+echo json_encode($user) . "\n";
+
+echo "--- USERS WITH SERVICE_ID = PERSO ---\n";
+$users = $conn->fetchAllAssociative("SELECT email, service_id FROM utilisateur WHERE service_id = 'PERSO'");
+foreach ($users as $u) {
+    echo json_encode($u) . "\n";
+}

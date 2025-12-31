@@ -41,10 +41,17 @@ class AdminDashboardController extends AbstractController
             'courriers_attente_accuse' => count($this->courrierRepository->findByStatut(Courrier::STATUT_EN_ATTENTE_ACCUSE_RECEPTION)),
         ];
 
+        // Mettre à jour la date de dernière consultation des activités pour l'admin
+        $user = $this->getUser();
+        if ($user instanceof \App\Domain\Entity\Utilisateur) {
+            $user->updateLastActivityCheckedAt();
+            $this->utilisateurRepository->save($user);
+        }
+
         return $this->render('admin/dashboard.html.twig', [
             'stats' => $stats,
-            'courriers_recents' => $this->courrierRepository->findRecent(5),
-            'actions_recentres' => $this->historiqueActionRepository->findLast(5),
+            'courriers_recents' => $this->courrierRepository->findRecent(10),
+            'actions_recentres' => $this->historiqueActionRepository->findLast(10),
             'sessions_connectees' => $this->sessionTraceRepository->findActiveSince(new \DateTimeImmutable('-15 minutes')),
         ]);
     }

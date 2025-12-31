@@ -132,7 +132,7 @@ class UtilisateurController extends AbstractController
         try {
             $this->deleteUtilisateurUseCase->execute($id);
 
-            $this->addFlash('success', 'Utilisateur désactivé avec succès');
+            $this->addFlash('success', 'Utilisateur supprimé avec succès');
         } catch (\Exception $e) {
             $this->addFlash('error', $e->getMessage());
         }

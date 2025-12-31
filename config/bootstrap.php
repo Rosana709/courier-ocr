@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Africa/Nairobi');
 
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Dotenv\Exception\PathException;

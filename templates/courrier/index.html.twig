@@ -94,19 +94,6 @@
                                         </span>
                                     {% endif %}
 
-                                    {# Badge "En copie" dans la vue Entrants #}
-                                    {% if viewType|default('tous') == 'entrants'
-                                       and currentUserService
-                                       and courrier.typeDestinataire == 'SERVICE'
-                                       and courrier.serviceDestinataire.id != currentUserService.id %}
-                                        {% for serviceCopie in courrier.destinatairesCopie %}
-                                            {% if serviceCopie.id == currentUserService.id %}
-                                                <span class="badge bg-secondary ms-1">
-                                                    <i class="bi bi-clipboard"></i> En copie
-                                                </span>
-                                            {% endif %}
-                                        {% endfor %}
-                                    {% endif %}
                                 </td>
                             {% endif %}
                             <td>{{ courrier.objet|length > 50 ? courrier.objet|slice(0, 50) ~ '...' : courrier.objet }}</td>
@@ -166,6 +153,13 @@
                                     <a href="{{ path('courrier_edit', {id: courrier.id}) }}" class="btn btn-sm btn-outline-secondary" title="Modifier">
                                         <i class="bi bi-pencil"></i>
                                     </a>
+                                    {% endif %}
+                                    {% if is_granted('ROLE_ADMIN') %}
+                                    <form method="post" action="{{ path('courrier_delete', {id: courrier.id}) }}" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce courrier ?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
                                     {% endif %}
                                 </div>
                             </td>

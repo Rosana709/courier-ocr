@@ -23,6 +23,7 @@ class HistoriqueAction
     public const TYPE_SUPPRESSION_DESTINATAIRE_COPIE = 'SUPPRESSION_DESTINATAIRE_COPIE';
     public const TYPE_AJOUT_NOTES = 'AJOUT_NOTES';
     public const TYPE_ARCHIVAGE = 'ARCHIVAGE';
+    public const TYPE_SUPPRESSION = 'SUPPRESSION';
 
     #[ORM\Id]
     #[ORM\Column(type: 'uuid')]
@@ -123,6 +124,7 @@ class HistoriqueAction
             self::TYPE_SUPPRESSION_DESTINATAIRE_COPIE,
             self::TYPE_AJOUT_NOTES,
             self::TYPE_ARCHIVAGE,
+            self::TYPE_SUPPRESSION,
         ];
     }
 

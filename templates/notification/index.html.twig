@@ -63,10 +63,12 @@
                     <small class="text-muted">
                         {% if notification.courrier %}
                             De:
-                            {% if notification.courrier.typeExpediteur == 'SERVICE' %}
+                            {% if notification.courrier.typeExpediteur == 'SERVICE' and notification.courrier.serviceExpediteur %}
                                 <i class="bi bi-building"></i> {{ notification.courrier.serviceExpediteur.nom }}
-                            {% else %}
+                            {% elseif notification.courrier.typeExpediteur != 'SERVICE' and notification.courrier.personneExterneExpediteur %}
                                 <i class="bi bi-person"></i> {{ notification.courrier.personneExterneExpediteur.nomOuRaisonSociale }}
+                            {% else %}
+                                <span class="text-danger">Inconnu</span>
                             {% endif %}
                             |
                         {% endif %}

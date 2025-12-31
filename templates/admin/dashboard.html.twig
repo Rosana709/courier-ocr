@@ -139,37 +139,78 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Activité récente</h5>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-journal-text"></i> Rapport d'activité des services</h5>
+                    <span class="badge bg-info">10 dernières actions</span>
                 </div>
                 <div class="card-body">
                     {% if actions_recentres is not defined or actions_recentres|length == 0 %}
-                        <p class="text-muted">Aucune activité récente.</p>
+                        <div class="text-center py-4">
+                            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-2">Aucune activité enregistrée pour le moment.</p>
+                        </div>
                     {% else %}
                         <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
                                     <tr>
-                                        <th>Action</th>
-                                        <th>Courrier</th>
-                                        <th>Par</th>
-                                        <th>Date</th>
-                                        <th></th>
+                                        <th>Date & Heure</th>
+                                        <th>Service / Acteur</th>
+                                        <th>Action effectuée</th>
+                                        <th>Détails du courrier</th>
+                                        <th class="text-end">Réf.</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for action in actions_recentres %}
                                         <tr>
-                                            <td><span class="badge bg-secondary">{{ action.typeAction }}</span></td>
+                                            <td class="small">{{ action.dateAction|date('d/m/Y H:i') }}</td>
                                             <td>
-                                                {{ action.courrier.objet|slice(0, 40) }}{% if action.courrier.objet|length > 40 %}...{% endif %}
+                                                <div class="fw-bold text-primary">
+                                                    {% if action.effectuePar and action.effectuePar.service %}
+                                                        <i class="bi bi-building"></i> {{ action.effectuePar.service.nom }}
+                                                    {% elseif action.effectuePar %}
+                                                        <i class="bi bi-person-fill"></i> {{ action.effectuePar.email }}
+                                                    {% else %}
+                                                        <i class="bi bi-gear-fill"></i> Système
+                                                    {% endif %}
+                                                </div>
+                                                <small class="text-muted">
+                                                    {% if action.effectuePar %}
+                                                        {{ action.effectuePar.email }}
+                                                    {% endif %}
+                                                </small>
                                             </td>
-                                            <td>{{ action.effectuePar ? action.effectuePar.email : 'Système' }}</td>
-                                            <td>{{ action.dateAction|date('d/m/Y H:i', 'Africa/Nairobi') }}</td>
                                             <td>
-                                                <a href="{{ path('courrier_show', {id: action.courrier.id}) }}" class="btn btn-outline-primary btn-sm">
-                                                    <i class="bi bi-eye"></i>
-                                                </a>
+                                                {% set badgeClass = 'secondary' %}
+                                                {% if action.typeAction == 'CREATION' %}{% set badgeClass = 'success' %}
+                                                {% elseif action.typeAction == 'ENVOI_ACCUSE_RECEPTION' %}{% set badgeClass = 'info' %}
+                                                {% elseif action.typeAction == 'MODIFICATION_STATUT' %}{% set badgeClass = 'warning' %}
+                                                {% endif %}
+                                                <span class="badge bg-{{ badgeClass }}">{{ action.typeAction|replace({'_': ' '}) }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="text-truncate" style="max-width: 300px;">
+                                                    {% if action.courrier %}
+                                                        <span title="{{ action.courrier.objet }}">{{ action.courrier.objet }}</span>
+                                                    {% else %}
+                                                        <span class="text-muted italic">Courrier supprimé</span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="small">
+                                                    {% if action.courrier %}
+                                                        <a href="{{ path('courrier_show', {id: action.courrier.id}) }}" class="text-decoration-none">
+                                                            <i class="bi bi-link-45deg"></i> Consulter
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td class="text-end small fw-bold">
+                                                {% if action.courrier %}
+                                                    {{ action.courrier.numeroReference }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
                                             </td>
                                         </tr>
                                     {% endfor %}
@@ -213,7 +254,7 @@
                                                     <span class="badge bg-info">Service</span>
                                                 {% endif %}
                                             </td>
-                                            <td>{{ session.derniereActivite|date('d/m/Y H:i:s', 'Africa/Nairobi') }}</td>
+                                            <td>{{ session.derniereActivite|date('d/m/Y H:i:s') }}</td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>

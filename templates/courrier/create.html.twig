@@ -214,15 +214,6 @@
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="destinatairesCopieIds" class="form-label">Services en copie</label>
-                    <select class="form-select" id="destinatairesCopieIds" name="destinatairesCopieIds[]" multiple>
-                        {% for service in services %}
-                            <option value="{{ service.id }}">{{ service.nom }}</option>
-                        {% endfor %}
-                    </select>
-                    <small class="form-text text-muted">Maintenez Ctrl pour sélectionner plusieurs services</small>
-                </div>
 
                 <hr>
 
@@ -281,7 +272,7 @@
                         <li>• <strong>Courrier ENTRANT :</strong> Saisissez le numéro de référence de l'expéditeur si disponible. Un numéro d'arrivée sera généré automatiquement : N° XXX-2025/DG/SERVICE</li>
                         <li>• <strong>Courrier SORTANT :</strong> Le numéro de référence sera généré automatiquement au format DGI</li>
                         <li>• Sélectionnez d'abord le type de destinataire</li>
-                        <li>• Utilisez "Services en copie" pour informer d'autres services</li>
+                        <li>• Rédigez un objet clair et précis</li>
                         <li>• Rédigez un objet clair et précis</li>
                         <li>• Les pièces jointes peuvent être ajoutées après la création</li>
                         <li>• Une notification sera envoyée automatiquement au destinataire</li>

@@ -368,8 +368,8 @@ class CourrierController extends AbstractController
             $dto = new UpdateCourrierDTO(
                 statut: Courrier::STATUT_ARCHIVE
             );
-            $this->updateCourrierUseCase->execute($id, $dto);
-            $this->addFlash('success', 'Courrier archiv??.');
+            $this->updateCourrierUseCase->execute($id, $dto, $this->getUser()->getId());
+            $this->addFlash('success', 'Courrier archivé.');
         } catch (DomainException $e) {
             $this->addFlash('error', $e->getMessage());
         }
@@ -384,14 +384,14 @@ class CourrierController extends AbstractController
             $courrier = $this->getCourrierUseCase->execute($id);
             
             if ($courrier->getType() !== Courrier::TYPE_SORTANT) {
-                throw new DomainException("La génération de PDF officiel n'est disponible que pour les courriers sortants.");
+                throw new \App\Domain\Exception\DomainException("La génération de PDF officiel n'est disponible que pour les courriers sortants.");
             }
 
-            $expLabel = $courrier->getTypeExpediteur() === Courrier::ACTEUR_SERVICE 
+            $expLabel = $courrier->getTypeExpediteur() === \App\Domain\Entity\Courrier::ACTEUR_SERVICE 
                 ? ($courrier->getServiceExpediteur()?->getNom() ?? 'Service')
                 : ($courrier->getPersonneExterneExpediteur()?->getNomOuRaisonSociale() ?? 'Externe');
 
-            $destLabel = $courrier->getTypeDestinataire() === Courrier::ACTEUR_SERVICE
+            $destLabel = $courrier->getTypeDestinataire() === \App\Domain\Entity\Courrier::ACTEUR_SERVICE
                 ? ($courrier->getServiceDestinataire()?->getNom() ?? 'Service')
                 : ($courrier->getPersonneExterneDestinataire()?->getNomOuRaisonSociale() ?? 'Externe');
 
@@ -409,7 +409,7 @@ class CourrierController extends AbstractController
 
             // Sauvegarder comme pièce jointe officielle
             $user = $this->getUser();
-            $pieceJointe = new PieceJointe(
+            $pieceJointe = new \App\Domain\Entity\PieceJointe(
                 courrier: $courrier,
                 nomFichierOriginal: 'Courrier_Officiel_' . str_replace('/', '_', $courrier->getNumeroReference()) . '.pdf',
                 typeMime: 'application/pdf',
@@ -423,7 +423,7 @@ class CourrierController extends AbstractController
             
             // On redirige avec un flag pour déclencher le téléchargement côté client si besoin
             return $this->redirectToRoute('courrier_show', ['id' => $id, 'download_pdf' => 1]);
-        } catch (DomainException $e) {
+        } catch (\App\Domain\Exception\DomainException $e) {
             $this->addFlash('error', $e->getMessage());
             return $this->redirectToRoute('courrier_show', ['id' => $id]);
         } catch (\Exception $e) {
@@ -431,6 +431,7 @@ class CourrierController extends AbstractController
             return $this->redirectToRoute('courrier_show', ['id' => $id]);
         }
     }
+
 
     #[Route('/{id}/verify-ocr', name: 'courrier_verify_ocr', methods: ['POST'])]
     public function verifyOcr(string $id, Request $request): Response
@@ -493,8 +494,14 @@ class CourrierController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     public function delete(string $id): Response
     {
-        $this->addFlash('error', 'La suppression de courrier est interdite. Utilisez l\'archivage.');
-        return $this->redirectToRoute('courrier_show', ['id' => $id]);
+        try {
+            $this->deleteCourrierUseCase->execute($id, $this->getUser()->getId());
+            $this->addFlash('success', 'Courrier supprimé avec succès.');
+            return $this->redirectToRoute('courrier_index');
+        } catch (DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+            return $this->redirectToRoute('courrier_show', ['id' => $id]);
+        }
     }
 }
 

@@ -12,17 +12,22 @@ use App\Domain\Exception\EntityNotFoundException;
 use App\Domain\Repository\CourrierRepositoryInterface;
 use App\Domain\Repository\NotificationRepositoryInterface;
 use App\Domain\Repository\ServiceRepositoryInterface;
+use App\Domain\Repository\HistoriqueActionRepositoryInterface;
+use App\Domain\Repository\UtilisateurRepositoryInterface;
+use App\Domain\Entity\HistoriqueAction;
 
 class UpdateCourrierUseCase
 {
     public function __construct(
         private readonly CourrierRepositoryInterface $courrierRepository,
         private readonly ServiceRepositoryInterface $serviceRepository,
-        private readonly NotificationRepositoryInterface $notificationRepository
+        private readonly NotificationRepositoryInterface $notificationRepository,
+        private readonly HistoriqueActionRepositoryInterface $historiqueActionRepository,
+        private readonly UtilisateurRepositoryInterface $utilisateurRepository
     ) {
     }
 
-    public function execute(string $courrierId, UpdateCourrierDTO $dto): Courrier
+    public function execute(string $courrierId, UpdateCourrierDTO $dto, ?string $utilisateurId = null): Courrier
     {
         $courrier = $this->courrierRepository->findById($courrierId);
 
@@ -52,7 +57,23 @@ class UpdateCourrierUseCase
 
             // On ne permet pas de changer le statut si le courrier est déjà confirmé/terminal
             if (!in_array($courrier->getStatut(), $statutsVerrouilles)) {
+                $ancienStatut = $courrier->getStatut();
                 $courrier->updateStatut($dto->statut);
+
+                if ($utilisateurId) {
+                    $utilisateur = $this->utilisateurRepository->findById($utilisateurId);
+                    if ($utilisateur) {
+                        $historiqueAction = new HistoriqueAction(
+                            courrier: $courrier,
+                            typeAction: HistoriqueAction::TYPE_MODIFICATION_STATUT,
+                            description: sprintf('Statut modifié de %s à %s', $ancienStatut, $dto->statut),
+                            effectuePar: $utilisateur,
+                            ancienneValeur: $ancienStatut,
+                            nouvelleValeur: $dto->statut
+                        );
+                        $this->historiqueActionRepository->save($historiqueAction);
+                    }
+                }
             }
         }
 
