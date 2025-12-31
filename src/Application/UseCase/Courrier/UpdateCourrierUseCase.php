@@ -35,6 +35,11 @@ class UpdateCourrierUseCase
             throw new EntityNotFoundException("Courrier non trouvé");
         }
 
+        // Empêcher la modification d'un courrier sortant
+        if ($courrier->estSortant()) {
+            throw new \App\Domain\Exception\DomainException("Un courrier sortant ne peut pas être modifié après sa création.");
+        }
+
         if ($dto->objet !== null) {
             $courrier->updateObjet($dto->objet);
         }

@@ -262,10 +262,13 @@ class CourrierController extends AbstractController
                     destinatairesCopieIds: $request->request->all('destinatairesCopieIds')
                 );
 
-                $this->updateCourrierUseCase->execute($id, $dto);
-
-                $this->addFlash('success', 'Courrier modifi?? avec succ??s.');
-                return $this->redirectToRoute('courrier_show', ['id' => $id]);
+                try {
+                    $this->updateCourrierUseCase->execute($id, $dto, $this->getUser()->getId());
+                    $this->addFlash('success', 'Courrier modifié avec succès.');
+                    return $this->redirectToRoute('courrier_show', ['id' => $id]);
+                } catch (DomainException $e) {
+                    $this->addFlash('error', $e->getMessage());
+                }
             }
 
             $services = $this->serviceRepository->findAll();

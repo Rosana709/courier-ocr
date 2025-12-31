@@ -186,7 +186,30 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script>
+        let serviceSelectInstance = null;
+
+        function initServiceSelect() {
+            if (serviceSelectInstance) return;
+            
+            serviceSelectInstance = new TomSelect('#service_id', {
+                create: false,
+                sortField: {
+                    field: 'text',
+                    direction: 'asc'
+                },
+                placeholder: 'Rechercher un service...',
+                plugins: ['clear_button'],
+                onChange: function(value) {
+                    // Trigger native change event for listeners
+                    const event = new Event('change');
+                    document.getElementById('service_id').dispatchEvent(event);
+                }
+            });
+        }
+
         function toggleServiceField() {
             const role = document.getElementById('role').value;
             const serviceField = document.getElementById('service-field');
@@ -195,10 +218,17 @@
             if (role === 'ROLE_SERVICE') {
                 serviceField.style.display = 'block';
                 serviceSelect.required = true;
+                // Initialize TomSelect if visible
+                // specific timeout to ensure display:block is rendered
+                setTimeout(initServiceSelect, 50);
             } else {
                 serviceField.style.display = 'none';
                 serviceSelect.required = false;
-                serviceSelect.value = '';
+                if (serviceSelectInstance) {
+                    serviceSelectInstance.clear();
+                } else {
+                    serviceSelect.value = '';
+                }
             }
         }
 
@@ -208,8 +238,22 @@
             const emailInput = document.getElementById('email');
 
             serviceSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                const serviceEmail = selectedOption.getAttribute('data-email');
+                // With TomSelect, we need to handle this carefully as the underlying select options might not be easily accessible via selectedIndex if virtualized
+                // But standard simple TomSelect updates the underlying select's value.
+                
+                const selectedValue = this.value;
+                if (!selectedValue) return;
+
+                // Find the option with this value
+                const options = this.querySelectorAll('option');
+                let serviceEmail = '';
+                
+                for(let op of options) {
+                    if (op.value === selectedValue) {
+                        serviceEmail = op.getAttribute('data-email');
+                        break;
+                    }
+                }
 
                 if (serviceEmail && serviceEmail !== 'null' && serviceEmail !== '') {
                     emailInput.value = serviceEmail;

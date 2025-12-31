@@ -86,12 +86,14 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3" id="serviceDestinataireGroup" style="display:none;">
+                        <div class="mb-3" id="serviceDestinataireGroup" style="display:none;">
                                     <label for="serviceDestinataireId" class="form-label">Service destinataire *</label>
                                     <select class="form-select" id="serviceDestinataireId" name="serviceDestinataireId">
                                         <option value="">-- Sélectionnez --</option>
                                         {% for service in services %}
-                                            <option value="{{ service.id }}">{{ service.nom }}</option>
+                                            {% if service.id != userService.id %}
+                                                <option value="{{ service.id }}">{{ service.nom }}</option>
+                                            {% endif %}
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -139,6 +141,8 @@
 {% endblock %}
 
 {% block javascripts %}
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const typeDestSelect = document.getElementById('typeDestinataire');
@@ -148,17 +152,59 @@
         const personneDestSelect = document.getElementById('personneExterneDestinataireId');
         const loadingOverlay = document.getElementById('loadingOverlay');
 
+        let serviceSelectInstance = null;
+        let personneSelectInstance = null;
+
+        function initTomSelects() {
+             // Init Service Select
+             if (!serviceSelectInstance) {
+                serviceSelectInstance = new TomSelect('#serviceDestinataireId', {
+                    create: false,
+                    sortField: {field: 'text', direction: 'asc'},
+                    placeholder: 'Rechercher un service...',
+                    plugins: ['clear_button'],
+                     onChange: function(value) {
+                         // Trigger native change event for listeners
+                         const event = new Event('change');
+                         document.getElementById('serviceDestinataireId').dispatchEvent(event);
+                     }
+                });
+             }
+
+             // Init Personne Select
+             if (!personneSelectInstance) {
+                personneSelectInstance = new TomSelect('#personneExterneDestinataireId', {
+                    create: false,
+                    sortField: {field: 'text', direction: 'asc'},
+                    placeholder: 'Rechercher une personne...',
+                    plugins: ['clear_button'],
+                     onChange: function(value) {
+                         // Trigger native change event for listeners
+                         const event = new Event('change');
+                         document.getElementById('personneExterneDestinataireId').dispatchEvent(event);
+                     }
+                });
+             }
+        }
+
         function syncDestinataireFields() {
             if (typeDestSelect.value === 'SERVICE') {
                 serviceDestGroup.style.display = 'block';
                 personneDestGroup.style.display = 'none';
                 serviceDestSelect.required = true;
                 personneDestSelect.required = false;
+                
+                // Clear validation state on hidden fields if possible
+                if(personneSelectInstance) personneSelectInstance.clear();
+                
             } else if (typeDestSelect.value === 'PERSONNE_EXTERNE') {
                 serviceDestGroup.style.display = 'none';
                 personneDestGroup.style.display = 'block';
                 serviceDestSelect.required = false;
                 personneDestSelect.required = true;
+                
+                if(serviceSelectInstance) serviceSelectInstance.clear();
+
             } else {
                 serviceDestGroup.style.display = 'none';
                 personneDestGroup.style.display = 'none';
@@ -167,16 +213,29 @@
 
         typeDestSelect.addEventListener('change', syncDestinataireFields);
 
+        // Init TomSelects immediately but they work best when visible. 
+        // However, TomSelect replaces the element, so we can init them.
+        initTomSelects();
+        
+        // Initial sync
+        syncDestinataireFields();
+
         // AI Logic
         document.getElementById('btnSmartAI')?.addEventListener('click', async () => {
             const objet = document.getElementById('objet').value;
             if (!objet) { alert("Saisissez un objet d'abord."); return; }
             
             const rSelect = typeDestSelect.value === 'SERVICE' ? serviceDestSelect : personneDestSelect;
+            // Get text from TomSelect if initialized, or fallback
+            // TomSelect syncs back to original select, but retrieving text might need checking options
+            let receiverName = "Destinataire";
+            if (rSelect.selectedIndex !== -1) {
+                 receiverName = rSelect.options[rSelect.selectedIndex].text;
+            }
             
             const params = {
                 senderService: "{{ userService.nom }}",
-                receiverService: rSelect.options[rSelect.selectedIndex]?.text || "Destinataire",
+                receiverService: receiverName,
                 letterNumber: "N/A",
                 importance: document.getElementById('priorite').value || "HAUTE",
                 prompt: objet

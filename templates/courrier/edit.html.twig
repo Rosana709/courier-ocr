@@ -18,76 +18,77 @@
         </div>
     </div>
 
-            {% set isStatutVerrouille = courrier.statut in ['RECU_CONFIRME', 'ACCUSE_RECEPTION_RECU', 'CLOS', 'ARCHIVE'] %}
-            <form method="post">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="objet" class="form-label">Objet *</label>
-                            <input type="text" class="form-control" id="objet" name="objet" value="{{ courrier.objet }}" required maxlength="500">
-                        </div>
-                    </div>
 
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="priorite" class="form-label">Priorité *</label>
-                            <select class="form-select" id="priorite" name="priorite" required>
-                                {% for prioriteValue in priorites %}
-                                    <option value="{{ prioriteValue }}" {% if prioriteValue == courrier.priorite %}selected{% endif %}>
-                                        {{ prioriteValue }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
+    {% set isStatutVerrouille = courrier.statut in ['RECU_CONFIRME', 'ACCUSE_RECEPTION_RECU', 'CLOS', 'ARCHIVE'] %}
+    <form method="post">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="objet" class="form-label">Objet *</label>
+                        <input type="text" class="form-control" id="objet" name="objet" value="{{ courrier.objet }}" required maxlength="500">
                     </div>
                 </div>
 
-                {% if is_granted('ROLE_ADMIN') %}
+                <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="statut" class="form-label">Statut * (Admin)</label>
-                        <select class="form-select" id="statut" name="statut" required>
-                            {% for statutValue in statuts %}
-                                <option value="{{ statutValue }}" {% if statutValue == courrier.statut %}selected{% endif %}>
-                                    {{ statutValue|replace({'_': ' '}) }}
+                        <label for="priorite" class="form-label">Priorité *</label>
+                        <select class="form-select" id="priorite" name="priorite" required>
+                            {% for prioriteValue in priorites %}
+                                <option value="{{ prioriteValue }}" {% if prioriteValue == courrier.priorite %}selected{% endif %}>
+                                    {{ prioriteValue }}
                                 </option>
                             {% endfor %}
                         </select>
                     </div>
-                {% else %}
-                    {# Le statut n'est plus modifiable pour les services dans ce formulaire #}
-                    <input type="hidden" name="statut" value="{{ courrier.statut }}">
-                {% endif %}
-
-                <div class="mb-3">
-                    <label for="contenu" class="form-label">Contenu</label>
-                    <textarea class="form-control" id="contenu" name="contenu" rows="5">{{ courrier.contenu }}</textarea>
                 </div>
+            </div>
 
-                {% set currentUserService = app.user.service %}
-                {% set estExpediteur = currentUserService and courrier.serviceExpediteur and currentUserService.id == courrier.serviceExpediteur.id %}
-                
-
+            {% if is_granted('ROLE_ADMIN') %}
                 <div class="mb-3">
-                    <label for="notes" class="form-label">Ajouter des notes</label>
-                    <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Les notes seront ajoutées aux notes existantes"></textarea>
+                    <label for="statut" class="form-label">Statut * (Admin)</label>
+                    <select class="form-select" id="statut" name="statut" required>
+                        {% for statutValue in statuts %}
+                            <option value="{{ statutValue }}" {% if statutValue == courrier.statut %}selected{% endif %}>
+                                {{ statutValue|replace({'_': ' '}) }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% else %}
+                {# Le statut n'est plus modifiable pour les services dans ce formulaire #}
+                <input type="hidden" name="statut" value="{{ courrier.statut }}">
+            {% endif %}
 
-                    {% if courrier.notes %}
-                    <div class="mt-2">
-                        <small class="text-muted">Notes existantes:</small>
-                        <div class="alert alert-light small">
-                            {{ courrier.notes|nl2br }}
-                        </div>
+            <div class="mb-3">
+                <label for="contenu" class="form-label">Contenu</label>
+                <textarea class="form-control" id="contenu" name="contenu" rows="5">{{ courrier.contenu }}</textarea>
+            </div>
+
+            {% set currentUserService = app.user.service %}
+            {% set estExpediteur = currentUserService and courrier.serviceExpediteur and currentUserService.id == courrier.serviceExpediteur.id %}
+            
+
+            <div class="mb-3">
+                <label for="notes" class="form-label">Ajouter des notes</label>
+                <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Les notes seront ajoutées aux notes existantes"></textarea>
+
+                {% if courrier.notes %}
+                <div class="mt-2">
+                    <small class="text-muted">Notes existantes:</small>
+                    <div class="alert alert-light small">
+                        {{ courrier.notes|nl2br }}
                     </div>
-                    {% endif %}
                 </div>
+                {% endif %}
+            </div>
 
-                <div class="d-flex justify-content-between">
-                    <a href="{{ path('courrier_show', {id: courrier.id}) }}" class="btn btn-secondary">Annuler</a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save"></i> Enregistrer les modifications
-                    </button>
-                </div>
-            </form>
+            <div class="d-flex justify-content-between">
+                <a href="{{ path('courrier_show', {id: courrier.id}) }}" class="btn btn-secondary">Annuler</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Enregistrer les modifications
+                </button>
+            </div>
+        </form>
         </div>
     </div>
 
