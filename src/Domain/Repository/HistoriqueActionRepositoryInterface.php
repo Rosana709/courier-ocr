@@ -9,6 +9,8 @@ use App\Domain\Entity\HistoriqueAction;
 
 interface HistoriqueActionRepositoryInterface
 {
+    public function find(string $id): ?HistoriqueAction;
+
     public function findByCourrier(Courrier $courrier): array;
 
     public function findLast(int $limit = 5): array;

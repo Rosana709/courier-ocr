@@ -223,7 +223,7 @@
         // AI Logic
         document.getElementById('btnSmartAI')?.addEventListener('click', async () => {
             const objet = document.getElementById('objet').value;
-            if (!objet) { alert("Saisissez un objet d'abord."); return; }
+            if (!objet) { showNotification("Saisissez un objet d'abord.", 'info'); return; }
             
             const rSelect = typeDestSelect.value === 'SERVICE' ? serviceDestSelect : personneDestSelect;
             // Get text from TomSelect if initialized, or fallback
@@ -252,9 +252,25 @@
                 const result = await res.json();
                 if (result.subject) document.getElementById('objet').value = result.subject;
                 if (result.body) document.getElementById('contenu').value = result.body;
-                alert("Rédigé avec succès !");
-            } catch (err) { alert(err.message); } 
+                showNotification("Rédigé avec succès !", 'success');
+            } catch (err) { showNotification(err.message, 'error'); } 
             finally { loadingOverlay.style.display = 'none'; }
+        });
+
+        // Validation Expéditeur != Destinataire
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const typeDest = typeDestSelect.value;
+            const userServiceId = "{{ userService.id }}";
+            
+            if (typeDest === 'SERVICE') {
+                const serviceDestId = serviceDestSelect.value;
+                if (serviceDestId === userServiceId) {
+                    e.preventDefault();
+                    showNotification("Erreur : Un courrier sortant ne peut pas être adressé à votre propre service.", 'error');
+                    return false;
+                }
+            }
         });
     });
 </script>

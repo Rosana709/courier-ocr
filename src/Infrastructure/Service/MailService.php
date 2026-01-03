@@ -14,8 +14,10 @@ class MailService
     ) {
     }
 
-    public function sendWelcomeEmail(string $recipientEmail, string $password, ?string $serviceName = null): void
+    public function sendWelcomeEmail(string $recipientEmail, string $password, string $role, ?string $serviceName = null): void
     {
+        $roleLabel = ($role === 'ROLE_ADMIN') ? 'Administrateur' : 'Utilisateur de service';
+        $roleInfo = sprintf('<li><strong>Rôle :</strong> %s</li>', $roleLabel);
         $serviceInfo = $serviceName ? sprintf('<li><strong>Service affecté :</strong> %s</li>', $serviceName) : '';
 
         $email = (new Email())
@@ -30,12 +32,37 @@ class MailService
                     <li><strong>Email :</strong> %s</li>
                     <li><strong>Mot de passe par défaut :</strong> %s</li>
                     %s
+                    %s
                 </ul>
                 <p>Nous vous recommandons de changer votre mot de passe dès votre première connexion.</p>
                 <p><a href="http://localhost:8000/login">Accéder à la plateforme</a></p>',
                 $recipientEmail,
                 $password,
+                $roleInfo,
                 $serviceInfo
+            ));
+
+        $this->mailer->send($email);
+    }
+
+    public function sendStatusChangeEmail(string $recipientEmail, bool $isActive): void
+    {
+        $message = $isActive 
+            ? 'Nous vous informons que votre compte a été activé par un administrateur. Vous pouvez désormais accéder à la plateforme.' 
+            : 'Nous vous informons que votre compte a été désactivé par un administrateur. Par conséquent, vous ne pouvez plus accéder à la plateforme.';
+
+        $link = $isActive ? '<p><a href="http://localhost:8000/login">Accéder à la plateforme</a></p>' : '';
+
+        $email = (new Email())
+            ->from('ne-pas-repondre@dgi.gov.mg')
+            ->to($recipientEmail)
+            ->subject('Mise à jour de votre compte - Gestion de Courrier')
+            ->html(sprintf(
+                '<h1>Mise à jour de votre compte</h1>
+                <p>%s</p>
+                %s',
+                $message,
+                $link
             ));
 
         $this->mailer->send($email);

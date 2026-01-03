@@ -10,6 +10,33 @@
     <link href="{{ asset('css/dgi-theme.css') }}" rel="stylesheet">
 
     {% block stylesheets %}{% endblock %}
+    <style>
+        #flash-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            width: 350px;
+            max-width: 90vw;
+        }
+        .alert {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: none;
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .alert.fade-out {
+            animation: slideOut 0.5s ease-in forwards;
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
 </head>
 <body>
     {% if app.user %}
@@ -123,15 +150,27 @@
     </nav>
     {% endif %}
 
-    <main class="container mt-4">
+    <div id="flash-container">
         {% for type, messages in app.flashes %}
             {% for message in messages %}
                 <div class="alert alert-{{ type == 'error' ? 'danger' : type }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <div class="d-flex align-items-center">
+                        {% if type == 'success' %}
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                        {% elseif type == 'error' %}
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        {% else %}
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                        {% endif %}
+                        <div>{{ message }}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
         {% endfor %}
+    </div>
+
+    <main class="container mt-4">
 
         {% block body %}{% endblock %}
     </main>
@@ -141,6 +180,30 @@
             <p class="text-muted">&copy; {{ 'now'|date('Y') }} Direction Générale des Impôts - Système de gestion de courrier</p>
         </div>
     </footer>
+
+    <!-- Modal de Confirmation Global -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Confirmation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="d-flex align-items-start">
+                        <div class="bg-warning-subtle p-3 rounded-circle me-3">
+                            <i class="bi bi-exclamation-triangle-fill text-warning fs-4"></i>
+                        </div>
+                        <p id="confirmModalMessage" class="mb-0 fs-5 mt-2 text-dark"></p>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary px-4" id="confirmModalBtn">Confirmer</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -167,6 +230,92 @@
 
         // Recharger toutes les 30 secondes
         setInterval(loadNotificationCount, 30000);
+
+        // Auto-disparition des messages flash
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('#flash-container .alert');
+            alerts.forEach(function(alert) {
+                // Créer un timer pour chaque alerte
+                setTimeout(function() {
+                    if (alert) {
+                        alert.classList.add('fade-out');
+                        // Attendre la fin de l'animation de sortie pour supprimer l'élément
+                        alert.addEventListener('animationend', function() {
+                            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                            bsAlert.close();
+                        });
+                    }
+                }, 5000);
+            });
+        });
+        
+        // Fonction globale pour afficher des notifications (toasts) programmatiquement
+        window.showNotification = function(message, type = 'success') {
+            const container = document.getElementById('flash-container');
+            const alertDiv = document.createElement('div');
+            const alertType = type === 'error' ? 'danger' : type;
+            
+            // Choisir l'icône
+            let icon = 'info-circle-fill';
+            if (type === 'success') icon = 'check-circle-fill';
+            else if (type === 'error' || type === 'danger') icon = 'exclamation-triangle-fill';
+            
+            alertDiv.className = `alert alert-${alertType} alert-dismissible fade show`;
+            alertDiv.setAttribute('role', 'alert');
+            alertDiv.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-${icon} me-2"></i>
+                    <div>${message}</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            container.appendChild(alertDiv);
+            
+            // Auto-disparition
+            setTimeout(() => {
+                alertDiv.classList.add('fade-out');
+                alertDiv.addEventListener('animationend', () => {
+                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alertDiv);
+                    bsAlert.close();
+                });
+            }, 5000);
+        };
+
+        // Gestion globale des confirmations personnalisées
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            const confirmBtn = document.getElementById('confirmModalBtn');
+            const confirmMsg = document.getElementById('confirmModalMessage');
+            let pendingAction = null;
+
+            document.body.addEventListener('submit', function(e) {
+                const form = e.target;
+                if (form.hasAttribute('data-confirm')) {
+                    e.preventDefault();
+                    confirmMsg.textContent = form.getAttribute('data-confirm');
+                    pendingAction = () => form.submit();
+                    confirmModal.show();
+                }
+            });
+
+            document.body.addEventListener('click', function(e) {
+                const link = e.target.closest('[data-confirm]');
+                if (link && link.tagName === 'A') {
+                    e.preventDefault();
+                    confirmMsg.textContent = link.getAttribute('data-confirm');
+                    pendingAction = () => window.location.href = link.href;
+                    confirmModal.show();
+                }
+            });
+
+            confirmBtn.addEventListener('click', function() {
+                if (pendingAction) {
+                    pendingAction();
+                }
+                confirmModal.hide();
+            });
+        });
     </script>
     {% endif %}
 

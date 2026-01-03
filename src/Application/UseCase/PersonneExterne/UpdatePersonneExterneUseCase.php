@@ -12,11 +12,13 @@ use App\Domain\Repository\PersonneExterneRepositoryInterface;
 class UpdatePersonneExterneUseCase
 {
     public function __construct(
-        private readonly PersonneExterneRepositoryInterface $personneExterneRepository
+        private readonly PersonneExterneRepositoryInterface $personneExterneRepository,
+        private readonly \App\Domain\Repository\HistoriqueActionRepositoryInterface $historiqueActionRepository,
+        private readonly \App\Domain\Repository\UtilisateurRepositoryInterface $utilisateurRepository
     ) {
     }
 
-    public function execute(string $id, UpdatePersonneExterneDTO $dto): PersonneExterne
+    public function execute(string $id, UpdatePersonneExterneDTO $dto, ?string $performingUserId = null): PersonneExterne
     {
         $personneExterne = $this->personneExterneRepository->findById($id);
 
@@ -45,6 +47,24 @@ class UpdatePersonneExterneUseCase
         }
 
         $this->personneExterneRepository->save($personneExterne);
+
+        if ($performingUserId) {
+            try {
+                $performingUser = $this->utilisateurRepository->findById($performingUserId);
+                if ($performingUser) {
+                    $historiqueAction = new \App\Domain\Entity\HistoriqueAction(
+                        courrier: null,
+                        typeAction: \App\Domain\Entity\HistoriqueAction::TYPE_PERSONNE_EXTERNE_MODIFICATION,
+                        description: sprintf('Mise à jour de la personne externe %s', $personneExterne->getNomOuRaisonSociale()),
+                        effectuePar: $performingUser,
+                        nouvelleValeur: $personneExterne->getId()
+                    );
+                    $this->historiqueActionRepository->save($historiqueAction);
+                }
+            } catch (\Exception $e) {
+                // Log error safely
+            }
+        }
 
         return $personneExterne;
     }

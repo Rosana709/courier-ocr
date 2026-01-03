@@ -386,14 +386,14 @@
                     const dateVal = data.date.match(/\d{4}-\d{2}-\d{2}/);
                     if (dateVal) document.getElementById('dateCourrier').value = dateVal[0];
                 }
-                alert("Analyse réussie !");
-            } catch (error) { alert("Erreur: " + error.message); } 
+                showNotification("Analyse réussie !", 'success');
+            } catch (error) { showNotification("Erreur: " + error.message, 'error'); } 
             finally { loadingOverlay.style.display = 'none'; smartOcrFileInput.value = ''; }
         });
 
         document.getElementById('btnSmartAI')?.addEventListener('click', async () => {
             const objetField = document.getElementById('objet');
-            if (!objetField.value) { alert("Saisissez un objet d'abord."); return; }
+            if (!objetField.value) { showNotification("Saisissez un objet d'abord.", 'info'); return; }
             const sSelect = typeExpSelect.value === 'SERVICE' ? serviceExpSelect : personneExpSelect;
             const rSelect = typeDestinataire.value === 'SERVICE' ? serviceDestinataireSelect : document.getElementById('personneExterneDestinataireId');
             const params = {
@@ -410,8 +410,8 @@
                 const result = await response.json();
                 if (result.subject) document.getElementById('objet').value = result.subject;
                 if (result.body) document.getElementById('contenu').value = result.body;
-                alert("Rédigé !");
-            } catch (error) { alert("Erreur: " + error.message); } 
+                showNotification("Rédigé !", 'success');
+            } catch (error) { showNotification("Erreur: " + error.message, 'error'); } 
             finally { loadingOverlay.style.display = 'none'; }
         });
 
@@ -435,7 +435,7 @@
                 const a = document.createElement('a'); a.href = url;
                 a.download = `courrier_${Date.now()}.pdf`;
                 document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            } catch (error) { alert("Erreur PDF: " + error.message); } 
+            } catch (error) { showNotification("Erreur PDF: " + error.message, 'error'); } 
             finally { loadingOverlay.style.display = 'none'; }
         });
 

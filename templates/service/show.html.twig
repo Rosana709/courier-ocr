@@ -142,13 +142,13 @@
                             <i class="bi bi-pencil"></i> Modifier le service
                         </a>
                         {% if service.estActif %}
-                            <form method="post" action="{{ path('service_deactivate', {id: service.id}) }}" onsubmit="return confirm('Voulez-vous vraiment désactiver ce service ?');">
+                            <form method="post" action="{{ path('service_deactivate', {id: service.id}) }}" data-confirm="Voulez-vous vraiment désactiver ce service ?">
                                 <button type="submit" class="btn btn-outline-warning w-100">
                                     <i class="bi bi-pause-circle"></i> Désactiver le service
                                 </button>
                             </form>
                         {% else %}
-                            <form method="post" action="{{ path('service_activate', {id: service.id}) }}" onsubmit="return confirm('Voulez-vous vraiment activer ce service ?');">
+                            <form method="post" action="{{ path('service_activate', {id: service.id}) }}" data-confirm="Voulez-vous vraiment activer ce service ?">
                                 <button type="submit" class="btn btn-outline-success w-100">
                                     <i class="bi bi-play-circle"></i> Activer le service
                                 </button>

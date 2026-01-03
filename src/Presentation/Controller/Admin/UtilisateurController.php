@@ -58,9 +58,9 @@ class UtilisateurController extends AbstractController
                     serviceId: $request->request->get('service_id') ?: null
                 );
 
-                $this->createUtilisateurUseCase->execute($dto);
+                $this->createUtilisateurUseCase->execute($dto, $this->getUser()->getUserIdentifier());
 
-                $this->addFlash('success', 'Utilisateur créé avec succès avec le mot de passe par défaut');
+                $this->addFlash('success', 'Utilisateur créé avec succès. Un email de bienvenue contenant le mot de passe par défaut a été envoyé à ' . $dto->email);
 
                 return $this->redirectToRoute('admin_utilisateur_index');
             } catch (\Exception $e) {
@@ -106,7 +106,7 @@ class UtilisateurController extends AbstractController
                     estActif: $request->request->get('est_actif') === '1'
                 );
 
-                $this->updateUtilisateurUseCase->execute($dto);
+                $this->updateUtilisateurUseCase->execute($dto, $this->getUser()->getUserIdentifier());
 
                 $this->addFlash('success', 'Utilisateur modifié avec succès');
 
@@ -144,7 +144,7 @@ class UtilisateurController extends AbstractController
     public function activate(string $id): Response
     {
         try {
-            $this->toggleUserStatusUseCase->activate($id);
+            $this->toggleUserStatusUseCase->activate($id, $this->getUser()->getUserIdentifier());
             $this->addFlash('success', 'Utilisateur activé avec succès');
         } catch (\Exception $e) {
             $this->addFlash('error', $e->getMessage());
@@ -157,7 +157,7 @@ class UtilisateurController extends AbstractController
     public function deactivate(string $id): Response
     {
         try {
-            $this->toggleUserStatusUseCase->deactivate($id);
+            $this->toggleUserStatusUseCase->deactivate($id, $this->getUser()->getUserIdentifier());
             $this->addFlash('success', 'Utilisateur désactivé avec succès');
         } catch (\Exception $e) {
             $this->addFlash('error', $e->getMessage());
@@ -170,7 +170,7 @@ class UtilisateurController extends AbstractController
     public function toggleStatus(string $id): Response
     {
         try {
-            $utilisateur = $this->toggleUserStatusUseCase->toggle($id);
+            $utilisateur = $this->toggleUserStatusUseCase->toggle($id, $this->getUser()->getUserIdentifier());
             $message = $utilisateur->estActif()
                 ? 'Utilisateur activé avec succès'
                 : 'Utilisateur désactivé avec succès';

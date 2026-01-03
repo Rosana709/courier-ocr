@@ -117,24 +117,24 @@
 
         // Si on change le mot de passe
         if (newPassword || confirmPassword) {
+            let errorMsg = '';
+            
             // Vérifier que l'ancien mot de passe est fourni
             if (!currentPassword) {
-                e.preventDefault();
-                alert('Vous devez fournir votre mot de passe actuel pour changer de mot de passe');
-                return;
+                errorMsg = 'Vous devez fournir votre mot de passe actuel pour changer de mot de passe';
             }
-
             // Vérifier que les mots de passe correspondent
-            if (newPassword !== confirmPassword) {
-                e.preventDefault();
-                alert('Les mots de passe ne correspondent pas');
-                return;
+            else if (newPassword !== confirmPassword) {
+                errorMsg = 'Les mots de passe ne correspondent pas';
+            }
+            // Vérifier la longueur minimale
+            else if (newPassword.length < 6) {
+                errorMsg = 'Le mot de passe doit contenir au moins 6 caractères';
             }
 
-            // Vérifier la longueur minimale
-            if (newPassword.length < 6) {
+            if (errorMsg) {
                 e.preventDefault();
-                alert('Le mot de passe doit contenir au moins 6 caractères');
+                showNotification(errorMsg, 'error');
                 return;
             }
         }

@@ -11,11 +11,13 @@ use App\Domain\Repository\PersonneExterneRepositoryInterface;
 class TogglePersonneExterneStatusUseCase
 {
     public function __construct(
-        private readonly PersonneExterneRepositoryInterface $personneExterneRepository
+        private readonly PersonneExterneRepositoryInterface $personneExterneRepository,
+        private readonly \App\Domain\Repository\HistoriqueActionRepositoryInterface $historiqueActionRepository,
+        private readonly \App\Domain\Repository\UtilisateurRepositoryInterface $utilisateurRepository
     ) {
     }
 
-    public function execute(string $id): PersonneExterne
+    public function execute(string $id, ?string $performingUserId = null): PersonneExterne
     {
         $personneExterne = $this->personneExterneRepository->findById($id);
 
@@ -30,6 +32,24 @@ class TogglePersonneExterneStatusUseCase
         }
 
         $this->personneExterneRepository->save($personneExterne);
+
+        if ($performingUserId) {
+            try {
+                $performingUser = $this->utilisateurRepository->findById($performingUserId);
+                if ($performingUser) {
+                    $historiqueAction = new \App\Domain\Entity\HistoriqueAction(
+                        courrier: null,
+                        typeAction: \App\Domain\Entity\HistoriqueAction::TYPE_PERSONNE_EXTERNE_TOGGLE,
+                        description: sprintf('%s pour %s', $personneExterne->estActif() ? 'Activation' : 'Désactivation', $personneExterne->getNomOuRaisonSociale()),
+                        effectuePar: $performingUser,
+                        nouvelleValeur: $personneExterne->estActif() ? 'ACTIF' : 'INACTIF'
+                    );
+                    $this->historiqueActionRepository->save($historiqueAction);
+                }
+            } catch (\Exception $e) {
+                // Log error safely
+            }
+        }
 
         return $personneExterne;
     }

@@ -9,6 +9,7 @@ use App\Domain\Entity\Utilisateur;
 use App\Domain\Repository\ServiceRepositoryInterface;
 use App\Domain\Repository\UtilisateurRepositoryInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Psr\Log\LoggerInterface;
 
 class CreateUtilisateurUseCase
 {
@@ -16,12 +17,20 @@ class CreateUtilisateurUseCase
         private readonly \App\Domain\Repository\UtilisateurRepositoryInterface $utilisateurRepository,
         private readonly \App\Domain\Repository\ServiceRepositoryInterface $serviceRepository,
         private readonly \Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface $passwordHasher,
-        private readonly \App\Infrastructure\Service\MailService $mailService
+        private readonly \App\Infrastructure\Service\MailService $mailService,
+        private readonly \App\Domain\Repository\HistoriqueActionRepositoryInterface $historiqueActionRepository,
+        private readonly \Psr\Log\LoggerInterface $logger
     ) {
     }
 
-    public function execute(CreateUtilisateurDTO $dto): Utilisateur
+    public function execute(CreateUtilisateurDTO $dto, string $performingUserId): Utilisateur
     {
+        // Récupérer l'utilisateur effectuant l'action
+        $performingUser = $this->utilisateurRepository->findById($performingUserId);
+        if (!$performingUser) {
+            throw new \DomainException('Utilisateur effectuant l\'action non trouvé');
+        }
+
         // Vérifier que l'email n'existe pas déjà
         if ($this->utilisateurRepository->existsByEmail($dto->email)) {
             throw new \DomainException('Un utilisateur avec cet email existe déjà');
@@ -57,13 +66,29 @@ class CreateUtilisateurUseCase
         // Sauvegarder
         $this->utilisateurRepository->save($utilisateur);
 
+        // Enregistrer l'action dans l'historique
+        try {
+            $historiqueAction = new \App\Domain\Entity\HistoriqueAction(
+                courrier: null,
+                typeAction: \App\Domain\Entity\HistoriqueAction::TYPE_UTILISATEUR_CREATION,
+                description: sprintf('Création de l\'utilisateur %s (%s)', $utilisateur->getEmail(), $utilisateur->getRoles()[0]),
+                effectuePar: $performingUser,
+                nouvelleValeur: $utilisateur->getEmail()
+            );
+            $this->historiqueActionRepository->save($historiqueAction);
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur lors de l\'historisation de la création d\'utilisateur : ' . $e->getMessage());
+        }
+
         // Envoyer l'email de bienvenue
         try {
             $serviceName = $utilisateur->getService()?->getNom();
-            $this->mailService->sendWelcomeEmail($dto->email, $dto->password, $serviceName);
+            $this->mailService->sendWelcomeEmail($dto->email, $dto->password, $dto->role, $serviceName);
         } catch (\Exception $e) {
-            // On log l'erreur mais on ne bloque pas la création du compte si l'envoi d'email échoue
-            // Dans un vrai projet, on pourrait utiliser un Messenger pour gérer ça en arrière-plan
+            $this->logger->error('Erreur lors de l\'envoi de l\'email de bienvenue : ' . $e->getMessage(), [
+                'email' => $dto->email,
+                'exception' => $e
+            ]);
         }
 
         return $utilisateur;

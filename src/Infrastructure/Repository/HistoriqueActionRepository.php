@@ -17,6 +17,11 @@ class HistoriqueActionRepository extends ServiceEntityRepository implements Hist
         parent::__construct($registry, HistoriqueAction::class);
     }
 
+    public function find($id, $lockMode = null, $lockVersion = null): ?HistoriqueAction
+    {
+        return parent::find($id, $lockMode, $lockVersion);
+    }
+
     public function findByCourrier(Courrier $courrier): array
     {
         return $this->createQueryBuilder('h')

@@ -12,11 +12,13 @@ use App\Domain\Repository\ServiceRepositoryInterface;
 class UpdateServiceUseCase
 {
     public function __construct(
-        private readonly ServiceRepositoryInterface $serviceRepository
+        private readonly ServiceRepositoryInterface $serviceRepository,
+        private readonly \App\Domain\Repository\HistoriqueActionRepositoryInterface $historiqueActionRepository,
+        private readonly \App\Domain\Repository\UtilisateurRepositoryInterface $utilisateurRepository
     ) {
     }
 
-    public function execute(UpdateServiceDTO $dto): Service
+    public function execute(UpdateServiceDTO $dto, ?string $performingUserId = null): Service
     {
         $service = $this->serviceRepository->findById($dto->id);
 
@@ -47,6 +49,24 @@ class UpdateServiceUseCase
         }
 
         $this->serviceRepository->save($service);
+
+        if ($performingUserId) {
+            try {
+                $performingUser = $this->utilisateurRepository->findById($performingUserId);
+                if ($performingUser) {
+                    $historiqueAction = new \App\Domain\Entity\HistoriqueAction(
+                        courrier: null,
+                        typeAction: \App\Domain\Entity\HistoriqueAction::TYPE_SERVICE_MODIFICATION,
+                        description: sprintf('Mise à jour du service %s (%s)', $service->getNom(), $service->getId()),
+                        effectuePar: $performingUser,
+                        nouvelleValeur: $service->getId()
+                    );
+                    $this->historiqueActionRepository->save($historiqueAction);
+                }
+            } catch (\Exception $e) {
+                // Log error safely
+            }
+        }
 
         return $service;
     }

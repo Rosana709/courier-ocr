@@ -339,7 +339,7 @@
                                         {% if is_granted('courrier_edit', courrier) %}
                                         <form method="post"
                                               action="{{ path('piece_jointe_delete', {courrierId: courrier.id, id: piece.id}) }}"
-                                              onsubmit="return confirm('Supprimer cette pièce jointe ?');"
+                                              data-confirm="Supprimer cette pièce jointe ?"
                                               class="d-inline-block">
                                             <button type="submit" class="btn btn-outline-danger" style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
                                                 <i class="bi bi-trash"></i>
@@ -539,13 +539,13 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    alert(result.message);
+                    showNotification(result.message, 'success');
                     location.reload();
                 } else {
-                    alert(result.message);
+                    showNotification(result.message, 'error');
                 }
             } catch (err) {
-                alert("Une erreur technique est survenue lors de la vérification.");
+                showNotification("Une erreur technique est survenue lors de la vérification.", 'error');
                 console.error(err);
             } finally {
                 loadingOverlay.style.display = 'none';

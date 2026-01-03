@@ -58,7 +58,7 @@ class ServiceController extends AbstractController
                     $request->request->get('estActif', '1') === '1'
                 );
 
-                $service = $this->createServiceUseCase->execute($dto);
+                $service = $this->createServiceUseCase->execute($dto, $this->getUser()->getUserIdentifier());
 
                 $this->addFlash('success', 'Service créé avec succès.');
                 return $this->redirectToRoute('service_show', ['id' => $service->getId()]);
@@ -102,7 +102,7 @@ class ServiceController extends AbstractController
                     $request->request->get('sigle')
                 );
 
-                $this->updateServiceUseCase->execute($dto);
+                $this->updateServiceUseCase->execute($dto, $this->getUser()->getUserIdentifier());
 
                 $this->addFlash('success', 'Service modifié avec succès.');
                 return $this->redirectToRoute('service_show', ['id' => $id]);
@@ -137,7 +137,7 @@ class ServiceController extends AbstractController
     public function toggleStatus(string $id): Response
     {
         try {
-            $service = $this->toggleServiceStatusUseCase->toggle($id);
+            $service = $this->toggleServiceStatusUseCase->toggle($id, $this->getUser()->getUserIdentifier());
             $status = $service->isEstActif() ? 'activé' : 'désactivé';
             $this->addFlash('success', "Service $status avec succès.");
         } catch (DomainException $e) {
@@ -151,7 +151,7 @@ class ServiceController extends AbstractController
     public function activate(string $id): Response
     {
         try {
-            $this->toggleServiceStatusUseCase->activate($id);
+            $this->toggleServiceStatusUseCase->activate($id, $this->getUser()->getUserIdentifier());
             $this->addFlash('success', 'Service activé avec succès.');
         } catch (DomainException $e) {
             $this->addFlash('error', $e->getMessage());
@@ -164,7 +164,7 @@ class ServiceController extends AbstractController
     public function deactivate(string $id): Response
     {
         try {
-            $this->toggleServiceStatusUseCase->deactivate($id);
+            $this->toggleServiceStatusUseCase->deactivate($id, $this->getUser()->getUserIdentifier());
             $this->addFlash('success', 'Service désactivé avec succès.');
         } catch (DomainException $e) {
             $this->addFlash('error', $e->getMessage());

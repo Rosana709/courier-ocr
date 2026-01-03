@@ -155,7 +155,7 @@
                                     </a>
                                     {% endif %}
                                     {% if is_granted('ROLE_ADMIN') %}
-                                    <form method="post" action="{{ path('courrier_delete', {id: courrier.id}) }}" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce courrier ?');">
+                                    <form method="post" action="{{ path('courrier_delete', {id: courrier.id}) }}" style="display:inline;" data-confirm="Êtes-vous sûr de vouloir supprimer ce courrier ?">
                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
                                             <i class="bi bi-trash"></i>
                                         </button>

@@ -238,6 +238,18 @@
                 if (!response.ok) throw new Error("Erreur OCR");
                 const result = await response.json();
                 const data = result.data || {};
+
+                // Validation Destinataire : doit être le service connecté
+                if (data.receiverService) {
+                    const rName = data.receiverService.toLowerCase();
+                    const userServiceName = "{{ userService.nom }}".toLowerCase();
+                    if (!rName.includes(userServiceName) && !userServiceName.includes(rName)) {
+                        showNotification("Attention : Ce document semble être adressé à '" + data.receiverService + "' et non à '{{ userService.nom }}'.\nL'analyse est annulée.", 'error');
+                        loadingOverlay.style.display = 'none';
+                        smartOcrFileInput.value = '';
+                        return;
+                    }
+                }
                 
                 if (data.subject) document.getElementById('objet').value = data.subject;
                 if (data.body) document.getElementById('contenu').value = data.body;
@@ -293,8 +305,8 @@
                 if (!data.letterNumber || !data.subject) {
                     msg += "\nNote : Certaines informations n'ont pas pu être extraites automatiquement.";
                 }
-                alert(msg);
-            } catch (err) { alert(err.message); } 
+                showNotification(msg, 'success');
+            } catch (err) { showNotification(err.message, 'error'); } 
             finally { loadingOverlay.style.display = 'none'; smartOcrFileInput.value = ''; }
         });
 
@@ -354,6 +366,22 @@
                 window.history.replaceState({}, document.title, window.location.pathname);
             } catch (e) { console.error(e); }
         }
+
+        // Validation Expéditeur != Destinataire
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const typeExp = typeExpSelect.value;
+            const userServiceId = "{{ userService.id }}";
+            
+            if (typeExp === 'SERVICE') {
+                const serviceExpId = serviceExpSelect.value;
+                if (serviceExpId === userServiceId) {
+                    e.preventDefault();
+                    showNotification("Erreur : Un courrier entrant ne peut pas avoir votre propre service comme expéditeur.", 'error');
+                    return false;
+                }
+            }
+        });
     });
 </script>
 {% endblock %}

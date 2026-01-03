@@ -140,7 +140,7 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-journal-text"></i> Rapport d'activité des services</h5>
+                    <h5 class="mb-0"><i class="bi bi-journal-text"></i> Rapport d'activité global</h5>
                     <span class="badge bg-info">10 dernières actions</span>
                 </div>
                 <div class="card-body">
@@ -155,15 +155,15 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Date & Heure</th>
-                                        <th>Service / Acteur</th>
+                                        <th>Acteur</th>
                                         <th>Action effectuée</th>
-                                        <th>Détails du courrier</th>
+                                        <th>Détails / Objet</th>
                                         <th class="text-end">Réf.</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for action in actions_recentres %}
-                                        <tr>
+                                        <tr class="activity-row" data-action-id="{{ action.id }}" style="cursor: pointer;">
                                             <td class="small">{{ action.dateAction|date('d/m/Y H:i') }}</td>
                                             <td>
                                                 <div class="fw-bold text-primary">
@@ -183,9 +183,9 @@
                                             </td>
                                             <td>
                                                 {% set badgeClass = 'secondary' %}
-                                                {% if action.typeAction == 'CREATION' %}{% set badgeClass = 'success' %}
-                                                {% elseif action.typeAction == 'ENVOI_ACCUSE_RECEPTION' %}{% set badgeClass = 'info' %}
-                                                {% elseif action.typeAction == 'MODIFICATION_STATUT' %}{% set badgeClass = 'warning' %}
+                                                {% if action.typeAction in ['CREATION', 'UTILISATEUR_CREATION', 'SERVICE_CREATION', 'PERSONNE_EXTERNE_CREATION'] %}{% set badgeClass = 'success' %}
+                                                {% elseif action.typeAction in ['ENVOI_ACCUSE_RECEPTION', 'UTILISATEUR_MODIFICATION', 'SERVICE_MODIFICATION', 'PERSONNE_EXTERNE_MODIFICATION'] %}{% set badgeClass = 'info' %}
+                                                {% elseif action.typeAction in ['MODIFICATION_STATUT', 'UTILISATEUR_TOGGLE', 'SERVICE_TOGGLE', 'PERSONNE_EXTERNE_TOGGLE'] %}{% set badgeClass = 'warning' %}
                                                 {% endif %}
                                                 <span class="badge bg-{{ badgeClass }}">{{ action.typeAction|replace({'_': ' '}) }}</span>
                                             </td>
@@ -194,7 +194,7 @@
                                                     {% if action.courrier %}
                                                         <span title="{{ action.courrier.objet }}">{{ action.courrier.objet }}</span>
                                                     {% else %}
-                                                        <span class="text-muted italic">Courrier supprimé</span>
+                                                        <span class="text-muted">{{ action.description }}</span>
                                                     {% endif %}
                                                 </div>
                                                 <div class="small">
@@ -266,4 +266,71 @@
         </div>
     </div>
 </div>
+
+{# Modal pour les détails de l'action #}
+<div class="modal fade" id="actionDetailModal" tabindex="-1" aria-labelledby="actionDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="action-detail-content">
+            <div class="modal-body text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-2 text-muted">Chargement des détails...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const activityRows = document.querySelectorAll('.activity-row');
+    const modalContent = document.getElementById('action-detail-content');
+    const actionModal = new bootstrap.Modal(document.getElementById('actionDetailModal'));
+
+    activityRows.forEach(row => {
+        row.addEventListener('click', function(e) {
+            // Ne pas ouvrir le modal si on clique sur le lien "Consulter"
+            if (e.target.closest('a')) return;
+
+            const actionId = this.dataset.actionId;
+            
+            // Afficher le loader
+            modalContent.innerHTML = `
+                <div class="modal-body text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Chargement des détails...</p>
+                </div>
+            `;
+            
+            actionModal.show();
+
+            // Charger les détails via AJAX
+            fetch(`/admin/action/${actionId}/detail`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Erreur réseau');
+                    return response.text();
+                })
+                .then(html => {
+                    modalContent.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    modalContent.innerHTML = `
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title">Erreur</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Impossible de charger les détails de cette activité.</p>
+                        </div>
+                    `;
+                });
+        });
+    });
+});
+</script>
 {% endblock %}

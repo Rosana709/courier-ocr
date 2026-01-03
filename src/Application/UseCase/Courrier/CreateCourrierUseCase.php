@@ -56,6 +56,16 @@ class CreateCourrierUseCase
             'destinataire'
         );
 
+        // Vérification Expéditeur != Destinataire
+        if ($dto->typeExpediteur === $dto->typeDestinataire) {
+            if ($dto->typeExpediteur === Courrier::ACTEUR_SERVICE && $dto->serviceExpediteurId === $dto->serviceDestinataireId) {
+                throw new InvalidCourierDataException("Un courrier formel ne peut pas avoir le même service comme expéditeur et destinataire.");
+            }
+            if ($dto->typeExpediteur === Courrier::ACTEUR_PERSONNE_EXTERNE && $dto->personneExterneExpediteurId === $dto->personneExterneDestinataireId) {
+                throw new InvalidCourierDataException("L'expéditeur et le destinataire ne peuvent pas être la même personne externe.");
+            }
+        }
+
         // Générer le numéro de référence selon le type de courrier
         if ($dto->type === Courrier::TYPE_SORTANT) {
             // Courrier sortant : générer numéro de référence automatiquement

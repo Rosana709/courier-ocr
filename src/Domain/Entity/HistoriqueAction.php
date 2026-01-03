@@ -25,13 +25,24 @@ class HistoriqueAction
     public const TYPE_ARCHIVAGE = 'ARCHIVAGE';
     public const TYPE_SUPPRESSION = 'SUPPRESSION';
 
+    // Actions administratives
+    public const TYPE_UTILISATEUR_CREATION = 'UTILISATEUR_CREATION';
+    public const TYPE_UTILISATEUR_MODIFICATION = 'UTILISATEUR_MODIFICATION';
+    public const TYPE_UTILISATEUR_TOGGLE = 'UTILISATEUR_TOGGLE';
+    public const TYPE_SERVICE_CREATION = 'SERVICE_CREATION';
+    public const TYPE_SERVICE_MODIFICATION = 'SERVICE_MODIFICATION';
+    public const TYPE_SERVICE_TOGGLE = 'SERVICE_TOGGLE';
+    public const TYPE_PERSONNE_EXTERNE_CREATION = 'PERSONNE_EXTERNE_CREATION';
+    public const TYPE_PERSONNE_EXTERNE_MODIFICATION = 'PERSONNE_EXTERNE_MODIFICATION';
+    public const TYPE_PERSONNE_EXTERNE_TOGGLE = 'PERSONNE_EXTERNE_TOGGLE';
+
     #[ORM\Id]
     #[ORM\Column(type: 'uuid')]
     private string $id;
 
     #[ORM\ManyToOne(targetEntity: Courrier::class)]
-    #[ORM\JoinColumn(name: 'courrier_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
-    private Courrier $courrier;
+    #[ORM\JoinColumn(name: 'courrier_id', referencedColumnName: 'id', nullable: true, onDelete: 'CASCADE')]
+    private ?Courrier $courrier = null;
 
     #[ORM\Column(name: 'typeaction', type: 'string', length: 50)]
     private string $typeAction;
@@ -53,7 +64,7 @@ class HistoriqueAction
     private \DateTimeImmutable $dateAction;
 
     public function __construct(
-        Courrier $courrier,
+        ?Courrier $courrier,
         string $typeAction,
         string $description,
         Utilisateur $effectuePar,
@@ -75,7 +86,7 @@ class HistoriqueAction
         return $this->id;
     }
 
-    public function getCourrier(): Courrier
+    public function getCourrier(): ?Courrier
     {
         return $this->courrier;
     }
@@ -125,6 +136,15 @@ class HistoriqueAction
             self::TYPE_AJOUT_NOTES,
             self::TYPE_ARCHIVAGE,
             self::TYPE_SUPPRESSION,
+            self::TYPE_UTILISATEUR_CREATION,
+            self::TYPE_UTILISATEUR_MODIFICATION,
+            self::TYPE_UTILISATEUR_TOGGLE,
+            self::TYPE_SERVICE_CREATION,
+            self::TYPE_SERVICE_MODIFICATION,
+            self::TYPE_SERVICE_TOGGLE,
+            self::TYPE_PERSONNE_EXTERNE_CREATION,
+            self::TYPE_PERSONNE_EXTERNE_MODIFICATION,
+            self::TYPE_PERSONNE_EXTERNE_TOGGLE,
         ];
     }
 

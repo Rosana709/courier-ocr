@@ -55,4 +55,18 @@ class AdminDashboardController extends AbstractController
             'sessions_connectees' => $this->sessionTraceRepository->findActiveSince(new \DateTimeImmutable('-15 minutes')),
         ]);
     }
+
+    #[Route('/action/{id}/detail', name: 'action_detail')]
+    public function actionDetail(string $id): Response
+    {
+        $action = $this->historiqueActionRepository->find($id);
+        
+        if (!$action) {
+            throw $this->createNotFoundException('Action non trouvée');
+        }
+
+        return $this->render('admin/dashboard/_action_detail.html.twig', [
+            'action' => $action,
+        ]);
+    }
 }

@@ -244,13 +244,13 @@
                             <i class="bi bi-pencil"></i> Modifier l'utilisateur
                         </a>
                         {% if utilisateur.estActif() %}
-                            <form method="post" action="{{ path('admin_utilisateur_deactivate', {id: utilisateur.id}) }}" onsubmit="return confirm('Voulez-vous vraiment désactiver cet utilisateur ?');">
+                            <form method="post" action="{{ path('admin_utilisateur_deactivate', {id: utilisateur.id}) }}" data-confirm="Voulez-vous vraiment désactiver cet utilisateur ?">
                                 <button type="submit" class="btn btn-outline-warning w-100">
                                     <i class="bi bi-pause-circle"></i> Désactiver le compte
                                 </button>
                             </form>
                         {% else %}
-                            <form method="post" action="{{ path('admin_utilisateur_activate', {id: utilisateur.id}) }}" onsubmit="return confirm('Voulez-vous vraiment activer cet utilisateur ?');">
+                            <form method="post" action="{{ path('admin_utilisateur_activate', {id: utilisateur.id}) }}" data-confirm="Voulez-vous vraiment activer cet utilisateur ?">
                                 <button type="submit" class="btn btn-outline-success w-100">
                                     <i class="bi bi-play-circle"></i> Activer le compte
                                 </button>

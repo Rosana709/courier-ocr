@@ -1,0 +1,87 @@
+<div class="modal-header bg-light">
+    <h5 class="modal-title" id="actionDetailModalLabel">
+        <i class="bi bi-info-circle"></i> Détails de l'activité
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="small text-muted d-block">Date et Heure</label>
+            <strong>{{ action.dateAction|date('d/m/Y H:i:s') }}</strong>
+        </div>
+        <div class="col-md-6">
+            <label class="small text-muted d-block">Type d'action</label>
+            {% set badgeClass = 'secondary' %}
+            {% if action.typeAction in ['CREATION', 'UTILISATEUR_CREATION', 'SERVICE_CREATION', 'PERSONNE_EXTERNE_CREATION'] %}{% set badgeClass = 'success' %}
+            {% elseif action.typeAction in ['ENVOI_ACCUSE_RECEPTION', 'UTILISATEUR_MODIFICATION', 'SERVICE_MODIFICATION', 'PERSONNE_EXTERNE_MODIFICATION'] %}{% set badgeClass = 'info' %}
+            {% elseif action.typeAction in ['MODIFICATION_STATUT', 'UTILISATEUR_TOGGLE', 'SERVICE_TOGGLE', 'PERSONNE_EXTERNE_TOGGLE'] %}{% set badgeClass = 'warning' %}
+            {% endif %}
+            <span class="badge bg-{{ badgeClass }}">{{ action.typeAction|replace({'_': ' '}) }}</span>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="small text-muted d-block">Effectuée par</label>
+        <div>
+            {% if action.effectuePar and action.effectuePar.service %}
+                <i class="bi bi-building"></i> {{ action.effectuePar.service.nom }}
+            {% elseif action.effectuePar %}
+                <i class="bi bi-person-fill"></i> {{ action.effectuePar.email }}
+            {% else %}
+                <i class="bi bi-gear-fill"></i> Système
+            {% endif %}
+        </div>
+        {% if action.effectuePar %}
+            <small class="text-muted">{{ action.effectuePar.email }}</small>
+        {% endif %}
+    </div>
+
+    <div class="mb-3">
+        <label class="small text-muted d-block">Élément concerné</label>
+        {% if action.courrier %}
+            <div class="fw-bold"><i class="bi bi-envelope"></i> {{ action.courrier.objet }}</div>
+            <div class="small">Réf: {{ action.courrier.numeroReference }}</div>
+            <a href="{{ path('courrier_show', {id: action.courrier.id}) }}" class="btn btn-sm btn-outline-primary mt-2">
+                <i class="bi bi-eye"></i> Voir le courrier
+            </a>
+        {% else %}
+            <div class="p-2 border rounded bg-light">
+                <i class="bi bi-info-circle-fill text-primary"></i> Action administrative (hors courrier)
+            </div>
+        {% endif %}
+    </div>
+
+    <hr>
+
+    <div class="mb-3">
+        <label class="small text-muted d-block">Description</label>
+        <div class="p-2 bg-light border rounded">
+            {{ action.description }}
+        </div>
+    </div>
+
+    {% if action.ancienneValeur or action.nouvelleValeur %}
+        <div class="row mt-3">
+            {% if action.ancienneValeur %}
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Ancienne valeur</label>
+                    <div class="p-2 border rounded bg-light-subtle text-danger text-decoration-line-through small">
+                        {{ action.ancienneValeur }}
+                    </div>
+                </div>
+            {% endif %}
+            {% if action.nouvelleValeur %}
+                <div class="col-md-6">
+                    <label class="small text-muted d-block">Nouvelle valeur</label>
+                    <div class="p-2 border rounded bg-light-subtle text-success fw-bold small">
+                        {{ action.nouvelleValeur }}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+</div>

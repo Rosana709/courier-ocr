@@ -246,7 +246,7 @@
                                             <form method="post"
                                                   action="{{ path('admin_utilisateur_deactivate', {id: utilisateur.id}) }}"
                                                   style="display: inline;"
-                                                  onsubmit="return confirm('Voulez-vous vraiment désactiver cet utilisateur ?');">
+                                                  data-confirm="Voulez-vous vraiment désactiver cet utilisateur ?">
                                                 <button type="submit"
                                                         class="btn btn-sm btn-warning btn-action"
                                                         title="Désactiver">
@@ -257,7 +257,7 @@
                                             <form method="post"
                                                   action="{{ path('admin_utilisateur_activate', {id: utilisateur.id}) }}"
                                                   style="display: inline;"
-                                                  onsubmit="return confirm('Voulez-vous vraiment activer cet utilisateur ?');">
+                                                  data-confirm="Voulez-vous vraiment activer cet utilisateur ?">
                                                 <button type="submit"
                                                         class="btn btn-sm btn-success btn-action"
                                                         title="Activer">
