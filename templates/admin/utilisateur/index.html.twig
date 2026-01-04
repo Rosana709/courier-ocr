@@ -148,7 +148,7 @@
                 <p class="stats-number">{{ utilisateurs|length }}</p>
                 <p class="stats-label">
                     <i class="bi bi-people"></i>
-                    Total Utilisateurs
+                    Nombre total d'utilisateurs
                 </p>
             </div>
         </div>
@@ -157,7 +157,7 @@
                 <p class="stats-number">{{ utilisateurs|filter(u => u.estActif())|length }}</p>
                 <p class="stats-label">
                     <i class="bi bi-check-circle"></i>
-                    Utilisateurs Actifs
+                    Comptes actifs
                 </p>
             </div>
         </div>
@@ -166,7 +166,7 @@
                 <p class="stats-number">{{ utilisateurs|filter(u => not u.estActif())|length }}</p>
                 <p class="stats-label">
                     <i class="bi bi-x-circle"></i>
-                    Utilisateurs Inactifs
+                    Comptes désactivés
                 </p>
             </div>
         </div>
@@ -185,9 +185,9 @@
                     <thead>
                         <tr>
                             <th>Email</th>
-                            <th>Rôle</th>
+                            <th>Type d'utilisateur</th>
                             <th>Service</th>
-                            <th>Statut</th>
+                            <th>État du compte</th>
                             <th class="text-end">Actions</th>
                         </tr>
                     </thead>

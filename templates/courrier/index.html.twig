@@ -154,13 +154,6 @@
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     {% endif %}
-                                    {% if is_granted('ROLE_ADMIN') %}
-                                    <form method="post" action="{{ path('courrier_delete', {id: courrier.id}) }}" style="display:inline;" data-confirm="Êtes-vous sûr de vouloir supprimer ce courrier ?">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -178,33 +171,33 @@
     </div>
 </div>
 
-{# Modal OCR #}
+{# Modal Saisie Automatique #}
 <div class="modal fade" id="ocrModal" tabindex="-1" aria-labelledby="ocrModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="ocrModalLabel">Importer un courrier via OCR</h5>
+                <h5 class="modal-title" id="ocrModalLabel">Remplissage automatique par scan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Sélectionnez un fichier PDF pour extraire automatiquement les informations du courrier.</p>
+                <p>Sélectionnez un fichier PDF ou une image pour que le système lise et remplisse automatiquement les informations.</p>
                 <div class="mb-3">
-                    <label for="ocrFile" class="form-label">Fichier PDF</label>
-                    <input class="form-control" type="file" id="ocrFile" accept=".pdf">
+                    <label for="ocrFile" class="form-label">Document (PDF ou Image)</label>
+                    <input class="form-control" type="file" id="ocrFile" accept=".pdf,image/*">
                 </div>
                 <div id="ocrStatus" class="mt-3" style="display: none;">
                     <div class="d-flex align-items-center">
                         <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
                             <span class="visually-hidden">Chargement...</span>
                         </div>
-                        <span id="ocrStatusText">Analyse en cours...</span>
+                        <span id="ocrStatusText">Lecture en cours...</span>
                     </div>
                 </div>
                 <div id="ocrError" class="alert alert-danger mt-3" style="display: none;"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-primary" id="startOcrBtn">Démarrer l'extraction</button>
+                <button type="button" class="btn btn-primary" id="startOcrBtn">Lancer la lecture automatique</button>
             </div>
         </div>
     </div>

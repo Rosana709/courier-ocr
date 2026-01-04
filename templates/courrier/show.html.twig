@@ -8,8 +8,8 @@
     <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
         <span class="visually-hidden">Chargement...</span>
     </div>
-    <div class="mt-3 fw-bold fs-5">Validation OCR en cours...</div>
-    <div class="small">Vérification de la cohérence du document...</div>
+    <div class="mt-3 fw-bold fs-5">Analyse automatique en cours...</div>
+    <div class="small">Nous vérifions si le document correspond aux informations saisies...</div>
 </div>
 
 <div class="container py-4">
@@ -190,7 +190,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         {% if isIncomingForRecipient %}
-                            <i class="bi bi-file-earmark-check"></i> Digitalisation du courrier
+                            <i class="bi bi-file-earmark-check"></i> Version numérique du courrier
                         {% else %}
                             Document{% if courrier.type != 'SORTANT' %}s joints{% endif %}
                         {% endif %}
@@ -248,10 +248,10 @@
                         {% else %}
                             <div class="text-center py-5 border-2 border-dashed rounded bg-light" id="ocrVerificationArea">
                                 <i class="bi bi-camera text-primary display-4"></i>
-                                <h6 class="mt-3">Vérification de la version numérique</h6>
+                                <h6 class="mt-3">Ajouter la version scannée</h6>
                                 <p class="text-muted px-4">
-                                    Pour confirmer la réception physique de ce courrier, veuillez importer sa version numérique scannée. 
-                                    Le système vérifiera la cohérence des données par OCR.
+                                    Pour confirmer que vous avez bien reçu ce courrier, merci d'importer le document scanné. 
+                                    Le système va lire automatiquement le numéro sur le papier pour confirmer qu'il s'agit du bon courrier.
                                 </p>
                                 <input type="file" id="recipientOcrInput" style="display: none;" accept="application/pdf,image/*">
                                 <button type="button" class="btn btn-lg btn-primary shadow-sm" id="btnRecipientOCR">
@@ -383,15 +383,15 @@
 
             <div class="card mb-3">
                 <div class="card-header">
-                    <h6 class="mb-0">Métadonnées</h6>
+                    <h6 class="mb-0">Détails de création</h6>
                 </div>
                 <div class="card-body">
                     <p class="small mb-1">
-                        <strong>Créé par:</strong><br>
+                        <strong>Enregistré par:</strong><br>
                         {{ courrier.creeParUtilisateur.email }}
                     </p>
                     <p class="small mb-1">
-                        <strong>Date de création:</strong><br>
+                        <strong>Date d'enregistrement:</strong><br>
                         {{ courrier.dateCreation|date('d/m/Y H:i') }}
                     </p>
                     {% if courrier.dateModification %}
@@ -412,9 +412,6 @@
                     <div class="d-grid gap-2">
                         <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#archiveModal">
                             <i class="bi bi-archive"></i> Archiver
-                        </button>
-                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                            <i class="bi bi-trash"></i> Supprimer
                         </button>
                     </div>
                 </div>
@@ -447,31 +444,6 @@
     </div>
 </div>
 
-<!-- Modal confirmation suppression -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-danger" id="deleteModalLabel"><i class="bi bi-exclamation-triangle"></i> Confirmation de suppression</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Êtes-vous sûr de vouloir supprimer définitivement ce courrier ?</p>
-                <div class="alert alert-danger">
-                    <i class="bi bi-exclamation-circle-fill"></i> Cette action est irréversible et supprimera toutes les pièces jointes associées.
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                <form method="post" action="{{ path('courrier_delete', {id: courrier.id}) }}">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-trash"></i> Confirmer la suppression
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 <!-- Modal d'upload de pièce jointe -->
 <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
     <div class="modal-dialog">

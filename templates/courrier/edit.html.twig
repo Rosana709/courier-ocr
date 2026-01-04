@@ -45,7 +45,7 @@
 
             {% if is_granted('ROLE_ADMIN') %}
                 <div class="mb-3">
-                    <label for="statut" class="form-label">Statut * (Admin)</label>
+                    <label for="statut" class="form-label">État du courrier * (Administrateur)</label>
                     <select class="form-select" id="statut" name="statut" required>
                         {% for statutValue in statuts %}
                             <option value="{{ statutValue }}" {% if statutValue == courrier.statut %}selected{% endif %}>
@@ -133,7 +133,7 @@
                 <dt class="col-sm-3">Date du courrier</dt>
                 <dd class="col-sm-9">{{ courrier.dateCourrier|date('d/m/Y') }}</dd>
 
-                <dt class="col-sm-3">Statut actuel</dt>
+                <dt class="col-sm-3">État actuel</dt>
                 <dd class="col-sm-9 mb-0">
                     {% set currentUserService = app.user.service %}
                     {% set displayedStatut = (not is_granted('ROLE_ADMIN') and currentUserService)

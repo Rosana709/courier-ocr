@@ -35,20 +35,20 @@ class UpdateCourrierUseCase
             throw new EntityNotFoundException("Courrier non trouvé");
         }
 
-        // Empêcher la modification d'un courrier sortant
-        if ($courrier->estSortant()) {
+        // Empêcher la modification d'un courrier sortant (sauf si c'est pour l'archiver)
+        if ($courrier->estSortant() && $dto->statut !== Courrier::STATUT_ARCHIVE) {
             throw new \App\Domain\Exception\DomainException("Un courrier sortant ne peut pas être modifié après sa création.");
         }
 
-        if ($dto->objet !== null) {
+        if ($dto->objet !== null && $courrier->estEntrant()) {
             $courrier->updateObjet($dto->objet);
         }
 
-        if ($dto->contenu !== null) {
+        if ($dto->contenu !== null && $courrier->estEntrant()) {
             $courrier->updateContenu($dto->contenu);
         }
 
-        if ($dto->priorite !== null) {
+        if ($dto->priorite !== null && $courrier->estEntrant()) {
             $courrier->updatePriorite($dto->priorite);
         }
 
@@ -61,7 +61,11 @@ class UpdateCourrierUseCase
             ];
 
             // On ne permet pas de changer le statut si le courrier est déjà confirmé/terminal
-            if (!in_array($courrier->getStatut(), $statutsVerrouilles)) {
+            // SAUF si on veut l'archiver (et qu'il n'est pas déjà archivé)
+            $isArchiving = $dto->statut === Courrier::STATUT_ARCHIVE;
+            $isAlreadyLocked = in_array($courrier->getStatut(), $statutsVerrouilles);
+
+            if (!$isAlreadyLocked || ($isArchiving && $courrier->getStatut() !== Courrier::STATUT_ARCHIVE)) {
                 $ancienStatut = $courrier->getStatut();
                 $courrier->updateStatut($dto->statut);
 

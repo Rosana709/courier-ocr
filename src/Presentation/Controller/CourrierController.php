@@ -109,16 +109,10 @@ class CourrierController extends AbstractController
     }
 
     #[Route('/archives', name: 'courrier_archives', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function archives(): Response
     {
-        $user = $this->getUser();
-
-        if ($this->isGranted('ROLE_ADMIN')) {
-            $courriers = $this->listCourriersUseCase->executeArchivedAll();
-        } else {
-            $serviceId = $user->getService()->getId();
-            $courriers = $this->listCourriersUseCase->executeArchivedByService($serviceId);
-        }
+        $courriers = $this->listCourriersUseCase->executeArchivedAll();
 
         return $this->render('courrier/index.html.twig', [
             'courriers' => $courriers,
@@ -372,12 +366,12 @@ class CourrierController extends AbstractController
                 statut: Courrier::STATUT_ARCHIVE
             );
             $this->updateCourrierUseCase->execute($id, $dto, $this->getUser()->getId());
-            $this->addFlash('success', 'Courrier archivé.');
+            $this->addFlash('success', 'Courrier archivé avec succès.');
         } catch (DomainException $e) {
             $this->addFlash('error', $e->getMessage());
         }
 
-        return $this->redirectToRoute('courrier_show', ['id' => $id]);
+        return $this->redirectToRoute('courrier_index');
     }
 
     #[Route('/{id}/generate-official-pdf', name: 'courrier_generate_official_pdf', methods: ['GET'])]
@@ -493,19 +487,6 @@ class CourrierController extends AbstractController
         }
     }
 
-    #[Route('/{id}/delete', name: 'courrier_delete', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
-    public function delete(string $id): Response
-    {
-        try {
-            $this->deleteCourrierUseCase->execute($id, $this->getUser()->getId());
-            $this->addFlash('success', 'Courrier supprimé avec succès.');
-            return $this->redirectToRoute('courrier_index');
-        } catch (DomainException $e) {
-            $this->addFlash('error', $e->getMessage());
-            return $this->redirectToRoute('courrier_show', ['id' => $id]);
-        }
-    }
 }
 
 

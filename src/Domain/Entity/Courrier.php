@@ -213,6 +213,11 @@ class Courrier
         return $this->type === self::TYPE_ENTRANT;
     }
 
+    public function estSortant(): bool
+    {
+        return $this->type === self::TYPE_SORTANT;
+    }
+
     public function getTypeRelatif(Service $service): string
     {
         // Si le service est l'expéditeur, c'est un courrier SORTANT pour lui

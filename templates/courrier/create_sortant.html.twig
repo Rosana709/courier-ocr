@@ -17,7 +17,7 @@
     <div class="row mb-4">
         <div class="col">
             <h1 class="h2">
-                <i class="bi bi-box-arrow-right"></i> Nouveau courrier
+                <i class="bi bi-box-arrow-right"></i> Nouveau Courrier Sortant
             </h1>
         </div>
         <div class="col-auto">
@@ -27,7 +27,7 @@
         </div>
     </div>
 
-    <div class="row">
+    <div class="row justify-content-center">
         <div class="col-md-8">
 
             <div class="card">
@@ -56,9 +56,8 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="numeroReference" class="form-label">N° Référence</label>
+                                    <label for="numeroReference" class="form-label">N° Référence (Attribué après enregistrement)</label>
                                     <input type="text" class="form-control" id="numeroReference" placeholder="Généré automatiquement" readonly title="Le numéro sera généré au format : XXX/MEF/SG/DGI/{{ userService.sigle ?? userService.id }}">
-                                    <div class="form-text small">Attribué après enregistrement</div>
                                 </div>
                             </div>
                         </div>
@@ -121,15 +120,18 @@
                             <textarea class="form-control" id="contenu" name="contenu" rows="10"></textarea>
                         </div>
 
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex justify-content-between align-items-start mt-4">
                             <a href="{{ path('courrier_index') }}" class="btn btn-secondary">Annuler</a>
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-smart" id="btnSmartAI">
-                                    <i class="bi bi-robot"></i> Rédiger via IA
-                                </button>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-save"></i> Enregistrer
-                                </button>
+                            <div class="d-flex flex-column align-items-end gap-2">
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-smart" id="btnSmartAI" title="L'IA peut vous aider à rédiger le contenu.">
+                                        <i class="bi bi-robot"></i> Aide à la rédaction (IA)
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save"></i> Enregistrer le courrier
+                                    </button>
+                                </div>
+                                <small class="text-muted"><i class="bi bi-info-circle"></i> Le texte généré par l'IA dans le contenu peut être modifié librement avant l'enregistrement.</small>
                             </div>
                         </div>
                     </form>

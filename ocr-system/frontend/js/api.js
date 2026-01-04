@@ -22,7 +22,7 @@ async function extractDataFromImage(file) {
         return result.data || {};
     } catch (error) {
         if (error.message.includes('Failed to fetch')) {
-            throw new Error("Impossible de contacter le serveur backend. Assurez-vous que le serveur FastAPI (port 8000) est lancé.");
+            throw new Error("Impossible de contacter le serveur backend. Assurez-vous que le serveur FastAPI (port 8001) est lancé.");
         }
         throw error;
     }

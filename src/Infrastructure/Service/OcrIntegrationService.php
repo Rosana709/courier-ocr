@@ -14,7 +14,7 @@ class OcrIntegrationService
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly \Psr\Log\LoggerInterface $logger,
-        string $ocrBackendUrl = 'http://127.0.0.1:8000'
+        string $ocrBackendUrl = 'http://127.0.0.1:8001'
     ) {
         $this->baseUrl = rtrim($ocrBackendUrl, '/');
     }
