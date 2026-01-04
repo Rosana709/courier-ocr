@@ -26,7 +26,7 @@ class UpdateProfilUseCase
             if ($existingUser !== null && $existingUser->getId() !== $utilisateur->getId()) {
                 throw new \DomainException('Cet email est déjà utilisé par un autre utilisateur');
             }
-            $utilisateur->setEmail($dto->email);
+            $utilisateur->updateEmail($dto->email);
         }
 
         // Mise à jour du mot de passe si fourni

@@ -17,7 +17,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class SmartAssistantController extends AbstractController
 {
     public function __construct(
-        private readonly OcrIntegrationService $ocrService
+        private readonly OcrIntegrationService $ocrService,
+        private readonly \App\Domain\Repository\CourrierRepositoryInterface $courrierRepository
     ) {
     }
 
@@ -31,7 +32,17 @@ class SmartAssistantController extends AbstractController
 
         try {
             $data = $this->ocrService->extractText($file);
-            return new JsonResponse(['data' => $data]);
+            
+            // Vérification des doublons
+            $isDuplicate = false;
+            if (!empty($data['letterNumber'])) {
+                $isDuplicate = $this->courrierRepository->existsByNumeroReference($data['letterNumber']);
+            }
+
+            return new JsonResponse([
+                'data' => $data,
+                'isDuplicate' => $isDuplicate
+            ]);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }

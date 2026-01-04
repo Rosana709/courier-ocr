@@ -10,7 +10,8 @@ use Symfony\Component\Mime\Email;
 class MailService
 {
     public function __construct(
-        private readonly MailerInterface $mailer
+        private readonly MailerInterface $mailer,
+        private readonly string $mailerSender
     ) {
     }
 
@@ -21,7 +22,7 @@ class MailService
         $serviceInfo = $serviceName ? sprintf('<li><strong>Service affecté :</strong> %s</li>', $serviceName) : '';
 
         $email = (new Email())
-            ->from('ne-pas-repondre@dgi.gov.mg')
+            ->from($this->mailerSender)
             ->to($recipientEmail)
             ->subject('Bienvenue sur la plateforme de Gestion de Courrier')
             ->html(sprintf(
@@ -54,7 +55,7 @@ class MailService
         $link = $isActive ? '<p><a href="http://localhost:8000/login">Accéder à la plateforme</a></p>' : '';
 
         $email = (new Email())
-            ->from('ne-pas-repondre@dgi.gov.mg')
+            ->from($this->mailerSender)
             ->to($recipientEmail)
             ->subject('Mise à jour de votre compte - Gestion de Courrier')
             ->html(sprintf(
@@ -71,7 +72,7 @@ class MailService
     public function sendServiceAssignmentEmail(string $recipientEmail, string $serviceName): void
     {
         $email = (new Email())
-            ->from('ne-pas-repondre@dgi.gov.mg')
+            ->from($this->mailerSender)
             ->to($recipientEmail)
             ->subject('Affectation à un nouveau service - Gestion de Courrier')
             ->html(sprintf(

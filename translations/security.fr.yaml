@@ -1,0 +1,4 @@
+"Invalid credentials.": "Email ou mot de passe incorrect."
+"Invalid CSRF token.": "Jeton CSRF invalide."
+"Account is disabled.": "Ce compte est désactivé."
+"Account is locked.": "Ce compte est verrouillé."

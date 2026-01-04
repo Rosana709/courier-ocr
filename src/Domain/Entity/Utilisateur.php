@@ -97,6 +97,11 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         $this->dateModification = new \DateTimeImmutable();
     }
 
+    public function setEmail(string $email): void
+    {
+        $this->updateEmail($email);
+    }
+
     public function getPassword(): string
     {
         return $this->password;

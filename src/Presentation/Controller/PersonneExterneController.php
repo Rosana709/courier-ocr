@@ -59,7 +59,7 @@ class PersonneExterneController extends AbstractController
                     email: $request->request->get('email')
                 );
 
-                $personne = $this->createPersonneExterneUseCase->execute($dto, $this->getUser()->getUserIdentifier());
+                $personne = $this->createPersonneExterneUseCase->execute($dto, $this->getUser()->getId());
 
                 $this->addFlash('success', 'Personne externe créée avec succès.');
                 return $this->redirectToRoute('personne_externe_show', ['id' => $personne->getId()]);
@@ -104,7 +104,7 @@ class PersonneExterneController extends AbstractController
                     email: $request->request->get('email')
                 );
 
-                $this->updatePersonneExterneUseCase->execute($id, $dto, $this->getUser()->getUserIdentifier());
+                $this->updatePersonneExterneUseCase->execute($id, $dto, $this->getUser()->getId());
 
                 $this->addFlash('success', 'Personne externe modifiée avec succès.');
                 return $this->redirectToRoute('personne_externe_show', ['id' => $id]);
@@ -125,7 +125,7 @@ class PersonneExterneController extends AbstractController
     public function toggleStatus(string $id): Response
     {
         try {
-            $this->togglePersonneExterneStatusUseCase->execute($id, $this->getUser()->getUserIdentifier());
+            $this->togglePersonneExterneStatusUseCase->execute($id, $this->getUser()->getId());
             $this->addFlash('success', 'Statut modifié avec succès.');
         } catch (DomainException $e) {
             $this->addFlash('error', $e->getMessage());

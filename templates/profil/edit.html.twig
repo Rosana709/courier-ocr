@@ -38,7 +38,12 @@
 
                         <div class="mb-3">
                             <label for="current_password" class="form-label">Mot de passe actuel</label>
-                            <input type="password" class="form-control" id="current_password" name="current_password">
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="current_password" name="current_password" style="border-right: none;">
+                                <span class="input-group-text toggle-password" data-target="current_password" style="cursor: pointer; background: white; border-left: none;">
+                                    <i class="bi bi-eye-slash-fill"></i>
+                                </span>
+                            </div>
                             <div class="form-text">Requis uniquement si vous changez votre mot de passe</div>
                         </div>
 
@@ -46,7 +51,12 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="new_password" class="form-label">Nouveau mot de passe</label>
-                                    <input type="password" class="form-control" id="new_password" name="new_password" minlength="6">
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="new_password" name="new_password" minlength="6" style="border-right: none;">
+                                        <span class="input-group-text toggle-password" data-target="new_password" style="cursor: pointer; background: white; border-left: none;">
+                                            <i class="bi bi-eye-slash-fill"></i>
+                                        </span>
+                                    </div>
                                     <div class="form-text">Au moins 6 caractères</div>
                                 </div>
                             </div>
@@ -54,7 +64,12 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="confirm_password" class="form-label">Confirmer le mot de passe</label>
-                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" minlength="6">
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" minlength="6" style="border-right: none;">
+                                        <span class="input-group-text toggle-password" data-target="confirm_password" style="cursor: pointer; background: white; border-left: none;">
+                                            <i class="bi bi-eye-slash-fill"></i>
+                                        </span>
+                                    </div>
                                     <div class="form-text">Doit correspondre au nouveau mot de passe</div>
                                 </div>
                             </div>
@@ -109,6 +124,25 @@
 
 {% block javascripts %}
 <script>
+    // Gestion de la visibilité du mot de passe
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.toggle('bi-eye-fill');
+                icon.classList.toggle('bi-eye-slash-fill');
+            } else {
+                input.type = 'password';
+                icon.classList.toggle('bi-eye-fill');
+                icon.classList.toggle('bi-eye-slash-fill');
+            }
+        });
+    });
+
     // Validation côté client
     document.querySelector('form').addEventListener('submit', function(e) {
         const newPassword = document.getElementById('new_password').value;

@@ -109,6 +109,24 @@
             box-shadow: 0 0 0 0.2rem rgba(118, 170, 170, 0.25);
         }
 
+        .form-control::placeholder {
+            color: rgba(31, 63, 68, 0.45);
+        }
+
+        /* Masquer l'icône de révélation native du navigateur (Edge/Chrome/IE) */
+        input::-ms-reveal,
+        input::-ms-clear {
+            display: none;
+        }
+        input::-webkit-contacts-auto-fill-button,
+        input::-webkit-credentials-auto-fill-button {
+            visibility: hidden;
+            display: none !important;
+            pointer-events: none;
+            position: absolute;
+            right: 0;
+        }
+
         .btn-primary {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             border: none;
@@ -236,13 +254,19 @@
 
                     <div class="mb-3">
                         <label for="inputPassword" class="form-label">Mot de passe</label>
-                        <input type="password"
-                               name="_password"
-                               id="inputPassword"
-                               class="form-control form-control-lg"
-                               autocomplete="current-password"
-                               required
-                               placeholder="Votre mot de passe">
+                        <div class="input-group">
+                            <input type="password"
+                                   name="_password"
+                                   id="inputPassword"
+                                   class="form-control form-control-lg"
+                                   autocomplete="current-password"
+                                   required
+                                   placeholder="Votre mot de passe"
+                                   style="border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none;">
+                            <span class="input-group-text" id="togglePassword" style="cursor: pointer; background: #f7fbfb; border: 1px solid rgba(118, 170, 170, 0.45); border-left: none; border-top-right-radius: 12px; border-bottom-right-radius: 12px;">
+                                <i class="bi bi-eye-slash-fill" id="eyeIcon"></i>
+                            </span>
+                        </div>
                     </div>
 
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
@@ -264,6 +288,7 @@
     <script>
         // Auto-disparition des messages flash
         document.addEventListener('DOMContentLoaded', function() {
+            // Flash messages
             const alerts = document.querySelectorAll('#flash-container .alert');
             alerts.forEach(function(alert) {
                 setTimeout(function() {
@@ -276,6 +301,21 @@
                     }
                 }, 6000); 
             });
+
+            // Password toggle
+            const togglePassword = document.querySelector('#togglePassword');
+            const password = document.querySelector('#inputPassword');
+            const eyeIcon = document.querySelector('#eyeIcon');
+
+            if (togglePassword && password) {
+                togglePassword.addEventListener('click', function() {
+                    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                    password.setAttribute('type', type);
+                    
+                    eyeIcon.classList.toggle('bi-eye-fill');
+                    eyeIcon.classList.toggle('bi-eye-slash-fill');
+                });
+            }
         });
     </script>
 </body>

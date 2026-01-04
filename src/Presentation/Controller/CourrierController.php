@@ -134,7 +134,7 @@ class CourrierController extends AbstractController
         $userService = $user?->getService();
 
         if (!$userService) {
-            $this->addFlash('error', "Votre compte n'est associ?? ?? aucun service.");
+            $this->addFlash('error', "Votre compte n'est associé à aucun service.");
             return $this->redirectToRoute('courrier_index');
         }
 
@@ -142,7 +142,7 @@ class CourrierController extends AbstractController
             try {
                 $type = $request->request->get('type', '');
 
-                // Exp??diteur : verrouill?? sur service connect?? pour SORTANT, s??lectionnable pour ENTRANT
+                // Expéditeur : verrouillé sur service connecté pour SORTANT, sélectionnable pour ENTRANT
                 $typeExpediteur = $request->request->get('typeExpediteur', Courrier::ACTEUR_SERVICE);
                 $serviceExpediteurId = $request->request->get('serviceExpediteurId');
                 $personneExterneExpediteurId = $request->request->get('personneExterneExpediteurId');
@@ -195,7 +195,7 @@ class CourrierController extends AbstractController
 
                 $courrier = $this->createCourrierUseCase->execute($dto, $user->getId());
 
-                $this->addFlash('success', 'Courrier cr???? avec succ??s.');
+                $this->addFlash('success', 'Courrier créé avec succès.');
                 return $this->redirectToRoute('courrier_show', ['id' => $courrier->getId()]);
 
             } catch (DomainException $e) {
@@ -203,7 +203,7 @@ class CourrierController extends AbstractController
             }
         }
 
-        $services = $this->serviceRepository->findAll();
+        $services = $this->serviceRepository->findActifs();
         $personnesExternes = $this->personneExterneRepository->findAll();
 
         $type = $request->query->get('type') ?? $request->request->get('type');
@@ -271,7 +271,7 @@ class CourrierController extends AbstractController
                 }
             }
 
-            $services = $this->serviceRepository->findAll();
+            $services = $this->serviceRepository->findActifs();
 
             return $this->render('courrier/edit.html.twig', [
                 'courrier' => $courrier,
@@ -295,7 +295,7 @@ class CourrierController extends AbstractController
 
             $this->accuseReceptionUseCase->execute($id, $serviceId, $user->getId());
 
-            $this->addFlash('success', 'Accus?? de r??ception confirm?? avec succ??s.');
+            $this->addFlash('success', 'Accusé de réception confirmé avec succès.');
         } catch (DomainException $e) {
             $this->addFlash('error', $e->getMessage());
         }
@@ -328,7 +328,7 @@ class CourrierController extends AbstractController
             ];
         }
 
-        $headers = ['N?? Arriv??e', 'N?? R??f??rence', 'Type', 'Objet', 'Priorit??', 'Statut', 'Date Courrier', 'Date Enregistrement'];
+        $headers = ['N° Arrivée', 'N° Référence', 'Type', 'Objet', 'Priorité', 'Statut', 'Date Courrier', 'Date Enregistrement'];
 
         return $this->excelExportService->export($data, $headers, 'Liste_Courriers_' . date('Y-m-d'));
     }
@@ -357,7 +357,7 @@ class CourrierController extends AbstractController
             ];
         }
 
-        $headers = ['N?? Arriv??e', 'N?? R??f??rence', 'Type', 'Objet', 'Priorit??', 'Statut', 'Date'];
+        $headers = ['N° Arrivée', 'N° Référence', 'Type', 'Objet', 'Priorité', 'Statut', 'Date'];
 
         return $this->pdfExportService->export($data, $headers, 'Liste_Courriers_' . date('Y-m-d'), 'Liste des Courriers');
     }

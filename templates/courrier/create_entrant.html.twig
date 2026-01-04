@@ -106,7 +106,9 @@
                                     <select class="form-select" id="serviceExpediteurId" name="serviceExpediteurId">
                                         <option value="">-- Sélectionnez --</option>
                                         {% for service in services %}
-                                            <option value="{{ service.id }}">{{ service.nom }}</option>
+                                            {% if service.id != userService.id %}
+                                                <option value="{{ service.id }}">{{ service.nom }}</option>
+                                            {% endif %}
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -239,10 +241,28 @@
                 const result = await response.json();
                 const data = result.data || {};
 
+                // Vérification des doublons
+                if (result.isDuplicate) {
+                    showNotification("Erreur : Ce document est déjà enregistré (N° " + (data.letterNumber || "inconnu") + ").\nL'analyse est annulée.", 'error');
+                    loadingOverlay.style.display = 'none';
+                    smartOcrFileInput.value = '';
+                    return;
+                }
+
                 // Validation Destinataire : doit être le service connecté
                 if (data.receiverService) {
-                    const rName = data.receiverService.toLowerCase();
-                    const userServiceName = "{{ userService.nom }}".toLowerCase();
+                    const normalize = (str) => {
+                        return str.toLowerCase()
+                            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Supprimer accents
+                            .replace(/s\b/g, "") // Supprimer les pluriels (fin de mot)
+                            .replace(/\([^)]*\)/g, "") // Supprimer le contenu entre parenthèses
+                            .replace(/[^a-z0-9]/g, "") // Garder seulement alphanumérique
+                            .trim();
+                    };
+
+                    const rName = normalize(data.receiverService);
+                    const userServiceName = normalize("{{ userService.nom }}");
+                    
                     if (!rName.includes(userServiceName) && !userServiceName.includes(rName)) {
                         showNotification("Attention : Ce document semble être adressé à '" + data.receiverService + "' et non à '{{ userService.nom }}'.\nL'analyse est annulée.", 'error');
                         loadingOverlay.style.display = 'none';
