@@ -70,8 +70,7 @@ class CreateCourrierUseCase
         if ($dto->type === Courrier::TYPE_SORTANT) {
             // Courrier sortant : générer numéro de référence automatiquement
             if ($dto->typeExpediteur === Courrier::ACTEUR_SERVICE) {
-                $annee = (int) date('Y');
-                $numeroReference = $this->numeroReferenceGenerator->generer($expediteur, $annee);
+                $numeroReference = $this->numeroReferenceGenerator->generer($expediteur);
             } else {
                 // Courrier externe sortant (rare)
                 $numeroReference = sprintf('EXT-%s-%s', date('Y'), uniqid());

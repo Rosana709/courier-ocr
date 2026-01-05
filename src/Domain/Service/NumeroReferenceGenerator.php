@@ -16,17 +16,17 @@ class NumeroReferenceGenerator
 
     /**
      * Génère un numéro de référence au format : XXX/MEF/SG/DGI/SERVICE
-     * XXX : compteur par service et par année (001, 002...)
+     * XXX : compteur global par service (001, 002...)
      */
-    public function generer(Service $service, int $annee): string
+    public function generer(Service $service): string
     {
-        // Récupérer le nombre de courriers du service pour cette année
-        $compteur = $this->courrierRepository->countByServiceAndAnnee($service, $annee);
+        // Récupérer le nombre total de courriers envoyés par le service
+        $compteur = $this->courrierRepository->countByServiceExpediteur($service);
 
         // Incrémenter pour le prochain courrier
         $compteur++;
 
-        // Formater le compteur sur 3 chiffres
+        // Formater le compteur sur 3 chiffres (ou plus si nécessaire)
         $numeroFormate = str_pad((string)$compteur, 3, '0', STR_PAD_LEFT);
 
         // Utiliser le sigle du service s'il existe, sinon l'ID

@@ -79,6 +79,8 @@ interface CourrierRepositoryInterface
     public function countByService(Service $service): int;
 
     public function countByServiceAndAnnee(Service $service, int $annee): int;
+    
+    public function countByServiceExpediteur(Service $service): int;
 
     public function countByStatut(string $statut): int;
 

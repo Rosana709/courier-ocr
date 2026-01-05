@@ -180,7 +180,7 @@ class CourrierController extends AbstractController
                     personneExterneExpediteurId: $personneExterneExpediteurId,
                     typeDestinataire: $request->request->get('typeDestinataire', ''),
                     serviceDestinataireId: $request->request->get('serviceDestinataireId'),
-                    personneExterneDestinataireId: $request->request->get('personneExterneDestinataireId'),
+                    personneExterneDestinataireId: $personneExterneDestinataireId,
                     destinatairesCopieIds: $request->request->all('destinatairesCopieIds'),
                     courrierParentId: $request->request->get('courrierParentId'),
                     notes: $request->request->get('notes'),
@@ -192,8 +192,12 @@ class CourrierController extends AbstractController
                 $this->addFlash('success', 'Courrier créé avec succès.');
                 return $this->redirectToRoute('courrier_show', ['id' => $courrier->getId()]);
 
-            } catch (DomainException $e) {
+            } catch (DomainException|\InvalidArgumentException|\TypeError $e) {
                 $this->addFlash('error', $e->getMessage());
+            } catch (\Exception $e) {
+                // Pour les autres erreurs inattendues, loguer le détail et afficher un message générique
+                error_log(sprintf('Erreur lors de la création d\'un courrier : %s at %s:%d', $e->getMessage(), $e->getFile(), $e->getLine()));
+                $this->addFlash('error', 'Une erreur inattendue est survenue lors de l\'enregistrement.');
             }
         }
 

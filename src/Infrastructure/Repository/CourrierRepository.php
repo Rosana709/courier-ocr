@@ -259,6 +259,16 @@ class CourrierRepository extends ServiceEntityRepository implements CourrierRepo
             ->getSingleScalarResult();
     }
 
+    public function countByServiceExpediteur(Service $service): int
+    {
+        return (int) $this->createQueryBuilder('c')
+            ->select('COUNT(c.id)')
+            ->where('c.serviceExpediteur = :service')
+            ->setParameter('service', $service)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     /**
      * Compte les courriers entrants reçus par un service dans une année donnée
      */
