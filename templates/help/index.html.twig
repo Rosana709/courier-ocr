@@ -1,0 +1,450 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Aide & Assistance - Gestion de Courrier{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .chat-container {
+        height: 70vh;
+        display: flex;
+        flex-direction: column;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        overflow: hidden;
+    }
+
+    .chat-header {
+        background: linear-gradient(135deg, #76aaaa 0%, #4e7a7a 100%);
+        color: white;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .chat-header .bot-avatar {
+        width: 45px;
+        height: 45px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #76aaaa;
+        font-size: 24px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 25px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        scroll-behavior: smooth;
+    }
+
+    .message {
+        max-width: 80%;
+        padding: 12px 18px;
+        border-radius: 15px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        position: relative;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.bot {
+        align-self: flex-start;
+        background: white;
+        color: #333;
+        border-bottom-left-radius: 2px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .message h3 {
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        color: #4e7a7a;
+        font-weight: 700;
+    }
+
+    .message ul, .message ol {
+        padding-left: 20px;
+        margin-bottom: 10px;
+    }
+
+    .message.user {
+        align-self: flex-end;
+        background: #76aaaa;
+        color: white;
+        border-bottom-right-radius: 2px;
+        box-shadow: 0 2px 10px rgba(118, 170, 170, 0.3);
+    }
+
+    .chat-input-area {
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        border-top: 1px solid rgba(0,0,0,0.05);
+        display: flex;
+        gap: 10px;
+    }
+
+    .chat-input {
+        flex: 1;
+        border: 1px solid #ddd;
+        border-radius: 30px;
+        padding: 12px 20px;
+        outline: none;
+        transition: all 0.3s;
+    }
+
+    .chat-input:focus {
+        border-color: #76aaaa;
+        box-shadow: 0 0 0 3px rgba(118, 170, 170, 0.1);
+    }
+
+    .btn-send {
+        width: 45px;
+        height: 45px;
+        background: #76aaaa;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s, background 0.2s;
+    }
+
+    .btn-send:hover {
+        background: #4e7a7a;
+        transform: scale(1.05);
+    }
+
+    .suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .suggestion-chip {
+        background: rgba(118, 170, 170, 0.1);
+        color: #4e7a7a;
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid rgba(118, 170, 170, 0.2);
+    }
+
+    .suggestion-chip:hover {
+        background: #76aaaa;
+        color: white;
+    }
+
+    .typing-indicator {
+        display: flex;
+        gap: 4px;
+        padding: 10px;
+        background: rgba(0,0,0,0.03);
+        border-radius: 10px;
+        width: fit-content;
+        margin-bottom: 10px;
+    }
+
+    .dot {
+        width: 6px;
+        height: 6px;
+        background: #999;
+        border-radius: 50%;
+        animation: bounce 1.3s infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.15s; }
+    .dot:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes bounce {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-4px); }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="mb-4 text-center">
+            <h1 class="fw-bold text-dark">Comment puis-je vous aider ?</h1>
+            <p class="text-muted">Votre assistant intelligent pour la gestion de courrier.</p>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="bot-avatar">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold">Assistant DGI</h5>
+                    <small class="opacity-75">Connecté et prêt à répondre</small>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chat-messages">
+                <div class="message bot">
+                    {% if is_admin %}
+                        Bonjour Administrateur ! Je connais parfaitement le fonctionnement de la plateforme (gestion des bureaux, des comptes et des rapports). Que voulez-vous savoir ?
+                    {% else %}
+                        Bonjour ! Je suis l'assistant de votre bureau. Je peux vous guider pour gérer vos courriers et vos alertes. Comment puis-je vous aider ?
+                    {% endif %}
+                </div>
+                
+                <div class="suggestions">
+                    {% if is_admin %}
+                        <div class="suggestion-chip" onclick="sendSuggestion('Après avoir créé un utilisateur ?')">Après création compte</div>
+                        <div class="suggestion-chip" onclick="sendSuggestion('Gérer les bureaux')">Gestion Bureaux</div>
+                    {% else %}
+                        <div class="suggestion-chip" onclick="sendSuggestion('Enregistrer un courrier arrivé')">Courrier Entrant</div>
+                        <div class="suggestion-chip" onclick="sendSuggestion('Préparer un courrier de départ')">Courrier Sortant</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="user-input" placeholder="Écrivez votre question ici..." onkeypress="handleKeyPress(event)">
+                <button class="btn-send" id="send-button" onclick="sendMessage()">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const chatMessages = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const isAdmin = {{ is_admin ? 'true' : 'false' }};
+    
+    const allKnowledge = [
+        {
+            title: "Démarrer sur la plateforme",
+            keywords: ['debuter', 'commencer', 'comment', 'faire', 'aide', 'guide', 'aider', 'perdu', 'nouveau', 'apprendre', 'plateforme', 'système'],
+            answer: "### 🚀 Bienvenue ! Laissez-moi vous guider.\nC'est votre première fois ici ? Pas de panique !\n\nL'idée de base est simple : cette plateforme sert à **gérer les courriers numériques** de votre bureau.\n- **Si vous recevez un document papier** : Utilisez le bouton **Courrier Entrant**. Glissez le document scanné, et le système le lira pour vous.\n- **Si vous voulez envoyer une lettre** : Utilisez **Courrier Sortant**. Je peux même vous aider à l'écrire !\n- **Le petit plus** : Regardez toujours la **cloche** en haut, c'est là que vos collègues vous envoient des informations.\n\nQue préférez-vous essayer en premier ?",
+            roles: ['admin', 'service']
+        },
+        {
+            title: "Enregistrement d'arrivée (Entrant)",
+            keywords: ['entrant', 'arrivée', 'réception', 'reçu', 'entrer', 'venir', 'pdf', 'automatique'],
+            answer: "### 📥 Gérer un Courrier Entrant (Arrivée)\nVoici comment enregistrer un document que vous avez reçu :\n1. **Ouvrir le formulaire** : Cliquez sur le bouton **Courrier Entrant** sur votre tableau de bord.\n2. **Lecture automatique** : Glissez votre fichier PDF dans la zone pointillée. Le système va lire le document et remplir tout seul la date et l'objet.\n3. **Validation des infos** : Vérifiez que les informations lues sont correctes. Vous pouvez les modifier à la main si besoin.\n4. **Enregistrer** : Cliquez sur le bouton de validation pour terminer l'enregistrement.",
+            roles: ['service']
+        },
+        {
+            title: "Préparation de départ (Sortant)",
+            keywords: ['sortant', 'départ', 'envoi', 'envoyer', 'écrire', 'lettre', 'rédiger', 'pdf'],
+            answer: "### 📤 Gérer un Courrier Sortant (Départ)\nVoici comment préparer un document que vous voulez envoyer :\n1. **Ouvrir le formulaire** : Cliquez sur le bouton **Courrier Sortant**.\n2. **Aide à la rédaction** : Tapez quelques mots sur le sujet de votre lettre dans la zone d'aide. L'assistant va écrire la lettre proprement pour vous.\n3. **Choisir le destinataire** : Indiquez à qui vous envoyez le courrier.\n4. **Générer le PDF** : Une fois enregistré, cliquez sur **Générer PDF** pour obtenir votre lettre officielle prête à imprimer.",
+            roles: ['service']
+        },
+        {
+            title: "Changement de statut",
+            keywords: ['statut', 'état', 'changer', 'étape', 'traité', 'fini', 'attente'],
+            answer: "### 🔄 Changer l'état d'un Courrier\nUn courrier peut passer par plusieurs étapes :\n1. **En attente** : C'est l'état de départ quand un courrier est créé.\n2. **Traité / Validé** : Quand vous avez terminé de gérer le dossier, vous pouvez marquer qu'il est fini.\n3. **Archivé** : Pour les vieux documents que vous voulez ranger pour ne plus les voir dans la liste principale.\n*Note : Pour changer l'état, allez sur la fiche du courrier et utilisez les boutons d'action en haut.*",
+            roles: ['admin', 'service']
+        },
+        {
+            title: "Validation des documents",
+            keywords: ['validation', 'valider', 'vérifier', 'approbation', 'confirmer'],
+            answer: "### ✅ Validation du Courrier Entrant\nC'est l'étape de vérification après la lecture automatique :\n1. **Vérification** : Une fois que le document est lu, regardez bien si l'expéditeur et le sujet sont les bons.\n2. **Correction** : Si le système a fait une petite erreur de lecture, corrigez simplement le texte dans les cases.\n3. **Lien** : Assurez-vous que le courrier est bien lié à la bonne personne ou au bon bureau.\n4. **Confirmation finale** : Cliquez sur le bouton d'enregistrement pour confirmer que tout est correct.",
+            roles: ['service']
+        },
+        {
+            title: "Gestion des Bureaux",
+            keywords: ['service', 'bureau', 'sigle', 'direction', 'département', 'créer', 'ajouter'],
+            answer: isAdmin
+                ? "### 🏢 Gestion des Bureaux (Admin)\n1. Allez dans le menu **Services**.\n2. Vous pouvez créer un nouveau bureau (ex: Direction Technique).\n3. Donnez un **sigle** court (ex: DT) qui servira à identifier les courriers de ce bureau.\n4. Vous pouvez activer ou désactiver un bureau pour suspendre son activité."
+                : "### 🏢 Votre Bureau\n- Vous travaillez pour votre propre bureau.\n- Vos lettres utilisent le nom et le sigle de votre bureau.\n- Vous ne voyez pas les lettres des autres bureaux par sécurité.",
+            roles: ['admin', 'service']
+        },
+        {
+            title: "Gestion des Comptes",
+            keywords: ['utilisateur', 'compte', 'personne', 'accès', 'créer', 'liste'],
+            answer: "### 👤 Gestion des Comptes (Admin)\n1. Allez dans **Utilisateurs**.\n2. Vous pouvez créer des accès pour vos collègues.\n3. N'oubliez pas de les rattacher à leur **Bureau** respectif pour qu'ils voient leurs courriers.\n4. Vous pouvez voir qui est connecté et quel est leur rôle (Admin ou Service).",
+            roles: ['admin']
+        },
+        {
+            title: "Après création utilisateur",
+            keywords: ['après', 'créer', 'création', 'utilisateur', 'suivant', 'étape', 'ensuite'],
+            answer: "### ✨ Étapes après la création d'un compte\nUne fois que vous avez créé un nouvel utilisateur (Admin), voici ce qu'il faut faire :\n1. **Informer l'utilisateur** : Donnez-lui son email et son mot de passe de départ.\n2. **Première connexion** : L'utilisateur doit se connecter normalement sur la page d'accueil.\n3. **Changement obligatoire** : Le système lui demandera automatiquement de choisir son propre mot de passe personnel dès sa première entrée.\n4. **Démarrage** : Il pourra alors voir les alertes et les courriers de son bureau assigné.",
+            roles: ['admin']
+        },
+        {
+            title: "Ranger ses documents",
+            keywords: ['archive', 'ranger', 'cacher', 'classeur', 'retrouver'],
+            answer: "### 📁 Ranger ses documents\n- Cliquez sur l'icône de rangement (Archive) pour mettre un document de côté.\n- Il ne disparaît pas, il est juste rangé dans un classeur numérique séparé pour faire de la place.\n- Vous pouvez les retrouver dans l'onglet 'Archives'.",
+            roles: ['admin', 'service']
+        },
+        {
+            title: "Mot de passe perdu",
+            keywords: ['mot de passe', 'mdp', 'perdu', 'oublié', 'connexion', 'email'],
+            answer: "### 🔑 Mot de passe perdu\n1. Cliquez sur **'Mot de passe oublié ?'** sur la page de connexion.\n2. Entrez votre email.\n3. Le système vous envoie un nouveau code par mail pour vous dépanner.\n4. Utilisez ce code pour entrer et changer votre mot de passe dans votre profil.",
+            roles: ['admin', 'service']
+        }
+    ];
+
+    function handleKeyPress(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    function sendSuggestion(text) {
+        userInput.value = text;
+        sendMessage();
+    }
+
+    function addMessage(text, side) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${side}`;
+        
+        // Convert dynamic markdown-like formatting to html
+        let formattedText = text
+            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/^\d\. (.*$)/gim, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>)/gim, '<ol>$1</ol>')
+            // Prevent nested ol tags if multiple li exist
+            .replace(/<\/ol><ol>/gim, '')
+            .replace(/\n/g, '<br>');
+            
+        msgDiv.innerHTML = formattedText;
+        
+        chatMessages.appendChild(msgDiv);
+        scrollChat();
+    }
+
+    function showTypingIndicator() {
+        const indicator = document.createElement('div');
+        indicator.className = 'typing-indicator';
+        indicator.id = 'typing-indicator';
+        indicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+        chatMessages.appendChild(indicator);
+        scrollChat();
+    }
+
+    function removeTypingIndicator() {
+        const indicator = document.getElementById('typing-indicator');
+        if (indicator) indicator.remove();
+    }
+
+    function scrollChat() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        addMessage(text, 'user');
+        userInput.value = '';
+
+        showTypingIndicator();
+
+        // Simulate thinking delay
+        setTimeout(() => {
+            removeTypingIndicator();
+            const response = findBestResponse(text);
+            addMessage(response, 'bot');
+        }, 800);
+    }
+
+    function findBestResponse(text) {
+        const input = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const words = input.split(/\s+|'|\?|!|\./);
+        
+        let bestItem = null;
+        let maxScore = 0;
+        let candidates = [];
+
+        // Filter knowledge base by role
+        const relevantKnowledge = allKnowledge.filter(item => {
+            return isAdmin ? item.roles.includes('admin') : item.roles.includes('service');
+        });
+
+        for (const item of relevantKnowledge) {
+            let score = 0;
+            
+            // Analyze keywords matching
+            for (const kw of item.keywords) {
+                const normalizedKw = kw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                
+                // Direct phrase match (Bonus)
+                if (input.includes(normalizedKw)) {
+                    score += 5;
+                }
+                
+                // Individual word match
+                for (const word of words) {
+                    if (word === normalizedKw && word.length > 2) {
+                        score += 3;
+                    } else if (normalizedKw.includes(word) && word.length > 3) {
+                        score += 1;
+                    }
+                }
+            }
+
+            if (score > 0) {
+                if (score > maxScore) {
+                    maxScore = score;
+                    bestItem = item;
+                }
+                candidates.push({ item, score });
+            }
+        }
+
+        // Friendly Guide logic
+        if (maxScore > 3) {
+            let response = "";
+            
+            // Preamble depends on score to sound more natural
+            if (maxScore > 10) {
+                response = "D'accord, je vois exactement ce que vous voulez dire ! Voici les détails :\n\n";
+            } else {
+                response = "Ah, je pense comprendre ! Vous parlez sûrement de ceci :\n\n";
+            }
+
+            response += bestItem.answer;
+            
+            // Add suggestions for further reading
+            const otherSuggestions = candidates
+                .filter(c => c.item !== bestItem && c.score > maxScore * 0.4)
+                .map(c => c.item.title);
+            
+            if (otherSuggestions.length > 0) {
+                response += "\n\n*Pour aller plus loin, vous pouvez aussi me demander pour : " + otherSuggestions.join(', ') + "*";
+            }
+            
+            return response;
+        }
+        
+        // Conversational Fallback - instead of a static list, ask questions
+        const fallbacks = [
+            "Je cherche à vous aider au mieux, mais je n'ai pas trouvé de réponse précise à cette question. Est-ce que cela concerne la **réception d'un courrier** ou peut-être un **problème de compte** ?",
+            "Hum, je ne suis pas encore expert sur ce sujet précis. Saviez-vous que je peux vous expliquer comment **rédiger une lettre automatique** ou comment **changer le statut d'un courrier** ?",
+            "Pas de soucis, la plateforme est vaste ! Souhaitez-vous que je vous fasse une petite **visite guidée** pour débutant ? Tapez simplement 'guide-moi'."
+        ];
+        
+        return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+    }
+</script>
+{% endblock %}
