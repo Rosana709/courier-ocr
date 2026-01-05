@@ -19,7 +19,8 @@ class NotificationController extends AbstractController
     public function __construct(
         private readonly ListNotificationsUseCase $listNotificationsUseCase,
         private readonly MarquerNotificationCommeLueUseCase $marquerNotificationCommeLueUseCase,
-        private readonly \App\Domain\Repository\HistoriqueActionRepositoryInterface $historiqueActionRepository
+        private readonly \App\Domain\Repository\HistoriqueActionRepositoryInterface $historiqueActionRepository,
+        private readonly \App\Domain\Repository\NotificationRepositoryInterface $notificationRepository
     ) {
     }
 
@@ -33,7 +34,8 @@ class NotificationController extends AbstractController
             return $this->redirectToRoute('admin_dashboard');
         }
 
-        $serviceId = $user->getService()?->getId();
+        $service = $user->getService();
+        $serviceId = $service?->getId();
 
         if (!$serviceId) {
             $this->addFlash('error', 'Aucun service associé à votre compte.');
@@ -42,9 +44,33 @@ class NotificationController extends AbstractController
 
         $notifications = $this->listNotificationsUseCase->executeByService($serviceId);
 
+        // On marque tout comme lu dès qu'on arrive sur la page
+        try {
+            $this->marquerNotificationCommeLueUseCase->executeAllByService($service);
+        } catch (\Exception $e) {
+            // Silently fail or log
+        }
+
         return $this->render('notification/index.html.twig', [
             'notifications' => $notifications,
         ]);
+    }
+
+    #[Route('/{id}/voir', name: 'notification_voir', methods: ['GET'])]
+    public function voir(string $id): Response
+    {
+        try {
+            $notification = $this->notificationRepository->findById($id);
+            
+            if ($notification) {
+                $this->marquerNotificationCommeLueUseCase->execute($id);
+                return $this->redirectToRoute('courrier_show', ['id' => $notification->getCourrier()->getId()]);
+            }
+        } catch (\Exception $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('notification_index');
     }
 
     #[Route('/count', name: 'notification_count', methods: ['GET'])]

@@ -135,13 +135,13 @@
         </div>
     </div>
 
-    {# Activité récente #}
+    {# Journal d'audit #}
     <div class="row">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-journal-text"></i> Rapport d'activité global</h5>
-                    <span class="badge bg-info">10 dernières actions</span>
+                    <h5 class="mb-0"><i class="bi bi-shield-lock"></i> Journal d'audit</h5>
+                    <span class="badge bg-info">10 dernières entrées</span>
                 </div>
                 <div class="card-body">
                     {% if actions_recentres is not defined or actions_recentres|length == 0 %}
@@ -154,62 +154,77 @@
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Date & Heure</th>
-                                        <th>Fait par</th>
-                                        <th>Action effectuée</th>
-                                        <th>Description / Objet</th>
-                                        <th class="text-end">Référence</th>
+                                        <th style="width: 15%;">Date & Heure</th>
+                                        <th>Entrée d'audit</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for action in actions_recentres %}
                                         <tr class="activity-row" data-action-id="{{ action.id }}" style="cursor: pointer;">
-                                            <td class="small">{{ action.dateAction|date('d/m/Y H:i') }}</td>
+                                            <td class="small text-nowrap">{{ action.dateAction|date('d/m/Y H:i') }}</td>
                                             <td>
-                                                <div class="fw-bold text-primary">
+                                                {# Acteur #}
+                                                <span class="fw-bold text-primary">
                                                     {% if action.effectuePar and action.effectuePar.service %}
-                                                        <i class="bi bi-building"></i> {{ action.effectuePar.service.nom }}
+                                                        {{ action.effectuePar.service.nom }}
                                                     {% elseif action.effectuePar %}
-                                                        <i class="bi bi-person-fill"></i> {{ action.effectuePar.email }}
-                                                    {% else %}
-                                                        <i class="bi bi-gear-fill"></i> Système
-                                                    {% endif %}
-                                                </div>
-                                                <small class="text-muted">
-                                                    {% if action.effectuePar %}
                                                         {{ action.effectuePar.email }}
-                                                    {% endif %}
-                                                </small>
-                                            </td>
-                                            <td>
-                                                {% set badgeClass = 'secondary' %}
-                                                {% if action.typeAction in ['CREATION', 'UTILISATEUR_CREATION', 'SERVICE_CREATION', 'PERSONNE_EXTERNE_CREATION'] %}{% set badgeClass = 'success' %}
-                                                {% elseif action.typeAction in ['ENVOI_ACCUSE_RECEPTION', 'UTILISATEUR_MODIFICATION', 'SERVICE_MODIFICATION', 'PERSONNE_EXTERNE_MODIFICATION'] %}{% set badgeClass = 'info' %}
-                                                {% elseif action.typeAction in ['MODIFICATION_STATUT', 'UTILISATEUR_TOGGLE', 'SERVICE_TOGGLE', 'PERSONNE_EXTERNE_TOGGLE'] %}{% set badgeClass = 'warning' %}
-                                                {% endif %}
-                                                <span class="badge bg-{{ badgeClass }}">{{ action.typeAction|replace({'_': ' '}) }}</span>
-                                            </td>
-                                            <td>
-                                                <div class="text-truncate" style="max-width: 300px;">
-                                                    {% if action.courrier %}
-                                                        <span title="{{ action.courrier.objet }}">{{ action.courrier.objet }}</span>
                                                     {% else %}
-                                                        <span class="text-muted">{{ action.description }}</span>
+                                                        Système
                                                     {% endif %}
-                                                </div>
-                                                <div class="small">
-                                                    {% if action.courrier %}
-                                                        <a href="{{ path('courrier_show', {id: action.courrier.id}) }}" class="text-decoration-none">
-                                                            <i class="bi bi-link-45deg"></i> Consulter
-                                                        </a>
-                                                    {% endif %}
-                                                </div>
-                                            </td>
-                                            <td class="text-end small fw-bold">
-                                                {% if action.courrier %}
-                                                    {{ action.courrier.numeroReference }}
+                                                </span>
+                                                
+                                                <span class="mx-1">—</span>
+                                                
+                                                {# Action en phrase simple #}
+                                                {% set actionText = '' %}
+                                                {% if action.typeAction == 'CREATION' %}
+                                                    {% set actionText = 'Crée le courrier' %}
+                                                {% elseif action.typeAction == 'MODIFICATION_STATUT' %}
+                                                    {% set actionText = 'Modifie le statut du courrier' %}
+                                                {% elseif action.typeAction == 'ENVOI_ACCUSE_RECEPTION' %}
+                                                    {% set actionText = 'Envoie l\'accusé de réception pour le courrier' %}
+                                                {% elseif action.typeAction == 'UTILISATEUR_CREATION' %}
+                                                    {% set actionText = 'Crée l\'utilisateur' %}
+                                                {% elseif action.typeAction == 'UTILISATEUR_MODIFICATION' %}
+                                                    {% set actionText = 'Modifie l\'utilisateur' %}
+                                                {% elseif action.typeAction == 'UTILISATEUR_TOGGLE' %}
+                                                    {% set actionText = 'Active/Désactive l\'utilisateur' %}
+                                                {% elseif action.typeAction == 'SERVICE_CREATION' %}
+                                                    {% set actionText = 'Crée le service' %}
+                                                {% elseif action.typeAction == 'SERVICE_MODIFICATION' %}
+                                                    {% set actionText = 'Modifie le service' %}
+                                                {% elseif action.typeAction == 'SERVICE_TOGGLE' %}
+                                                    {% set actionText = 'Active/Désactive le service' %}
+                                                {% elseif action.typeAction == 'PERSONNE_EXTERNE_CREATION' %}
+                                                    {% set actionText = 'Crée la personne externe' %}
+                                                {% elseif action.typeAction == 'PERSONNE_EXTERNE_MODIFICATION' %}
+                                                    {% set actionText = 'Modifie la personne externe' %}
+                                                {% elseif action.typeAction == 'PERSONNE_EXTERNE_TOGGLE' %}
+                                                    {% set actionText = 'Active/Désactive la personne externe' %}
+                                                {% elseif action.typeAction == 'ARCHIVE' %}
+                                                    {% set actionText = 'Archive le courrier' %}
                                                 {% else %}
-                                                    -
+                                                    {% set actionText = action.typeAction|replace({'_': ' '})|lower|capitalize %}
+                                                {% endif %}
+                                                
+                                                <span>{{ actionText }}</span>
+                                                
+                                                {# Référence du courrier si disponible #}
+                                                {% if action.courrier %}
+                                                    <span class="fw-bold">N°{{ action.courrier.numeroReference }}</span>
+                                                {% endif %}
+                                                
+                                                {# Description supplémentaire si disponible #}
+                                                {% if action.description and not action.courrier %}
+                                                    <span class="text-muted small">— {{ action.description }}</span>
+                                                {% endif %}
+                                                
+                                                {# Lien vers le courrier si disponible #}
+                                                {% if action.courrier %}
+                                                    <a href="{{ path('courrier_show', {id: action.courrier.id}) }}" class="ms-2 small text-decoration-none" onclick="event.stopPropagation();">
+                                                        <i class="bi bi-link-45deg"></i> Consulter
+                                                    </a>
                                                 {% endif %}
                                             </td>
                                         </tr>

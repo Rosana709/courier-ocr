@@ -47,11 +47,18 @@
                 <div class="mb-3">
                     <label for="statut" class="form-label">État du courrier * (Administrateur)</label>
                     <select class="form-select" id="statut" name="statut" required>
-                        {% for statutValue in statuts %}
-                            <option value="{{ statutValue }}" {% if statutValue == courrier.statut %}selected{% endif %}>
-                                {{ statutValue|replace({'_': ' '}) }}
-                            </option>
-                        {% endfor %}
+                        {% if courrier.statut == 'ARCHIVE' %}
+                            {# Si le courrier est archivé, proposer de le désarchiver #}
+                            <option value="ARCHIVE" selected>ARCHIVE (actuel)</option>
+                            <option value="EN_ATTENTE">Désarchiver (EN ATTENTE)</option>
+                        {% else %}
+                            {# Sinon, afficher tous les statuts normalement #}
+                            {% for statutValue in statuts %}
+                                <option value="{{ statutValue }}" {% if statutValue == courrier.statut %}selected{% endif %}>
+                                    {{ statutValue|replace({'_': ' '}) }}
+                                </option>
+                            {% endfor %}
+                        {% endif %}
                     </select>
                 </div>
             {% else %}

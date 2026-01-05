@@ -44,16 +44,31 @@ class SessionActivitySubscriber implements EventSubscriberInterface
             return;
         }
 
+        // Check if session is already started to avoid circular dependency
         $session = $request->getSession();
+        if (!$session->isStarted()) {
+            // Don't try to start the session here, it will be started later
+            return;
+        }
+
         $sessionId = $session->getId();
         if (!$sessionId) {
             return;
         }
 
-        // Rafraîchir ou créer une trace pour cette session utilisateur
-        $this->sessionTraceRepository->upsert($user, $sessionId);
+        // Wrap database operations in try-catch to prevent blocking the request
+        try {
+            // Rafraîchir ou créer une trace pour cette session utilisateur
+            $this->sessionTraceRepository->upsert($user, $sessionId);
 
-        // Nettoyage léger des sessions trop anciennes (2 heures)
-        $this->sessionTraceRepository->removeOlderThan(new \DateTimeImmutable('-2 hours'));
+            // Nettoyage léger des sessions trop anciennes (2 heures)
+            // Only do cleanup occasionally (1 in 100 requests) to reduce DB load
+            if (random_int(1, 100) === 1) {
+                $this->sessionTraceRepository->removeOlderThan(new \DateTimeImmutable('-2 hours'));
+            }
+        } catch (\Exception $e) {
+            // Log error but don't block the request
+            // You can add logging here if needed
+        }
     }
 }

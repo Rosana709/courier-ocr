@@ -35,9 +35,9 @@ class UpdateCourrierUseCase
             throw new EntityNotFoundException("Courrier non trouvé");
         }
 
-        // Empêcher la modification d'un courrier sortant (sauf si c'est pour l'archiver)
-        if ($courrier->estSortant() && $dto->statut !== Courrier::STATUT_ARCHIVE) {
-            throw new \App\Domain\Exception\DomainException("Un courrier sortant ne peut pas être modifié après sa création.");
+        // Empêcher la modification d'un courrier sortant (sauf si c'est pour l'archiver ou désarchiver)
+        if ($courrier->estSortant() && $dto->statut !== Courrier::STATUT_ARCHIVE && $courrier->getStatut() !== Courrier::STATUT_ARCHIVE) {
+            throw new \RuntimeException("Un courrier sortant ne peut pas être modifié après sa création.");
         }
 
         if ($dto->objet !== null && $courrier->estEntrant()) {
@@ -62,11 +62,22 @@ class UpdateCourrierUseCase
 
             // On ne permet pas de changer le statut si le courrier est déjà confirmé/terminal
             // SAUF si on veut l'archiver (et qu'il n'est pas déjà archivé)
+            // OU si on veut le désarchiver (passer de ARCHIVE à un autre statut)
             $isArchiving = $dto->statut === Courrier::STATUT_ARCHIVE;
+            $isUnarchiving = $courrier->getStatut() === Courrier::STATUT_ARCHIVE && $dto->statut !== Courrier::STATUT_ARCHIVE;
             $isAlreadyLocked = in_array($courrier->getStatut(), $statutsVerrouilles);
 
-            if (!$isAlreadyLocked || ($isArchiving && $courrier->getStatut() !== Courrier::STATUT_ARCHIVE)) {
+            if (!$isAlreadyLocked || $isArchiving || $isUnarchiving) {
                 $ancienStatut = $courrier->getStatut();
+                
+                // Si on désarchive, trouver le statut précédent avant l'archivage
+                if ($isUnarchiving) {
+                    $statutAvantArchivage = $this->trouverStatutAvantArchivage($courrier);
+                    if ($statutAvantArchivage) {
+                        $dto->statut = $statutAvantArchivage;
+                    }
+                }
+                
                 $courrier->updateStatut($dto->statut);
 
                 if ($utilisateurId) {
@@ -81,6 +92,11 @@ class UpdateCourrierUseCase
                             nouvelleValeur: $dto->statut
                         );
                         $this->historiqueActionRepository->save($historiqueAction);
+                        
+                        // Créer des notifications lors du désarchivage
+                        if ($isUnarchiving) {
+                            $this->creerNotificationsDesarchivage($courrier);
+                        }
                     }
                 }
             }
@@ -144,5 +160,53 @@ class UpdateCourrierUseCase
         );
 
         $this->notificationRepository->save($notification);
+    }
+    
+    private function creerNotificationsDesarchivage(Courrier $courrier): void
+    {
+        $servicesAConcerner = [];
+        
+        // Ajouter l'expéditeur si c'est un service
+        if ($courrier->getTypeExpediteur() === Courrier::ACTEUR_SERVICE && $courrier->getServiceExpediteur()) {
+            $servicesAConcerner[] = $courrier->getServiceExpediteur();
+        }
+        
+        // Ajouter le destinataire si c'est un service
+        if ($courrier->getTypeDestinataire() === Courrier::ACTEUR_SERVICE && $courrier->getServiceDestinataire()) {
+            $servicesAConcerner[] = $courrier->getServiceDestinataire();
+        }
+        
+        // Créer une notification pour chaque service concerné
+        foreach ($servicesAConcerner as $service) {
+            $notification = new Notification(
+                service: $service,
+                courrier: $courrier,
+                type: Notification::TYPE_STATUT_CHANGE,
+                message: sprintf(
+                    'Le courrier "%s" (Réf: %s) a été désarchivé et est de nouveau actif.',
+                    $courrier->getObjet(),
+                    $courrier->getNumeroReference()
+                )
+            );
+            
+            $this->notificationRepository->save($notification);
+        }
+    }
+    
+    private function trouverStatutAvantArchivage(Courrier $courrier): ?string
+    {
+        // Chercher dans l'historique la dernière action qui a mis le statut à ARCHIVE
+        $historique = $this->historiqueActionRepository->findByCourrierOrderByDateDesc($courrier->getId());
+        
+        foreach ($historique as $action) {
+            if ($action->getTypeAction() === HistoriqueAction::TYPE_MODIFICATION_STATUT 
+                && $action->getNouvelleValeur() === Courrier::STATUT_ARCHIVE) {
+                // Retourner l'ancienne valeur (le statut avant l'archivage)
+                return $action->getAncienneValeur();
+            }
+        }
+        
+        // Si on ne trouve pas, retourner EN_ATTENTE par défaut
+        return Courrier::STATUT_EN_ATTENTE;
     }
 }

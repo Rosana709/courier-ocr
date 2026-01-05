@@ -410,9 +410,15 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#archiveModal">
-                            <i class="bi bi-archive"></i> Archiver
-                        </button>
+                        {% if courrier.statut == 'ARCHIVE' %}
+                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#archiveModal">
+                                <i class="bi bi-archive-fill"></i> Désarchiver
+                            </button>
+                        {% else %}
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#archiveModal">
+                                <i class="bi bi-archive"></i> Archiver
+                            </button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -421,24 +427,44 @@
     </div>
 </div>
 
-<!-- Modal confirmation archivage -->
+<!-- Modal confirmation archivage/désarchivage -->
 <div class="modal fade" id="archiveModal" tabindex="-1" aria-labelledby="archiveModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="archiveModalLabel"><i class="bi bi-archive"></i> Confirmation</h5>
+                {% if courrier.statut == 'ARCHIVE' %}
+                    <h5 class="modal-title" id="archiveModalLabel"><i class="bi bi-archive-fill"></i> Confirmation de désarchivage</h5>
+                {% else %}
+                    <h5 class="modal-title" id="archiveModalLabel"><i class="bi bi-archive"></i> Confirmation d'archivage</h5>
+                {% endif %}
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                Archiver ce courrier ? Il sera conservé en lecture seule dans la liste des archives.
+                {% if courrier.statut == 'ARCHIVE' %}
+                    Désarchiver ce courrier ? Il sera remis en statut "En attente".
+                {% else %}
+                    Archiver ce courrier ? Il sera conservé en lecture seule dans la liste des archives.
+                {% endif %}
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                <form method="post" action="{{ path('courrier_archiver', {id: courrier.id}) }}">
-                    <button type="submit" class="btn btn-secondary">
-                        <i class="bi bi-archive"></i> Confirmer l'archivage
-                    </button>
-                </form>
+                {% if courrier.statut == 'ARCHIVE' %}
+                    <form method="post" action="{{ path('courrier_edit', {id: courrier.id}) }}">
+                        <input type="hidden" name="objet" value="{{ courrier.objet }}">
+                        <input type="hidden" name="priorite" value="{{ courrier.priorite }}">
+                        <input type="hidden" name="contenu" value="{{ courrier.contenu }}">
+                        <input type="hidden" name="statut" value="EN_ATTENTE">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-archive-fill"></i> Confirmer le désarchivage
+                        </button>
+                    </form>
+                {% else %}
+                    <form method="post" action="{{ path('courrier_archiver', {id: courrier.id}) }}">
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="bi bi-archive"></i> Confirmer l'archivage
+                        </button>
+                    </form>
+                {% endif %}
             </div>
         </div>
     </div>

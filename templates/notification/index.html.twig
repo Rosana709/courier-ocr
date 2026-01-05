@@ -54,7 +54,7 @@
 
                     <p class="mb-1 text-muted small">
                         <i class="bi bi-envelope"></i>
-                        <a href="{{ path('courrier_show', {id: notification.courrier.id}) }}">
+                        <a href="{{ path('notification_voir', {id: notification.id}) }}">
                             {{ notification.courrier.numeroReference }}
                         </a>
                         - {{ notification.courrier.objet }}
@@ -85,7 +85,7 @@
 
 
                     <div class="btn-group-vertical btn-group-sm">
-                        <a href="{{ path('courrier_show', {id: courrier.id}) }}"
+                        <a href="{{ path('notification_voir', {id: notification.id}) }}"
                            class="btn btn-sm btn-outline-primary"
                            title="Voir le courrier">
                             <i class="bi bi-eye"></i>

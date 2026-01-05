@@ -444,18 +444,44 @@ class CourrierController extends AbstractController
             }
 
             // Extraction OCR
-            $ocrData = $this->ocrIntegrationService->extractText($file);
+            try {
+                $ocrData = $this->ocrIntegrationService->extractText($file);
+            } catch (\Exception $e) {
+                return $this->json([
+                    'success' => false, 
+                    'message' => 'Erreur lors de l\'extraction OCR : ' . $e->getMessage()
+                ], 500);
+            }
+            
             $extractedReference = $ocrData['letterNumber'] ?? null;
 
             // Nettoyage pour comparaison (enlever espaces et caractères spéciaux)
-            $cleanExtracted = $extractedReference ? strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $extractedReference)) : '';
-            $cleanStored = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $courrier->getNumeroReference()));
+            $cleanExtracted = $extractedReference ? strtolower(preg_replace('/[^a-z0-9]/', '', $extractedReference)) : '';
+            $cleanStored = strtolower(preg_replace('/[^a-z0-9]/', '', $courrier->getNumeroReference()));
 
             // Comparaison de la référence (plus permissive)
-            if (!$extractedReference || (strlen($cleanStored) > 3 && !str_contains($cleanExtracted, $cleanStored) && !str_contains($cleanStored, $cleanExtracted))) {
+            // On vérifie si au moins 80% des caractères correspondent
+            $similarity = 0;
+            if ($cleanExtracted && $cleanStored) {
+                similar_text($cleanExtracted, $cleanStored, $similarity);
+            }
+            
+            if (!$extractedReference) {
                 return $this->json([
                     'success' => false, 
-                    'message' => 'La référence extraite (' . ($extractedReference ?? 'aucune') . ') ne correspond pas à la référence attendue (' . $courrier->getNumeroReference() . '). Veuillez importer la bonne version numérique.'
+                    'message' => 'Aucune référence n\'a pu être extraite du document. Assurez-vous que le document est lisible et contient bien le numéro de référence.'
+                ], 400);
+            }
+            
+            if ($similarity < 70) {
+                return $this->json([
+                    'success' => false, 
+                    'message' => sprintf(
+                        'La référence extraite "%s" ne correspond pas à la référence attendue "%s" (similarité: %.0f%%). Veuillez importer le bon document.',
+                        $extractedReference,
+                        $courrier->getNumeroReference(),
+                        $similarity
+                    )
                 ], 400);
             }
 
