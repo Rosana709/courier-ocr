@@ -1,224 +1,119 @@
-# Système de Gestion de Courrier - DGI
+# 🦅 Système de Gestion de Courrier Intégré (SGC) - DGI
 
-Application web de gestion de courrier développée avec Symfony 7 pour la Direction Générale des Impôts.
-
-## 📋 Description
-
-Cette application permet de gérer les courriers entrants et sortants au sein de l'organisation, avec un système de numérotation automatique, de suivi et de notifications.
-
-## ✨ Fonctionnalités principales
-
-### Gestion des courriers
-- ✅ **Création de courriers** (entrants/sortants, internes/externes)
-- ✅ **Double numérotation** pour les courriers entrants :
-  - Numéro de référence (de l'expéditeur)
-  - Numéro d'arrivée (auto-généré : N° XXX-2025/DG/SIGLE)
-- ✅ **Types d'acteurs** : Services internes ou Personnes externes
-- ✅ **Gestion des priorités** : Basse, Normale, Haute, Urgente
-- ✅ **Statuts multiples** : Enregistré, En cours, En attente, Clos, Archivé
-- ✅ **Services en copie** : Notification de plusieurs services
-- ✅ **Pièces jointes** : Upload et gestion de documents
-- ✅ **Accusé de réception** : Pour les courriers vers des services
-
-### Notifications
-- ✅ **Système de notifications** en temps réel
-- ✅ **Types de notifications** :
-  - Nouveau courrier reçu
-  - Accusé de réception confirmé
-  - Changement de statut
-- ✅ **Filtrage** : Non lues, récentes
-- ✅ **Marquage** : Lire/tout marquer comme lu
-
-### Gestion des utilisateurs
-- ✅ **Authentification** sécurisée
-- ✅ **Rôles** : Admin, Utilisateur de service
-- ✅ **Profils** : Gestion des informations personnelles
-- ✅ **Services** : Rattachement à un service
-
-### Exports
-- ✅ **Export Excel** : Liste complète avec tous les champs
-- ✅ **Export PDF** : Tableau formaté pour impression
-- ✅ Disponible pour : Courriers, Services, Personnes externes, Utilisateurs
-
-### Filtres et recherche
-- ✅ **Vues séparées** pour utilisateurs de service :
-  - Tous les courriers
-  - Courriers entrants (avec badge "En copie")
-  - Courriers sortants
-- ✅ **Filtres** : Type, statut, priorité, date, service
-- ✅ **Recherche** : Par numéro, objet, contenu
-
-## 🛠️ Technologies utilisées
-
-- **Backend** : PHP 8.2+ avec Symfony 7
-- **Base de données** : PostgreSQL 16
-- **Architecture** : Domain-Driven Design (DDD)
-- **Frontend** : Twig + Bootstrap 5 + Bootstrap Icons
-- **Exports** : PhpSpreadsheet (Excel) + Dompdf (PDF)
-
-## 📁 Structure du projet
-
-```
-src/
-├── Application/        # Use Cases et DTOs
-│   ├── DTO/
-│   └── UseCase/
-├── Domain/            # Entités et logique métier
-│   ├── Entity/
-│   ├── Repository/
-│   ├── Service/
-│   └── Exception/
-├── Infrastructure/    # Implémentation technique
-│   └── Repository/
-└── Presentation/      # Contrôleurs et vues
-    └── Controller/
-templates/             # Vues Twig
-migrations/           # Migrations de base de données
-```
-
-## 🚀 Installation
-
-### Prérequis
-- PHP 8.2 ou supérieur
-- Composer
-- PostgreSQL 16
-- Extension PDO PostgreSQL
-
-### Étapes d'installation
-
-1. **Cloner le projet**
-   ```bash
-   git clone <url-du-repo>
-   cd gestion_courier
-   ```
-
-2. **Installer les dépendances**
-   ```bash
-   composer install
-   ```
-
-3. **Configuration de la base de données**
-
-   Créer un fichier `.env.local` :
-   ```env
-   DATABASE_URL="postgresql://user:password@127.0.0.1:5432/gestion_courier?serverVersion=16&charset=utf8"
-   ```
-
-4. **Créer la base de données**
-   ```bash
-   php bin/console doctrine:database:create
-   ```
-
-5. **Exécuter les migrations**
-   ```bash
-   php bin/console doctrine:migrations:migrate
-   ```
-
-6. **Charger les données de test (optionnel)**
-   ```bash
-   php bin/console doctrine:fixtures:load
-   ```
-
-7. **Lancer le serveur de développement**
-   ```bash
-   symfony server:start
-   # ou
-   php -S localhost:8000 -t public/
-   ```
-
-8. **Accéder à l'application**
-   ```
-   https://localhost:8000
-   ```
-
-## 👤 Comptes de test
-
-Après le chargement des fixtures :
-
-- **Administrateur** :
-  - Email : `admin@dgi.gov`
-  - Mot de passe : `admin123`
-
-- **Utilisateur de service** :
-  - Email : `user@dgi.gov`
-  - Mot de passe : `user123`
-
-## 📊 Modèle de données
-
-### Entités principales
-
-- **Courrier** : Gestion des courriers (entrants/sortants)
-- **Service** : Services de l'organisation
-- **Utilisateur** : Comptes utilisateurs
-- **PersonneExterne** : Contacts externes
-- **PieceJointe** : Documents attachés
-- **AccuseReception** : Confirmations de réception
-- **Notification** : Système de notifications
-- **HistoriqueAction** : Traçabilité des actions
-
-## 🔐 Sécurité
-
-- Authentification par formulaire
-- Hashage des mots de passe (bcrypt)
-- Contrôle d'accès basé sur les rôles (Voter)
-- Protection CSRF
-- Validation des données (DTO + Contraintes)
-
-## 📝 Fonctionnalités avancées
-
-### Système de numérotation
-- **Courriers sortants** : N° 001 – 2025/DGI/SERVICE (compteur par service/année)
-- **Courriers entrants** : N° 001-2025/DG/SERVICE (numéro d'arrivée auto-généré)
-
-### Workflow de validation
-1. Courrier créé → Statut initial selon type/destinataire
-2. Si destinataire = SERVICE → Nécessite accusé de réception
-3. Confirmation → Notification à l'expéditeur
-4. Suivi du statut tout au long du cycle de vie
-
-## 🔧 Commandes utiles
-
-```bash
-# Vider le cache
-php bin/console cache:clear
-
-# Créer un nouvel utilisateur admin
-php bin/console app:create-admin
-
-# Voir les routes
-php bin/console debug:router
-
-# Vérifier la configuration
-php bin/console debug:config
-
-# Mettre à jour le schéma DB (dev uniquement)
-php bin/console doctrine:schema:update --force
-```
-
-## 📦 Dépendances principales
-
-- symfony/framework-bundle
-- doctrine/orm
-- symfony/security-bundle
-- symfony/twig-bundle
-- symfony/form
-- phpoffice/phpspreadsheet
-- dompdf/dompdf
-
-## 🤝 Contribution
-
-Ce projet a été développé pour la Direction Générale des Impôts.
-
-## 📄 Licence
-
-Projet propriétaire - Direction Générale des Impôts
-
-## 🆘 Support
-
-Pour toute question ou problème, contactez l'équipe de développement.
+Bienvenue dans le projet de gestion de courrier de la **Direction Générale des Impôts (DGI)**. Ce projet est une solution hybride combinant la puissance de **Symfony 7** pour la gestion métier et un micro-service **FastAPI (Python)** pour l'intelligence artificielle et l'OCR.
 
 ---
 
-**Version** : 1.0.0
-**Date** : Décembre 2025
-**Développé avec** : Claude Code & Symfony 7
+## �️ Architecture du Projet
+
+Le projet est divisé en deux composants principaux qui communiquent via API :
+
+### 1. Application Principale (`/gestion_courier`)
+*   **Technologie** : PHP 8.2+ / Symfony 7.2
+*   **Rôle** : Cœur de l'application, gestion des utilisateurs, des services, de la base de données, des workflows de validation et des notifications.
+*   **Base de Données** : PostgreSQL 16.
+
+### 2. Système OCR & IA (`/ocr-system/backend`)
+*   **Technologie** : Python 3.10+ / FastAPI
+*   **Rôle** : Micro-service spécialisé dans le traitement de documents.
+    *   **Extraction OCR** : Utilisation de Tesseract/PaddleOCR pour lire les informations des fichiers PDF scannés.
+    *   **Génération de Contenu** : Intégration d'IA pour assister à la rédaction des courriers.
+    *   **Génération de PDF** : Moteur de rendu PDF pour les courriers officiels sortants.
+
+---
+
+## ✨ Fonctionnalités Clés
+
+### 📁 Gestion Métier (Symfony)
+*   **Workflow Complet** : Enregistrement, diffusion (aiguillage), suivi et archivage des courriers.
+*   **Accusés de Réception** : Système de décharge numérique pour garantir la traçabilité.
+*   **Notifications Dynamiques** : Alertes sonores et visuelles en temps réel dès la réception d'un courrier.
+*   **Tableaux de Bord** : Rapports d'activité détaillés pour les chefs de service et administrateurs.
+
+### 🤖 Intelligence & Automatisation (Python)
+*   **OCR Intelligent** : Importez un PDF scanné, et le système remplit automatiquement l'objet, la date et le numéro de référence.
+*   **Aide à la Rédaction** : Génération automatique du corps de texte basé sur un prompt.
+*   **Certification PDF** : Création de documents PDF normalisés avec en-tête DGI officiel.
+
+---
+
+## � Structure des Dossiers
+
+```text
+gestion_courier/
+├── src/                      # Code source Symfony (Architecture DDD)
+│   ├── Domain/               # Entités, Repositories (Logique métier)
+│   ├── Application/          # Cas d'utilisation (UseCases)
+│   ├── Infrastructure/       # Services externes (OCR Integration, Mailer)
+│   └── Presentation/         # Contrôleurs et templates Twig
+├── templates/                # Vues Twig (Frontend)
+├── config/                   # Configuration Symfony
+└── public/                   # Point d'entrée web
+
+ocr-system/
+├── backend/                  # API Python FastAPI
+│   ├── app/
+│   │   ├── api/              # Endpoints (extract, generate-pdf)
+│   │   ├── services/         # Logique OCR et IA
+│   │   └── utils/            # Moteur de génération PDF
+│   └── main.py               # Lancement du serveur Python (Port 8001)
+└── frontend/                 # (Optionnel) Dashboard de monitoring OCR
+```
+
+---
+
+## 🚀 Installation & Configuration
+
+### 1. Configuration de l'Application Symfony
+```bash
+cd gestion_courier
+composer install
+
+# Configurer .env.local
+DATABASE_URL="postgresql://user:password@127.0.0.1:5432/gestion_courier?serverVersion=16&charset=utf8"
+OCR_BACKEND_URL="http://127.0.0.1:8001"
+
+# Initialiser la base de données
+php bin/console doctrine:database:create
+php bin/console doctrine:migrations:migrate
+php bin/console doctrine:fixtures:load
+```
+
+### 2. Configuration du Backend OCR (Python)
+```bash
+cd ocr-system/backend
+python -m venv venv
+source venv/bin/activate  # ou venv\Scripts\activate sur Windows
+pip install -r requirements.txt
+
+# Lancer le serveur
+python main.py
+```
+
+---
+
+## 🔌 Fonctionnement de l'Intégration
+
+L'application Symfony communique avec le service Python via le service `OcrIntegrationService.php`. 
+
+1.  **Extraction** : Quand vous uploadez un fichier dans `Courrier Entrant`, le fichier est envoyé à `POST http://127.0.0.1:8001/api/extract`.
+2.  **Résultat** : Le JSON retourné (objet, date, etc.) est utilisé pour pré-remplir le formulaire Symfony en JavaScript.
+3.  **Génération PDF** : Pour les courriers sortants, Symfony envoie les données à `POST /api/generate-pdf` pour récupérer un fichier PDF formaté.
+
+---
+
+## 🔐 Sécurité & Maintenance
+
+*   **Rôles** : `ROLE_ADMIN` (Gestion totale, archivage) et `ROLE_USER` (Gestion par service).
+*   **Tranches de vie** : Les courriers ne sont jamais supprimés physiquement mais passés au statut `ARCHIVE`.
+*   **Logs** : Le backend Python génère des logs dans `ocr_backend.log` pour le débogage des extractions.
+
+---
+
+## 👨‍� Crédits & Contact
+
+Développé pour la **Direction Générale des Impôts**.  
+**Technologies** : Symfony 7, FastAPI, PostgreSQL, Tesseract OCR.
+
+---
+*Dernière mise à jour : 06 Janvier 2026*
