@@ -69,16 +69,17 @@ class UpdateCourrierUseCase
 
             if (!$isAlreadyLocked || $isArchiving || $isUnarchiving) {
                 $ancienStatut = $courrier->getStatut();
+                $nouveauStatut = $dto->statut;
                 
                 // Si on désarchive, trouver le statut précédent avant l'archivage
                 if ($isUnarchiving) {
                     $statutAvantArchivage = $this->trouverStatutAvantArchivage($courrier);
                     if ($statutAvantArchivage) {
-                        $dto->statut = $statutAvantArchivage;
+                        $nouveauStatut = $statutAvantArchivage;
                     }
                 }
                 
-                $courrier->updateStatut($dto->statut);
+                $courrier->updateStatut($nouveauStatut);
 
                 if ($utilisateurId) {
                     $utilisateur = $this->utilisateurRepository->findById($utilisateurId);
@@ -86,10 +87,10 @@ class UpdateCourrierUseCase
                         $historiqueAction = new HistoriqueAction(
                             courrier: $courrier,
                             typeAction: HistoriqueAction::TYPE_MODIFICATION_STATUT,
-                            description: sprintf('Statut modifié de %s à %s', $ancienStatut, $dto->statut),
+                            description: sprintf('Statut modifié de %s à %s', $ancienStatut, $nouveauStatut),
                             effectuePar: $utilisateur,
                             ancienneValeur: $ancienStatut,
-                            nouvelleValeur: $dto->statut
+                            nouvelleValeur: $nouveauStatut
                         );
                         $this->historiqueActionRepository->save($historiqueAction);
                         
@@ -196,7 +197,7 @@ class UpdateCourrierUseCase
     private function trouverStatutAvantArchivage(Courrier $courrier): ?string
     {
         // Chercher dans l'historique la dernière action qui a mis le statut à ARCHIVE
-        $historique = $this->historiqueActionRepository->findByCourrierOrderByDateDesc($courrier->getId());
+        $historique = $this->historiqueActionRepository->findByCourrier($courrier);
         
         foreach ($historique as $action) {
             if ($action->getTypeAction() === HistoriqueAction::TYPE_MODIFICATION_STATUT 

@@ -143,6 +143,11 @@
                             </span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="notification-sound-toggle" title="Activer/Désactiver le son des notifications">
+                            <i class="bi bi-volume-up fs-5" id="notification-sound-icon"></i>
+                        </a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle"></i>
@@ -240,27 +245,135 @@
 
     {% if app.user %}
     <script>
+        // Gestion du son des notifications
+        let lastNotificationCount = -1;
+        let soundEnabled = localStorage.getItem('notification-sound') !== 'false';
+        let audioContext = null;
+
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('AudioContext initialisé');
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log('AudioContext repris après suspension');
+                });
+            }
+        }
+
+        // Les navigateurs bloquent le son tant qu'il n'y a pas eu d'interaction utilisateur (clic)
+        document.addEventListener('click', initAudioContext, { once: true });
+
+        function playNotificationSound() {
+            if (!soundEnabled) return;
+            
+            try {
+                initAudioContext();
+                const now = audioContext.currentTime;
+                
+                // Corps principal de la sonnette (Ding !)
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(2093.00, now);
+                
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.4, now + 0.002);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.start(now);
+                osc.stop(now + 0.8);
+
+                // Harmonique haute
+                const osc2 = audioContext.createOscillator();
+                const gain2 = audioContext.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(4186.01, now);
+                gain2.gain.setValueAtTime(0, now);
+                gain2.gain.linearRampToValueAtTime(0.15, now + 0.002);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc2.connect(gain2);
+                gain2.connect(audioContext.destination);
+                osc2.start(now);
+                osc2.stop(now + 0.3);
+                
+                console.log('Son de notification joué');
+            } catch (e) {
+                console.error('Erreur audio détaillée:', e);
+            }
+        }
+
+        function updateSoundIcon() {
+            const icon = document.getElementById('notification-sound-icon');
+            if (!icon) return;
+            if (soundEnabled) {
+                icon.classList.remove('bi-volume-mute');
+                icon.classList.add('bi-volume-up');
+                icon.style.color = '';
+            } else {
+                icon.classList.remove('bi-volume-up');
+                icon.classList.add('bi-volume-mute');
+                icon.style.color = '#dc3545';
+            }
+        }
+
+        const soundToggle = document.getElementById('notification-sound-toggle');
+        if (soundToggle) {
+            soundToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                initAudioContext();
+                soundEnabled = !soundEnabled;
+                localStorage.setItem('notification-sound', soundEnabled);
+                updateSoundIcon();
+                
+                if (soundEnabled) {
+                    playNotificationSound();
+                    window.showNotification('Son des notifications activé', 'info');
+                } else {
+                    window.showNotification('Son des notifications désactivé', 'info');
+                }
+            });
+        }
+
         // Charger le nombre de notifications non lues
         function loadNotificationCount() {
             fetch('{{ path('notification_count') }}')
                 .then(response => response.json())
                 .then(data => {
                     const badge = document.getElementById('notification-badge');
-                    if (data.count > 0) {
-                        badge.textContent = data.count > 99 ? '99+' : data.count;
-                        badge.style.display = 'inline-block';
-                    } else {
-                        badge.style.display = 'none';
+                    
+                    // Si le nombre a augmenté depuis la dernière vérification
+                    if (lastNotificationCount !== -1 && data.count > lastNotificationCount) {
+                        playNotificationSound();
+                    }
+                    
+                    lastNotificationCount = data.count;
+
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count > 99 ? '99+' : data.count;
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
                     }
                 })
                 .catch(error => console.error('Erreur lors du chargement des notifications:', error));
         }
 
+        // Initialiser l'icône au chargement
+        updateSoundIcon();
+
         // Charger au démarrage
         loadNotificationCount();
 
-        // Recharger toutes les 30 secondes
-        setInterval(loadNotificationCount, 30000);
+        // Recharger toutes les 5 secondes pour une réactivité quasi-instantanée
+        setInterval(loadNotificationCount, 5000);
 
         // Auto-disparition des messages flash
         document.addEventListener('DOMContentLoaded', function() {
