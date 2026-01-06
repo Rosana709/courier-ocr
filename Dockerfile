@@ -1,17 +1,23 @@
 FROM php:8.2-apache
 
-RUN apt-get update && apt-get install -y \
-    git unzip libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql
+# Activer mod_rewrite
+RUN a2enmod rewrite
 
+# Installer extensions PHP nécessaires
+RUN docker-php-ext-install pdo pdo_mysql
+
+# Installer Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Copier le projet
+COPY . /var/www/html
 
 WORKDIR /var/www/html
 
-COPY . .
-
+# Installer les dépendances Symfony
 RUN composer install --no-dev --optimize-autoloader
 
-RUN a2enmod rewrite
+# Permissions
+RUN chown -R www-data:www-data /var/www/html
 
-CMD ["apache2-foreground"]
+EXPOSE 80
