@@ -1,0 +1,45 @@
+services:
+  # 1. Le Backend OCR (FastAPI)
+  - type: web
+    name: sgc-ocr-backend
+    env: python
+    rootDir: ocr-system/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: LLAMA_CLOUD_API_KEY
+        sync: false # À configurer dans le dashboard Render
+      - key: PYTHON_VERSION
+        value: 3.10.0
+
+  # 2. L'Application Principale (Symfony)
+  - type: web
+    name: sgc-symfony-app
+    env: php
+    buildCommand: composer install --no-dev --optimize-autoloader && php bin/console assets:install public
+    startCommand: heroku-php-apache2 public/
+    plan: free # Ou 'starter' selon vos besoins
+    envVars:
+      - key: APP_ENV
+        value: prod
+      - key: APP_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sgc-db
+          property: connectionString
+      - key: OCR_BACKEND_URL
+        fromService:
+          type: web
+          name: sgc-ocr-backend
+          property: host
+      # Facultatif selon votre configuration SMTP
+      - key: MAILER_DSN
+        sync: false
+
+# 3. La Base de Données PostgreSQL
+databases:
+  - name: sgc-db
+    databaseName: gestion_courier
+    user: admin_sgc
+    plan: free
