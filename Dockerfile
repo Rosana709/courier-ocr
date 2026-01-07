@@ -30,7 +30,7 @@ WORKDIR /var/www/html
 
 # Supprimer les configs locales et préparer l'environnement de build
 RUN rm -rf var/cache/* var/log/* \
-    && mkdir -p var/cache var/log \
+    && mkdir -p var/cache var/log public/uploads \
     && chown -R www-data:www-data var public/uploads
 
 # Variables d'environnement pour le build
