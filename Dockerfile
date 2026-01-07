@@ -1,23 +1,20 @@
-FROM php:8.2-apache
+FROM php:8.3-apache
 
-# Activer mod_rewrite
-RUN a2enmod rewrite
+# Installer les extensions PHP nécessaires
+RUN apt-get update && apt-get install -y \
+        libpng-dev \
+        libjpeg-dev \
+        libfreetype6-dev \
+        unzip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd pdo pdo_mysql
 
-# Installer extensions PHP nécessaires
-RUN docker-php-ext-install pdo pdo_mysql
-
-# Installer Composer
+# Copier Composer depuis l'image officielle
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copier le projet
+# Copier le code
 COPY . /var/www/html
-
 WORKDIR /var/www/html
 
 # Installer les dépendances Symfony
 RUN composer install --no-dev --optimize-autoloader
-
-# Permissions
-RUN chown -R www-data:www-data /var/www/html
-
-EXPOSE 80
