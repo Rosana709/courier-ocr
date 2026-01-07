@@ -20,6 +20,8 @@ services:
         exclude:
             - '../src/DependencyInjection/'
             - '../src/Domain/Entity/'
+            - '../src/Application/DTO/'
+            - '../src/Domain/Exception/'
             - '../src/Kernel.php'
 
     # Repository interfaces binding

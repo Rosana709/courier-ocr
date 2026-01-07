@@ -237,7 +237,21 @@
             loadingOverlay.style.display = 'flex';
             try {
                 const response = await fetch('{{ path('smart_extract') }}', { method: 'POST', body: formData });
-                if (!response.ok) throw new Error("Erreur OCR");
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || errorData.error || "Erreur lors de l'analyse OCR");
+                }
+                
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const text = await response.text();
+                    console.error("Réponse invalide:", text);
+                    if (text.includes("Connexion") || text.includes("login")) {
+                        throw new Error("Votre session a expiré. Veuillez rafraîchir la page et vous reconnecter.");
+                    }
+                    throw new Error("Le serveur a renvoyé une réponse invalide (HTML au lieu de JSON).");
+                }
+
                 const result = await response.json();
                 const data = result.data || {};
 

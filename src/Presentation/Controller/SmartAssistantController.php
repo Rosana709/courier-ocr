@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/smart')]
@@ -36,15 +36,22 @@ class SmartAssistantController extends AbstractController
             // Vérification des doublons
             $isDuplicate = false;
             if (!empty($data['letterNumber'])) {
-                $isDuplicate = $this->courrierRepository->existsByNumeroReference($data['letterNumber']);
+                $isDuplicate = $this->courrierRepository->existsByNumeroReference((string)$data['letterNumber']);
             }
 
             return new JsonResponse([
                 'data' => $data,
                 'isDuplicate' => $isDuplicate
             ]);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (\Throwable $e) {
+            // Log full error for developer
+            error_log('OCR Error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            
+            return new JsonResponse([
+                'error' => 'Erreur lors de l\'analyse du document',
+                'message' => $e->getMessage(),
+                'trace' => $this->getParameter('kernel.debug') ? $e->getTraceAsString() : null
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -61,8 +68,12 @@ class SmartAssistantController extends AbstractController
         try {
             $result = $this->ocrService->generateContent($prompt, $content);
             return new JsonResponse($result);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (\Throwable $e) {
+            error_log('Generate Content Error: ' . $e->getMessage());
+            return new JsonResponse([
+                'error' => 'Erreur lors de la génération de contenu',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -78,8 +89,12 @@ class SmartAssistantController extends AbstractController
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'attachment; filename="courrier_genere.pdf"',
             ]);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (\Throwable $e) {
+            error_log('Generate PDF Error: ' . $e->getMessage());
+            return new JsonResponse([
+                'error' => 'Erreur lors de la génération du PDF',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
