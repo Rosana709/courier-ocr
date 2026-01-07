@@ -1,20 +1,21 @@
-FROM php:8.3-apache
+FROM php:8.3-fpm
 
-# Installer les extensions PHP nécessaires
+# Installer les dépendances système
 RUN apt-get update && apt-get install -y \
-        libpng-dev \
-        libjpeg-dev \
-        libfreetype6-dev \
-        unzip \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql
+    libpq-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    git \
+    && docker-php-ext-install pdo_pgsql zip \
+    && docker-php-ext-enable pdo_pgsql zip
 
-# Copier Composer depuis l'image officielle
+# Copier Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copier le code
+# Copier le code source
 COPY . /var/www/html
 WORKDIR /var/www/html
 
-# Installer les dépendances Symfony
+# Installer les dépendances PHP
 RUN composer install --no-dev --optimize-autoloader
