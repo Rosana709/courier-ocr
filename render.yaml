@@ -34,7 +34,7 @@ services:
           name: sgc-ocr-backend
           property: host
       - key: TRUSTED_PROXIES
-        value: 127.0.0.1,REMOTE_ADDR
+        value: 0.0.0.0/0,::/0
 
 databases:
   - name: sgc-db
