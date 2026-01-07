@@ -29,8 +29,7 @@ COPY . /var/www/html
 WORKDIR /var/www/html
 
 # Purger les configurations locales du fichier .env pour forcer l'usage des variables Render
-RUN sed -i 's/^DATABASE_URL=.*/DATABASE_URL=/' .env \
-    && sed -i 's/^MAILER_DSN=.*/MAILER_DSN=/' .env
+RUN sed -i 's/^DATABASE_URL=.*/DATABASE_URL=/' .env
 
 # Supprimer les caches et préparer les dossiers
 RUN rm -rf var/cache/* var/log/* \
