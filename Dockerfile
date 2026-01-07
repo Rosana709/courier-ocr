@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     git \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-configure intl \
-    && docker-php-ext-install gd pdo_pgsql zip intl \
+    && docker-php-ext-install gd pdo_pgsql pdo_mysql zip intl \
     && a2enmod rewrite
 
 # Configuration Apache pour Symfony
@@ -28,8 +28,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY . /var/www/html
 WORKDIR /var/www/html
 
-# Purger les configurations locales du fichier .env pour forcer l'usage des variables Render
-RUN sed -i 's/^DATABASE_URL=.*/DATABASE_URL=/' .env
+# Purger les configurations locales du fichier .env si nécessaire
+# RUN sed -i 's/^DATABASE_URL=.*/DATABASE_URL=/' .env
 
 # Supprimer les caches et préparer les dossiers
 RUN rm -rf var/cache/* var/log/* \
