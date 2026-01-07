@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Nouveau courrier sortant - Gestion de Courrier{% endblock %}
+{% block title %}Nouvel enregistrement courrier sortant - Gestion de Courrier{% endblock %}
 
 {% block body %}
 <!-- Loading Overlay -->
@@ -9,7 +9,7 @@
         <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
             <span class="visually-hidden">Chargement...</span>
         </div>
-        <div class="mt-2 fw-bold">Traitement intelligent en cours...</div>
+        <div class="mt-2 fw-bold" id="loadingText">Traitement intelligent en cours...</div>
     </div>
 </div>
 
@@ -17,7 +17,7 @@
     <div class="row mb-4">
         <div class="col">
             <h1 class="h2">
-                <i class="bi bi-box-arrow-right"></i> Nouveau Courrier Sortant
+                <i class="bi bi-box-arrow-right"></i> Nouvel Enregistrement Courrier Sortant
             </h1>
         </div>
         <div class="col-auto">
@@ -29,8 +29,26 @@
 
     <div class="row justify-content-center">
         <div class="col-md-8">
+            <!-- Smart Dashboard OCR -->
+            <div id="smartDashboard" class="smart-card">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-stars smart-gradient-text fs-4 me-2"></i>
+                    <h5 class="mb-0 smart-gradient-text">Assistant de saisie</h5>
+                </div>
+                <div>
+                    <p class="small text-muted mb-3">Pour enregistrer un <strong>ancien courrier</strong>, importez le document pour remplir automatiquement les champs.</p>
+                    <input type="file" id="smartOcrFileInput" style="display: none;" accept="image/*,application/pdf">
+                    <button type="button" class="btn btn-smart" id="btnSmartOCR">
+                        <i class="bi bi-camera"></i> Lire un document ancien (automatique)
+                    </button>
+                </div>
+            </div>
 
             <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square text-primary"></i> Nouveau courrier</h5>
+                    <p class="small text-muted mb-0">S'il s'agit d'un nouveau courrier à rédiger, veuillez remplir ce formulaire.</p>
+                </div>
                 <div class="card-body">
                     <form method="post">
                         <input type="hidden" name="type" value="SORTANT">
@@ -56,8 +74,14 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="numeroReference" class="form-label">N° Référence (Attribué après enregistrement)</label>
-                                    <input type="text" class="form-control" id="numeroReference" placeholder="Généré automatiquement" readonly title="Le numéro sera généré au format : XXX/MEF/SG/DGI/{{ userService.sigle ?? userService.id }}">
+                                    <label for="numeroReference" class="form-label">N° Référence</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="numeroReference" 
+                                           name="numeroReference"
+                                           placeholder="Généré automatiquement" 
+                                           title="Laissez vide pour générer automatiquement au format : XXX/MEF/SG/DGI/{{ userService.sigle ?? userService.id }}">
+                                    <small class="text-muted">Laissez vide pour une auto-génération.</small>
                                 </div>
                             </div>
                         </div>
@@ -103,7 +127,24 @@
                                         {% for personne in personnesExternes %}
                                             <option value="{{ personne.id }}">{{ personne.nomOuRaisonSociale }}</option>
                                         {% endfor %}
+                                        <option value="NEW_EXTERNAL">Autre</option>
                                     </select>
+                                </div>
+                                <div id="nomNouvellePersonneGroup" style="display:none;" class="p-3 bg-light border rounded mb-3">
+                                    <h6 class="text-primary mb-3"><i class="bi bi-person-plus"></i> Ajouter une personne externe</h6>
+                                    <div class="mb-3">
+                                        <label for="nomNouvellePersonne" class="form-label">Nom / Raison Sociale *</label>
+                                        <input type="text" class="form-control" id="nomNouvellePersonne" name="nomNouvellePersonne" placeholder="Entrez le nom complet">
+                                    </div>
+                                    <div class="mb-0">
+                                        <label for="typeNouvellePersonne" class="form-label">Type de personne *</label>
+                                        <select class="form-select" id="typeNouvellePersonne" name="typeNouvellePersonne">
+                                            <option value="ORGANISME">Organisme</option>
+                                            <option value="ADMINISTRATION">Administration</option>
+                                            <option value="ENTREPRISE">Entreprise</option>
+                                            <option value="CONTRIBUABLE">Particulier / Contribuable</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -153,6 +194,10 @@
         const serviceDestSelect = document.getElementById('serviceDestinataireId');
         const personneDestSelect = document.getElementById('personneExterneDestinataireId');
         const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+
+        const nomNouvellePersonneGroup = document.getElementById('nomNouvellePersonneGroup');
+        const nomNouvellePersonneInput = document.getElementById('nomNouvellePersonne');
 
         let serviceSelectInstance = null;
         let personneSelectInstance = null;
@@ -182,6 +227,7 @@
                     plugins: ['clear_button'],
                      onChange: function(value) {
                          // Trigger native change event for listeners
+                         syncNouvellePersonne();
                          const event = new Event('change');
                          document.getElementById('personneExterneDestinataireId').dispatchEvent(event);
                      }
@@ -193,11 +239,13 @@
             if (typeDestSelect.value === 'SERVICE') {
                 serviceDestGroup.style.display = 'block';
                 personneDestGroup.style.display = 'none';
+                nomNouvellePersonneGroup.style.display = 'none';
                 serviceDestSelect.required = true;
                 personneDestSelect.required = false;
+                nomNouvellePersonneInput.required = false;
                 
                 // Clear validation state on hidden fields if possible
-                if(personneSelectInstance) personneSelectInstance.clear();
+                // if(personneSelectInstance) personneSelectInstance.clear();
                 
             } else if (typeDestSelect.value === 'PERSONNE_EXTERNE') {
                 serviceDestGroup.style.display = 'none';
@@ -205,22 +253,138 @@
                 serviceDestSelect.required = false;
                 personneDestSelect.required = true;
                 
-                if(serviceSelectInstance) serviceSelectInstance.clear();
+                // if(serviceSelectInstance) serviceSelectInstance.clear();
+                syncNouvellePersonne();
 
             } else {
                 serviceDestGroup.style.display = 'none';
                 personneDestGroup.style.display = 'none';
+                nomNouvellePersonneGroup.style.display = 'none';
+            }
+        }
+
+        function syncNouvellePersonne() {
+            if (personneDestSelect.value === 'NEW_EXTERNAL') {
+                nomNouvellePersonneGroup.style.display = 'block';
+                nomNouvellePersonneInput.required = true;
+            } else {
+                nomNouvellePersonneGroup.style.display = 'none';
+                nomNouvellePersonneInput.required = false;
             }
         }
 
         typeDestSelect.addEventListener('change', syncDestinataireFields);
+        personneDestSelect.addEventListener('change', syncNouvellePersonne);
 
         // Init TomSelects immediately but they work best when visible. 
-        // However, TomSelect replaces the element, so we can init them.
         initTomSelects();
         
         // Initial sync
         syncDestinataireFields();
+
+        // OCR Logic
+        const smartOcrFileInput = document.getElementById('smartOcrFileInput');
+        document.getElementById('btnSmartOCR')?.addEventListener('click', () => smartOcrFileInput.click());
+        
+        smartOcrFileInput?.addEventListener('change', async (e) => {
+            if (!e.target.files.length) return;
+            const formData = new FormData();
+            formData.append('file', e.target.files[0]);
+            loadingText.innerText = "Analyse OCR en cours...";
+            loadingOverlay.style.display = 'flex';
+            try {
+                const response = await fetch('{{ path('smart_extract') }}', { method: 'POST', body: formData });
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || errorData.error || "Erreur lors de l'analyse OCR");
+                }
+                
+                const result = await response.json();
+                const data = result.data || {};
+
+                // Vérification des doublons
+                if (result.isDuplicate) {
+                    showNotification("Erreur : Ce document est déjà enregistré (N° " + (data.letterNumber || "inconnu") + ").\nL'analyse est annulée.", 'error');
+                    loadingOverlay.style.display = 'none';
+                    smartOcrFileInput.value = '';
+                    return;
+                }
+
+                // Pour un courrier SORTANT, on vérifie si l'expéditeur du doc est bien nous
+                if (data.senderService) {
+                    const normalize = (str) => {
+                        return str.toLowerCase()
+                            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                            .replace(/s\b/g, "")
+                            .replace(/\([^)]*\)/g, "")
+                            .replace(/[^a-z0-9]/g, "")
+                            .trim();
+                    };
+
+                    const sName = normalize(data.senderService);
+                    const userServiceName = normalize("{{ userService.nom }}");
+                    
+                    if (!sName.includes(userServiceName) && !userServiceName.includes(sName)) {
+                        // On prévient juste, on ne bloque pas forcément car le nom peut différer un peu
+                        console.warn("L'expéditeur détecté semble différent du service actuel.");
+                    }
+                }
+                
+                if (data.subject) document.getElementById('objet').value = data.subject;
+                if (data.body) document.getElementById('contenu').value = data.body;
+                if (data.letterNumber) document.getElementById('numeroReference').value = data.letterNumber;
+                if (data.date) {
+                    const dVal = data.date.match(/\d{4}-\d{2}-\d{2}/);
+                    if (dVal) document.getElementById('dateCourrier').value = dVal[0];
+                }
+                
+                // Tentative de mapping destinataire (receiverService dans le JSON OCR)
+                if (data.receiverService) {
+                    const rName = data.receiverService.toLowerCase();
+                    let found = false;
+
+                    // 1. Chercher dans les services
+                    const sOpts = document.getElementById('serviceDestinataireId').options;
+                    for (let i = 0; i < sOpts.length; i++) {
+                        const optText = sOpts[i].text.toLowerCase();
+                        if (optText.includes(rName) || rName.includes(optText)) {
+                            typeDestSelect.value = 'SERVICE';
+                            syncDestinataireFields();
+                            if (serviceSelectInstance) serviceSelectInstance.setValue(sOpts[i].value);
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    // 2. Chercher dans les personnes externes
+                    if (!found) {
+                        const pOpts = document.getElementById('personneExterneDestinataireId').options;
+                        for (let i = 0; i < pOpts.length; i++) {
+                            const optText = pOpts[i].text.toLowerCase();
+                            if (pOpts[i].value !== 'NEW_EXTERNAL' && (optText.includes(rName) || rName.includes(optText))) {
+                                typeDestSelect.value = 'PERSONNE_EXTERNE';
+                                syncDestinataireFields();
+                                if (personneSelectInstance) personneSelectInstance.setValue(pOpts[i].value);
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // 3. Sinon, marquer comme nouveau
+                    if (!found) {
+                        typeDestSelect.value = 'PERSONNE_EXTERNE';
+                        syncDestinataireFields();
+                        if (personneSelectInstance) personneSelectInstance.setValue('NEW_EXTERNAL');
+                        syncNouvellePersonne();
+                        nomNouvellePersonneInput.value = data.receiverService;
+                    }
+                }
+                
+                showNotification("Analyse terminée ! Les champs ont été remplis.", 'success');
+            } catch (err) { showNotification(err.message, 'error'); } 
+            finally { loadingOverlay.style.display = 'none'; smartOcrFileInput.value = ''; }
+        });
 
         // AI Logic
         document.getElementById('btnSmartAI')?.addEventListener('click', async () => {
@@ -228,8 +392,6 @@
             if (!objet) { showNotification("Saisissez un objet d'abord.", 'info'); return; }
             
             const rSelect = typeDestSelect.value === 'SERVICE' ? serviceDestSelect : personneDestSelect;
-            // Get text from TomSelect if initialized, or fallback
-            // TomSelect syncs back to original select, but retrieving text might need checking options
             let receiverName = "Destinataire";
             if (rSelect.selectedIndex !== -1) {
                  receiverName = rSelect.options[rSelect.selectedIndex].text;
@@ -238,11 +400,12 @@
             const params = {
                 senderService: "{{ userService.nom }}",
                 receiverService: receiverName,
-                letterNumber: "N/A",
+                letterNumber: document.getElementById('numeroReference').value || "N/A",
                 importance: document.getElementById('priorite').value || "HAUTE",
                 prompt: objet
             };
 
+            loadingText.innerText = "Traitement intelligent en cours...";
             loadingOverlay.style.display = 'flex';
             try {
                 const res = await fetch('{{ path('smart_generate_content') }}', { 
@@ -278,3 +441,4 @@
     });
 </script>
 {% endblock %}
+

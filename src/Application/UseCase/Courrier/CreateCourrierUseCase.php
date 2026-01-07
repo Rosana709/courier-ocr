@@ -68,12 +68,17 @@ class CreateCourrierUseCase
 
         // Générer le numéro de référence selon le type de courrier
         if ($dto->type === Courrier::TYPE_SORTANT) {
-            // Courrier sortant : générer numéro de référence automatiquement
-            if ($dto->typeExpediteur === Courrier::ACTEUR_SERVICE) {
-                $numeroReference = $this->numeroReferenceGenerator->generer($expediteur);
+            // Si un numéro est fourni (ex: anciens courriers), on l'utilise
+            if (!empty($dto->numeroReference)) {
+                $numeroReference = $dto->numeroReference;
             } else {
-                // Courrier externe sortant (rare)
-                $numeroReference = sprintf('EXT-%s-%s', date('Y'), uniqid());
+                // Courrier sortant : générer numéro de référence automatiquement
+                if ($dto->typeExpediteur === Courrier::ACTEUR_SERVICE) {
+                    $numeroReference = $this->numeroReferenceGenerator->generer($expediteur);
+                } else {
+                    // Courrier externe sortant (rare)
+                    $numeroReference = sprintf('EXT-%s-%s', date('Y'), uniqid());
+                }
             }
         } else {
             // Courrier entrant : le numéro de référence doit provenir de l'expéditeur (courrier sortant d'origine)
@@ -127,17 +132,22 @@ class CreateCourrierUseCase
         );
         $this->historiqueActionRepository->save($historiqueAction);
 
-        // Générer le numéro d'arrivée pour les courriers entrants vers un SERVICE
-        if ($courrier->getType() === Courrier::TYPE_ENTRANT
-            && $courrier->getTypeDestinataire() === Courrier::ACTEUR_SERVICE) {
+        // Générer le numéro d'enregistrement (Arrivée/Chrono) pour :
+        // 1. Les courriers entrants vers un SERVICE
+        // 2. Les anciens courriers sortants (ceux enregistrés avec une référence manuelle via l'assistant)
+        $servicePourNumero = null;
+        if ($courrier->getType() === Courrier::TYPE_ENTRANT && $courrier->getTypeDestinataire() === Courrier::ACTEUR_SERVICE) {
+            $servicePourNumero = $courrier->getServiceDestinataire();
+        } elseif ($courrier->getType() === Courrier::TYPE_SORTANT && !empty($dto->numeroReference)) {
+            $servicePourNumero = $courrier->getServiceExpediteur();
+        }
 
-            $serviceDestinataire = $courrier->getServiceDestinataire();
+        if ($servicePourNumero) {
             $annee = (int) $courrier->getDateEnregistrement()->format('Y');
-
-            $numeroArrivee = $this->numeroArriveeGenerator->generer($serviceDestinataire, $annee);
+            $numeroArrivee = $this->numeroArriveeGenerator->generer($servicePourNumero, $annee);
             $courrier->setNumeroArrivee($numeroArrivee);
 
-            // Sauvegarder à nouveau avec le numéro d'arrivée
+            // Sauvegarder avec le numéro d'enregistrement
             $this->courrierRepository->save($courrier);
         }
 

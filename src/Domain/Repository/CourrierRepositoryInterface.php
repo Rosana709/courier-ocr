@@ -79,6 +79,11 @@ interface CourrierRepositoryInterface
     public function countByService(Service $service): int;
 
     public function countByServiceAndAnnee(Service $service, int $annee): int;
+
+    /**
+     * Compte tous les courriers d'un service ayant un numéro d'arrivée/enregistrement pour une année
+     */
+    public function countByServiceAndAnneeWithArrivalNumber(Service $service, int $annee): int;
     
     public function countByServiceExpediteur(Service $service): int;
 

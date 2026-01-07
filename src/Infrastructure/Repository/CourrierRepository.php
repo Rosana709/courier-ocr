@@ -259,6 +259,24 @@ class CourrierRepository extends ServiceEntityRepository implements CourrierRepo
             ->getSingleScalarResult();
     }
 
+    public function countByServiceAndAnneeWithArrivalNumber(Service $service, int $annee): int
+    {
+        $dateDebut = new \DateTimeImmutable($annee . '-01-01 00:00:00');
+        $dateFin = new \DateTimeImmutable($annee . '-12-31 23:59:59');
+
+        return (int) $this->createQueryBuilder('c')
+            ->select('COUNT(c.id)')
+            ->where('(c.serviceExpediteur = :service OR c.serviceDestinataire = :service)')
+            ->andWhere('c.dateEnregistrement >= :dateDebut')
+            ->andWhere('c.dateEnregistrement <= :dateFin')
+            ->andWhere('c.numeroArrivee IS NOT NULL')
+            ->setParameter('service', $service)
+            ->setParameter('dateDebut', $dateDebut)
+            ->setParameter('dateFin', $dateFin)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function countByServiceExpediteur(Service $service): int
     {
         return (int) $this->createQueryBuilder('c')

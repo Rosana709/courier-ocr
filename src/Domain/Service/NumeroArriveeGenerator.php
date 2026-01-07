@@ -15,14 +15,14 @@ class NumeroArriveeGenerator
     }
 
     /**
-     * Génère un numéro d'arrivée pour un courrier entrant
-     * Format : N° XXX-YYYY/DG/SIGLE_DESTINATAIRE
+     * Génère un numéro d'enregistrement (Arrivée/Chrono)
+     * Format : N° XXX-YYYY/DG/SIGLE_SERVICE
      */
-    public function generer(Service $serviceDestinataire, int $annee): string
+    public function generer(Service $service, int $annee): string
     {
-        // Compter les arrivées pour ce service cette année
-        $compteur = $this->courrierRepository->countArriveesByServiceAndAnnee(
-            $serviceDestinataire,
+        // Compter les enregistrements déjà numérotés pour ce service cette année
+        $compteur = $this->courrierRepository->countByServiceAndAnneeWithArrivalNumber(
+            $service,
             $annee
         );
         $compteur++;
@@ -31,7 +31,7 @@ class NumeroArriveeGenerator
         $numeroFormate = str_pad((string)$compteur, 3, '0', STR_PAD_LEFT);
 
         // Utiliser le sigle du service ou son ID
-        $codeService = $serviceDestinataire->getSigle() ?? $serviceDestinataire->getId();
+        $codeService = $service->getSigle() ?? $service->getId();
 
         // Format : N° XXX-YYYY/DG/SERVICE
         return sprintf('N° %s-%d/DG/%s', $numeroFormate, $annee, $codeService);
