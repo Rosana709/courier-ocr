@@ -28,10 +28,18 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY . /var/www/html
 WORKDIR /var/www/html
 
-# Supprimer les configs locales et préparer l'environnement de build
+# Purger les configurations locales du fichier .env pour forcer l'usage des variables Render
+RUN sed -i 's/^DATABASE_URL=.*/DATABASE_URL=/' .env \
+    && sed -i 's/^MAILER_DSN=.*/MAILER_DSN=/' .env
+
+# Supprimer les caches et préparer les dossiers
 RUN rm -rf var/cache/* var/log/* \
     && mkdir -p var/cache var/log public/uploads \
     && chown -R www-data:www-data var public/uploads
+
+# Configuration Apache finale
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf \
+    && sed -i 's/80/${PORT}/g' /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf
 
 # Variables d'environnement pour le build
 ENV APP_ENV=prod
@@ -40,9 +48,6 @@ ENV APP_DEBUG=0
 # Installation des dépendances et warmup
 RUN composer install --no-dev --optimize-autoloader --no-scripts \
     && composer dump-autoload --optimize --classmap-authoritative --no-dev
-
-# Port dynamique pour Render
-RUN sed -i 's/80/${PORT}/g' /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf
 
 # Commande de démarrage
 CMD ["apache2-foreground"]
