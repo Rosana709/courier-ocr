@@ -18,6 +18,7 @@ services:
     env: docker
     rootDir: .
     dockerfilePath: Dockerfile
+    preDeployCommand: php bin/console doctrine:migrations:migrate --no-interaction
     plan: free
     envVars:
       - key: APP_ENV
