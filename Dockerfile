@@ -28,8 +28,9 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY . /var/www/html
 WORKDIR /var/www/html
 
-# Purger les configurations locales du fichier .env si nécessaire
-# RUN sed -i 's/^DATABASE_URL=.*/DATABASE_URL=/' .env
+# Purger les configurations locales du fichier .env pour forcer l'usage des variables Render
+RUN sed -i 's/^DATABASE_URL=.*/DATABASE_URL=/' .env \
+    && sed -i 's/^MAILER_DSN=.*/MAILER_DSN=/' .env
 
 # Supprimer les caches et préparer les dossiers
 RUN rm -rf var/cache/* var/log/* \
