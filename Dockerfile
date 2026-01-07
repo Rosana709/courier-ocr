@@ -10,9 +10,9 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     libpq-dev \
- && docker-php-ext-configure gd --with-freetype --with-jpeg \
- && docker-php-ext-install gd pdo_pgsql zip \
- && docker-php-ext-enable gd pdo_pgsql zip
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd pdo_pgsql zip \
+    && docker-php-ext-enable gd pdo_pgsql zip
 
 # Copier Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -20,6 +20,9 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Copier le code source
 COPY . /var/www/html
 WORKDIR /var/www/html
+
+# Supprimer les fichiers de config locaux pour forcer l'utilisation des variables d'environnement Render
+RUN rm -f .env.local .env
 
 # Installer les dépendances PHP
 RUN composer install --no-dev --optimize-autoloader

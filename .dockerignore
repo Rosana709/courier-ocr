@@ -1,0 +1,13 @@
+.git
+.env.local
+.env.local.php
+.env.test.local
+var/*
+!var/.gitkeep
+vendor/
+ocr-system/venv
+ocr-system/backend/venv
+ocr-system/backend/temp/*
+ocr-system/backend/generated_pdfs/*
+public/uploads/*
+!public/uploads/.gitkeep
