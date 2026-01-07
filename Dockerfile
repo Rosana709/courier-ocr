@@ -1,32 +1,48 @@
-FROM php:8.3-fpm
+FROM php:8.3-apache
 
-# Installer dépendances système et PHP extensions
+# Installer les dépendances système
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
+    libicu-dev \
+    libpq-dev \
     zip \
     unzip \
     git \
-    libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo_pgsql zip \
-    && docker-php-ext-enable gd pdo_pgsql zip
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install gd pdo_pgsql zip intl \
+    && a2enmod rewrite
+
+# Configuration Apache pour Symfony
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/000-default.conf
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 # Copier Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copier le code source
+# Copier le code
 COPY . /var/www/html
 WORKDIR /var/www/html
 
-# Supprimer uniquement le fichier de config local pour ne pas écraser les variables Render
-RUN rm -f .env.local
+# Supprimer les configs locales et préparer l'environnement de build
+RUN rm -rf var/cache/* var/log/* \
+    && mkdir -p var/cache var/log \
+    && chown -R www-data:www-data var public/uploads
 
-# Installer les dépendances PHP sans exécuter les scripts (car .env peut manquer au build)
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+# Variables d'environnement pour le build
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
 
-# Expose le port HTTP 80
-# Lance le serveur PHP intégré sur le port injecté par Render, en servant le dossier 'public'
-CMD php -S 0.0.0.0:$PORT -t public
+# Installation des dépendances et warmup
+RUN composer install --no-dev --optimize-autoloader --no-scripts \
+    && composer dump-autoload --optimize --classmap-authoritative --no-dev
+
+# Port dynamique pour Render
+RUN sed -i 's/80/${PORT}/g' /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf
+
+# Commande de démarrage
+CMD ["apache2-foreground"]
