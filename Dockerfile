@@ -21,11 +21,11 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY . /var/www/html
 WORKDIR /var/www/html
 
-# Supprimer les fichiers de config locaux pour forcer l'utilisation des variables d'environnement Render
-RUN rm -f .env.local .env
+# Supprimer uniquement le fichier de config local pour ne pas écraser les variables Render
+RUN rm -f .env.local
 
-# Installer les dépendances PHP
-RUN composer install --no-dev --optimize-autoloader
+# Installer les dépendances PHP sans exécuter les scripts (car .env peut manquer au build)
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Expose le port HTTP 80
 # Lance le serveur PHP intégré sur le port injecté par Render, en servant le dossier 'public'
