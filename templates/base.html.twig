@@ -262,8 +262,10 @@
             }
         }
 
-        // Les navigateurs bloquent le son tant qu'il n'y a pas eu d'interaction utilisateur (clic)
-        document.addEventListener('click', initAudioContext, { once: true });
+        // Les navigateurs bloquent le son tant qu'il n'y a pas eu d'interaction utilisateur
+        ['click', 'keydown', 'mousedown', 'touchstart'].forEach(event => {
+            document.addEventListener(event, initAudioContext, { once: true });
+        });
 
         function playNotificationSound() {
             if (!soundEnabled) return;
@@ -272,39 +274,36 @@
                 initAudioContext();
                 const now = audioContext.currentTime;
                 
-                // Corps principal de la sonnette (Ding !)
+                // Premier Ding (Note principale)
                 const osc = audioContext.createOscillator();
                 const gain = audioContext.createGain();
-                
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(2093.00, now);
-                
+                osc.frequency.setValueAtTime(1567.98, now); // G6
                 gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(0.4, now + 0.002);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
-                
+                gain.gain.linearRampToValueAtTime(0.3, now + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
                 osc.connect(gain);
                 gain.connect(audioContext.destination);
-                
                 osc.start(now);
-                osc.stop(now + 0.8);
+                osc.stop(now + 0.5);
 
-                // Harmonique haute
+                // Deuxième Ding (Un peu plus haut, décalé de 120ms)
+                const delay = 0.12;
                 const osc2 = audioContext.createOscillator();
                 const gain2 = audioContext.createGain();
                 osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(4186.01, now);
-                gain2.gain.setValueAtTime(0, now);
-                gain2.gain.linearRampToValueAtTime(0.15, now + 0.002);
-                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc2.frequency.setValueAtTime(2093.00, now + delay); // C7
+                gain2.gain.setValueAtTime(0, now + delay);
+                gain2.gain.linearRampToValueAtTime(0.2, now + delay + 0.01);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.4);
                 osc2.connect(gain2);
                 gain2.connect(audioContext.destination);
-                osc2.start(now);
-                osc2.stop(now + 0.3);
+                osc2.start(now + delay);
+                osc2.stop(now + delay + 0.4);
                 
-                console.log('Son de notification joué');
+                console.log('Son de notification premium joué');
             } catch (e) {
-                console.error('Erreur audio détaillée:', e);
+                console.error('Erreur audio détaillées:', e);
             }
         }
 
@@ -378,6 +377,22 @@
         // Auto-disparition des messages flash
         document.addEventListener('DOMContentLoaded', function() {
             const alerts = document.querySelectorAll('#flash-container .alert');
+            
+            // Jouer le son au chargement s'il y a des messages importants
+            if (alerts.length > 0) {
+                let hasImportantAlert = false;
+                alerts.forEach(alert => {
+                    if (alert.classList.contains('alert-success') || 
+                        alert.classList.contains('alert-danger') || 
+                        alert.classList.contains('alert-warning')) {
+                        hasImportantAlert = true;
+                    }
+                });
+                if (hasImportantAlert) {
+                    playNotificationSound();
+                }
+            }
+
             alerts.forEach(function(alert) {
                 // Créer un timer pour chaque alerte
                 setTimeout(function() {
@@ -415,6 +430,11 @@
             `;
             
             container.appendChild(alertDiv);
+            
+            // Jouer le son si ce n'est pas juste une info mineure
+            if (type === 'success' || type === 'error' || type === 'danger' || type === 'warning') {
+                playNotificationSound();
+            }
             
             // Auto-disparition
             setTimeout(() => {
