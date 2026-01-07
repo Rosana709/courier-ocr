@@ -23,3 +23,9 @@ WORKDIR /var/www/html
 
 # Installer les dépendances PHP
 RUN composer install --no-dev --optimize-autoloader
+
+# Expose le port HTTP 80
+EXPOSE 80
+
+# Lance le serveur PHP intégré sur le port 80, en servant le dossier 'public'
+CMD ["php", "-S", "0.0.0.0:80", "-t", "public"]
