@@ -25,7 +25,5 @@ WORKDIR /var/www/html
 RUN composer install --no-dev --optimize-autoloader
 
 # Expose le port HTTP 80
-EXPOSE 80
-
-# Lance le serveur PHP intégré sur le port 80, en servant le dossier 'public'
-CMD ["php", "-S", "0.0.0.0:80", "-t", "public"]
+# Lance le serveur PHP intégré sur le port injecté par Render, en servant le dossier 'public'
+CMD php -S 0.0.0.0:$PORT -t public

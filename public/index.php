@@ -2,19 +2,8 @@
 
 use App\Kernel;
 
-require_once dirname(__DIR__).'/config/bootstrap.php';
+require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
 
-// Créer le kernel
-$kernel = new Kernel($_SERVER['APP_ENV'] ?? 'dev', (bool) ($_SERVER['APP_DEBUG'] ?? true));
-
-// Créer une requête
-$request = Symfony\Component\HttpFoundation\Request::createFromGlobals();
-
-// Traiter la requête
-$response = $kernel->handle($request);
-
-// Envoyer la réponse
-$response->send();
-
-// Terminer
-$kernel->terminate($request, $response);
+return function (array $context) {
+    return new Kernel($context['APP_ENV'], (bool) $context['APP_DEBUG']);
+};
