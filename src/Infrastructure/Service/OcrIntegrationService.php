@@ -107,4 +107,24 @@ class OcrIntegrationService
 
         return $response->getContent();
     }
+    /**
+     * Discute avec l'assistant intelligent.
+     */
+    public function chat(string $message, array $history = [], bool $isAdmin = false): array
+    {
+        $response = $this->httpClient->request('POST', $this->baseUrl . '/api/chat', [
+            'json' => [
+                'message' => $message,
+                'history' => $history,
+                'isAdmin' => $isAdmin,
+            ],
+            'timeout' => 60,
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new \RuntimeException('Échec de la discussion avec l\'assistant : ' . $response->getContent(false));
+        }
+
+        return $response->toArray();
+    }
 }

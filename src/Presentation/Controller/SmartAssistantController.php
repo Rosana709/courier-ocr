@@ -97,4 +97,27 @@ class SmartAssistantController extends AbstractController
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+    #[Route('/chat', name: 'smart_chat', methods: ['POST'])]
+    public function chat(Request $request): JsonResponse
+    {
+        $content = json_decode($request->getContent(), true);
+        $message = $content['message'] ?? '';
+        $history = $content['history'] ?? [];
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+
+        if (empty($message)) {
+            return new JsonResponse(['error' => 'Le message est vide'], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $result = $this->ocrService->chat($message, $history, $isAdmin);
+            return new JsonResponse($result);
+        } catch (\Throwable $e) {
+            error_log('Chat Error: ' . $e->getMessage());
+            return new JsonResponse([
+                'error' => 'Erreur lors de la discussion',
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

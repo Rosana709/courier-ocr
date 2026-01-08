@@ -205,9 +205,9 @@
             <div class="chat-messages" id="chat-messages">
                 <div class="message bot">
                     {% if is_admin %}
-                        Bonjour Administrateur ! Je connais parfaitement le fonctionnement de la plateforme (gestion des bureaux, des comptes et des rapports). Que voulez-vous savoir ?
+                        Bienvenue sur notre plateforme d'automatisation d'enregistrement de courrier de la <strong>Direction Générale des Impôts (DGI)</strong>. En tant qu'administrateur, vous avez accès à des fonctionnalités avancées pour gérer et surveiller l'ensemble des courriers et des accès. Comment puis-je vous assister aujourd'hui ?
                     {% else %}
-                        Bonjour ! Je suis l'assistant de votre bureau. Je peux vous guider pour gérer vos courriers et vos alertes. Comment puis-je vous aider ?
+                        Bienvenue ! Je suis l'assistant intelligent de la <strong>Direction Générale des Impôts (DGI)</strong>. Je suis là pour vous aider à automatiser l'enregistrement de vos courriers entrants et sortants. Que souhaitez-vous faire ?
                     {% endif %}
                 </div>
                 
@@ -236,72 +236,8 @@
     const chatMessages = document.getElementById('chat-messages');
     const userInput = document.getElementById('user-input');
     const isAdmin = {{ is_admin ? 'true' : 'false' }};
+    let chatHistory = []; // Stocke l'historique pour le contexte
     
-    const allKnowledge = [
-        {
-            title: "Démarrer sur la plateforme",
-            keywords: ['debuter', 'commencer', 'comment', 'faire', 'aide', 'guide', 'aider', 'perdu', 'nouveau', 'apprendre', 'plateforme', 'système'],
-            answer: "### 🚀 Bienvenue ! Laissez-moi vous guider.\nC'est votre première fois ici ? Pas de panique !\n\nL'idée de base est simple : cette plateforme sert à **gérer les courriers numériques** de votre bureau.\n- **Si vous recevez un document papier** : Utilisez le bouton **Courrier Entrant**. Glissez le document scanné, et le système le lira pour vous.\n- **Si vous voulez envoyer une lettre** : Utilisez **Courrier Sortant**. Je peux même vous aider à l'écrire !\n- **Le petit plus** : Regardez toujours la **cloche** en haut, c'est là que vos collègues vous envoient des informations.\n\nQue préférez-vous essayer en premier ?",
-            roles: ['admin', 'service']
-        },
-        {
-            title: "Enregistrement d'arrivée (Entrant)",
-            keywords: ['entrant', 'arrivée', 'réception', 'reçu', 'entrer', 'venir', 'pdf', 'automatique'],
-            answer: "### 📥 Gérer un Courrier Entrant (Arrivée)\nVoici comment enregistrer un document que vous avez reçu :\n1. **Ouvrir le formulaire** : Cliquez sur le bouton **Courrier Entrant** sur votre tableau de bord.\n2. **Lecture automatique** : Glissez votre fichier PDF dans la zone pointillée. Le système va lire le document et remplir tout seul la date et l'objet.\n3. **Validation des infos** : Vérifiez que les informations lues sont correctes. Vous pouvez les modifier à la main si besoin.\n4. **Enregistrer** : Cliquez sur le bouton de validation pour terminer l'enregistrement.",
-            roles: ['service']
-        },
-        {
-            title: "Préparation de départ (Sortant)",
-            keywords: ['sortant', 'départ', 'envoi', 'envoyer', 'écrire', 'lettre', 'rédiger', 'pdf'],
-            answer: "### 📤 Gérer un Courrier Sortant (Départ)\nVoici comment préparer un document que vous voulez envoyer :\n1. **Ouvrir le formulaire** : Cliquez sur le bouton **Courrier Sortant**.\n2. **Aide à la rédaction** : Tapez quelques mots sur le sujet de votre lettre dans la zone d'aide. L'assistant va écrire la lettre proprement pour vous.\n3. **Choisir le destinataire** : Indiquez à qui vous envoyez le courrier.\n4. **Générer le PDF** : Une fois enregistré, cliquez sur **Générer PDF** pour obtenir votre lettre officielle prête à imprimer.",
-            roles: ['service']
-        },
-        {
-            title: "Changement de statut",
-            keywords: ['statut', 'état', 'changer', 'étape', 'traité', 'fini', 'attente'],
-            answer: "### 🔄 Changer l'état d'un Courrier\nUn courrier peut passer par plusieurs étapes :\n1. **En attente** : C'est l'état de départ quand un courrier est créé.\n2. **Traité / Validé** : Quand vous avez terminé de gérer le dossier, vous pouvez marquer qu'il est fini.\n3. **Archivé** : Pour les vieux documents que vous voulez ranger pour ne plus les voir dans la liste principale.\n*Note : Pour changer l'état, allez sur la fiche du courrier et utilisez les boutons d'action en haut.*",
-            roles: ['admin', 'service']
-        },
-        {
-            title: "Validation des documents",
-            keywords: ['validation', 'valider', 'vérifier', 'approbation', 'confirmer'],
-            answer: "### ✅ Validation du Courrier Entrant\nC'est l'étape de vérification après la lecture automatique :\n1. **Vérification** : Une fois que le document est lu, regardez bien si l'expéditeur et le sujet sont les bons.\n2. **Correction** : Si le système a fait une petite erreur de lecture, corrigez simplement le texte dans les cases.\n3. **Lien** : Assurez-vous que le courrier est bien lié à la bonne personne ou au bon bureau.\n4. **Confirmation finale** : Cliquez sur le bouton d'enregistrement pour confirmer que tout est correct.",
-            roles: ['service']
-        },
-        {
-            title: "Gestion des Bureaux",
-            keywords: ['service', 'bureau', 'sigle', 'direction', 'département', 'créer', 'ajouter'],
-            answer: isAdmin
-                ? "### 🏢 Gestion des Bureaux (Admin)\n1. Allez dans le menu **Services**.\n2. Vous pouvez créer un nouveau bureau (ex: Direction Technique).\n3. Donnez un **sigle** court (ex: DT) qui servira à identifier les courriers de ce bureau.\n4. Vous pouvez activer ou désactiver un bureau pour suspendre son activité."
-                : "### 🏢 Votre Bureau\n- Vous travaillez pour votre propre bureau.\n- Vos lettres utilisent le nom et le sigle de votre bureau.\n- Vous ne voyez pas les lettres des autres bureaux par sécurité.",
-            roles: ['admin', 'service']
-        },
-        {
-            title: "Gestion des Comptes",
-            keywords: ['utilisateur', 'compte', 'personne', 'accès', 'créer', 'liste'],
-            answer: "### 👤 Gestion des Comptes (Admin)\n1. Allez dans **Utilisateurs**.\n2. Vous pouvez créer des accès pour vos collègues.\n3. N'oubliez pas de les rattacher à leur **Bureau** respectif pour qu'ils voient leurs courriers.\n4. Vous pouvez voir qui est connecté et quel est leur rôle (Admin ou Service).",
-            roles: ['admin']
-        },
-        {
-            title: "Après création utilisateur",
-            keywords: ['après', 'créer', 'création', 'utilisateur', 'suivant', 'étape', 'ensuite'],
-            answer: "### ✨ Étapes après la création d'un compte\nUne fois que vous avez créé un nouvel utilisateur (Admin), voici ce qu'il faut faire :\n1. **Informer l'utilisateur** : Donnez-lui son email et son mot de passe de départ.\n2. **Première connexion** : L'utilisateur doit se connecter normalement sur la page d'accueil.\n3. **Changement obligatoire** : Le système lui demandera automatiquement de choisir son propre mot de passe personnel dès sa première entrée.\n4. **Démarrage** : Il pourra alors voir les alertes et les courriers de son bureau assigné.",
-            roles: ['admin']
-        },
-        {
-            title: "Ranger ses documents",
-            keywords: ['archive', 'ranger', 'cacher', 'classeur', 'retrouver'],
-            answer: "### 📁 Ranger ses documents\n- Cliquez sur l'icône de rangement (Archive) pour mettre un document de côté.\n- Il ne disparaît pas, il est juste rangé dans un classeur numérique séparé pour faire de la place.\n- Vous pouvez les retrouver dans l'onglet 'Archives'.",
-            roles: ['admin', 'service']
-        },
-        {
-            title: "Mot de passe perdu",
-            keywords: ['mot de passe', 'mdp', 'perdu', 'oublié', 'connexion', 'email'],
-            answer: "### 🔑 Mot de passe perdu\n1. Cliquez sur **'Mot de passe oublié ?'** sur la page de connexion.\n2. Entrez votre email.\n3. Le système vous envoie un nouveau code par mail pour vous dépanner.\n4. Utilisez ce code pour entrer et changer votre mot de passe dans votre profil.",
-            roles: ['admin', 'service']
-        }
-    ];
-
     function handleKeyPress(e) {
         if (e.key === 'Enter') {
             sendMessage();
@@ -317,20 +253,26 @@
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${side}`;
         
-        // Convert dynamic markdown-like formatting to html
+        // Un rendu Markdown amélioré
         let formattedText = text
             .replace(/^### (.*$)/gim, '<h3>$1</h3>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/^\d\. (.*$)/gim, '<li>$1</li>')
-            .replace(/(<li>.*<\/li>)/gim, '<ol>$1</ol>')
-            // Prevent nested ol tags if multiple li exist
-            .replace(/<\/ol><ol>/gim, '')
+            // On repère d'abord les lignes qui commencent par un chiffre suivi d'un point ou d'un tiret
+            .replace(/^(\d+)[.\-] (.*$)/gim, (match, num, content) => {
+                return `<div class="list-item"><span class="list-num">${num}-</span> ${content}</div>`;
+            })
             .replace(/\n/g, '<br>');
             
         msgDiv.innerHTML = formattedText;
-        
         chatMessages.appendChild(msgDiv);
         scrollChat();
+        
+        // Ajouter à l'historique (limité aux 6 derniers pour ne pas saturer le prompt)
+        if (side === 'bot') {
+            chatHistory.push({ role: 'assistant', content: text });
+        } else {
+            chatHistory.push({ role: 'user', content: text });
+        }
     }
 
     function showTypingIndicator() {
@@ -340,18 +282,28 @@
         indicator.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
         chatMessages.appendChild(indicator);
         scrollChat();
+        
+        // Jouer le son d'écriture
+        if (typeof playTypingSound === 'function') {
+            playTypingSound();
+        }
     }
 
     function removeTypingIndicator() {
         const indicator = document.getElementById('typing-indicator');
         if (indicator) indicator.remove();
+        
+        // Arrêter le son d'écriture
+        if (typeof stopTypingSound === 'function') {
+            stopTypingSound();
+        }
     }
 
     function scrollChat() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    function sendMessage() {
+    async function sendMessage() {
         const text = userInput.value.trim();
         if (!text) return;
 
@@ -360,91 +312,31 @@
 
         showTypingIndicator();
 
-        // Simulate thinking delay
-        setTimeout(() => {
+        try {
+            const response = await fetch('/smart/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: text,
+                    history: chatHistory.slice(-6)
+                })
+            });
+
+            if (!response.ok) throw new Error('Erreur API');
+
+            const data = await response.json();
             removeTypingIndicator();
-            const response = findBestResponse(text);
-            addMessage(response, 'bot');
-        }, 800);
-    }
-
-    function findBestResponse(text) {
-        const input = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const words = input.split(/\s+|'|\?|!|\./);
-        
-        let bestItem = null;
-        let maxScore = 0;
-        let candidates = [];
-
-        // Filter knowledge base by role
-        const relevantKnowledge = allKnowledge.filter(item => {
-            return isAdmin ? item.roles.includes('admin') : item.roles.includes('service');
-        });
-
-        for (const item of relevantKnowledge) {
-            let score = 0;
+            addMessage(data.response, 'bot');
             
-            // Analyze keywords matching
-            for (const kw of item.keywords) {
-                const normalizedKw = kw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                
-                // Direct phrase match (Bonus)
-                if (input.includes(normalizedKw)) {
-                    score += 5;
-                }
-                
-                // Individual word match
-                for (const word of words) {
-                    if (word === normalizedKw && word.length > 2) {
-                        score += 3;
-                    } else if (normalizedKw.includes(word) && word.length > 3) {
-                        score += 1;
-                    }
-                }
+            // Jouer le son de message reçu
+            if (typeof playMessageReceivedSound === 'function') {
+                playMessageReceivedSound();
             }
-
-            if (score > 0) {
-                if (score > maxScore) {
-                    maxScore = score;
-                    bestItem = item;
-                }
-                candidates.push({ item, score });
-            }
+        } catch (error) {
+            console.error('Erreur Chat:', error);
+            removeTypingIndicator();
+            addMessage("Désolé, j'ai rencontré une petite difficulté technique pour me connecter à mon cerveau IA. Souhaitez-vous que je réessaie ?", 'bot');
         }
-
-        // Friendly Guide logic
-        if (maxScore > 3) {
-            let response = "";
-            
-            // Preamble depends on score to sound more natural
-            if (maxScore > 10) {
-                response = "D'accord, je vois exactement ce que vous voulez dire ! Voici les détails :\n\n";
-            } else {
-                response = "Ah, je pense comprendre ! Vous parlez sûrement de ceci :\n\n";
-            }
-
-            response += bestItem.answer;
-            
-            // Add suggestions for further reading
-            const otherSuggestions = candidates
-                .filter(c => c.item !== bestItem && c.score > maxScore * 0.4)
-                .map(c => c.item.title);
-            
-            if (otherSuggestions.length > 0) {
-                response += "\n\n*Pour aller plus loin, vous pouvez aussi me demander pour : " + otherSuggestions.join(', ') + "*";
-            }
-            
-            return response;
-        }
-        
-        // Conversational Fallback - instead of a static list, ask questions
-        const fallbacks = [
-            "Je cherche à vous aider au mieux, mais je n'ai pas trouvé de réponse précise à cette question. Est-ce que cela concerne la **réception d'un courrier** ou peut-être un **problème de compte** ?",
-            "Hum, je ne suis pas encore expert sur ce sujet précis. Saviez-vous que je peux vous expliquer comment **rédiger une lettre automatique** ou comment **changer le statut d'un courrier** ?",
-            "Pas de soucis, la plateforme est vaste ! Souhaitez-vous que je vous fasse une petite **visite guidée** pour débutant ? Tapez simplement 'guide-moi'."
-        ];
-        
-        return fallbacks[Math.floor(Math.random() * fallbacks.length)];
     }
 </script>
 {% endblock %}

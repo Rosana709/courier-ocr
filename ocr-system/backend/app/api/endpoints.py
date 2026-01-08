@@ -3,12 +3,21 @@ import shutil
 from datetime import datetime
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
-from app.models.schemas import MailContent, GenerationRequest
+from app.models.schemas import MailContent, GenerationRequest, ChatRequest
 from app.services.ocr import extract_document
-from app.services.ai_gen import generate_mail_content
+from app.services.ai_gen import generate_mail_content, ask_assistant
 from app.utils.pdf import PDFGenerator
 
 router = APIRouter(prefix="/api")
+
+@router.post("/chat")
+async def chat_with_assistant(req: ChatRequest):
+    try:
+        result = ask_assistant(req)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/extract")
 async def extract_letters(file: UploadFile = File(...)):

@@ -307,6 +307,66 @@
             }
         }
 
+        let typingSoundInterval = null;
+        function playTypingSound() {
+            if (!soundEnabled || typingSoundInterval) return;
+            
+            typingSoundInterval = setInterval(() => {
+                try {
+                    initAudioContext();
+                    if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+                    
+                    const now = audioContext.currentTime;
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    
+                    // Son de petit "clic" plus sec et audible
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(500 + Math.random() * 150, now);
+                    
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(0.12, now + 0.002);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                    
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.04);
+                } catch (e) {}
+            }, 130);
+        }
+
+        function stopTypingSound() {
+            if (typingSoundInterval) {
+                clearInterval(typingSoundInterval);
+                typingSoundInterval = null;
+            }
+        }
+
+        function playMessageReceivedSound() {
+            if (!soundEnabled) return;
+            try {
+                initAudioContext();
+                if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+                
+                const now = audioContext.currentTime;
+                
+                // Son double-bip cristallin
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, now); // La5
+                osc.frequency.exponentialRampToValueAtTime(1320, now + 0.05); // Mi6
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } catch (e) {}
+        }
+
+
         function updateSoundIcon() {
             const icon = document.getElementById('notification-sound-icon');
             if (!icon) return;

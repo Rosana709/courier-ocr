@@ -15,3 +15,9 @@ class GenerationRequest(BaseModel):
     letterNumber: str
     importance: str
     prompt: str
+
+class ChatRequest(BaseModel):
+    message: str
+    history: list = []
+    isAdmin: bool = False
+
