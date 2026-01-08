@@ -438,20 +438,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const alerts = document.querySelectorAll('#flash-container .alert');
             
-            // Jouer le son au chargement s'il y a des messages importants
-            if (alerts.length > 0) {
-                let hasImportantAlert = false;
-                alerts.forEach(alert => {
-                    if (alert.classList.contains('alert-success') || 
-                        alert.classList.contains('alert-danger') || 
-                        alert.classList.contains('alert-warning')) {
-                        hasImportantAlert = true;
-                    }
-                });
-                if (hasImportantAlert) {
-                    playNotificationSound();
-                }
-            }
+            // Son supprimé pour les messages flash (réservé aux notifications système et chatbox)
 
             alerts.forEach(function(alert) {
                 // Créer un timer pour chaque alerte
@@ -491,10 +478,7 @@
             
             container.appendChild(alertDiv);
             
-            // Jouer le son si ce n'est pas juste une info mineure
-            if (type === 'success' || type === 'error' || type === 'danger' || type === 'warning') {
-                playNotificationSound();
-            }
+            // Son supprimé ici (réservé aux notifications système et chatbox)
             
             // Auto-disparition
             setTimeout(() => {
