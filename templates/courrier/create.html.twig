@@ -495,6 +495,30 @@
         serviceDestinataireSelect?.addEventListener('change', syncDestinataireFields);
         document.getElementById('personneExterneDestinataireId')?.addEventListener('change', syncDestinataireFields);
 
+        // --- Final Validation & Confirmation Logic ---
+        const form = document.querySelector('form');
+        const btnSubmit = form.querySelector('button[type="submit"]');
+        const btnAnnuler = form.querySelector('a.btn-secondary[data-confirm]');
+
+        function validateRequiredFields(e) {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                form.reportValidity();
+                window.showNotification("Veuillez renseigner les champs obligatoires.", 'error');
+                return false;
+            }
+            return true;
+        }
+
+        btnAnnuler?.addEventListener('click', function(e) {
+            if (!validateRequiredFields(e)) return;
+        }, true);
+
+        // Le bouton Enregistrer est géré globalement par base.html.twig 
+        // mais on peut ajouter un listener ici si on veut forcer un comportement.
+        // Puisque base.html.twig vérifie déjà form.checkValidity(), c'est bon.
+
         toggleNumeroReference();
         applyExpediteurLock();
         syncExpediteurFields();

@@ -410,35 +410,63 @@
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
 
-        // Validation Expéditeur != Destinataire et Double-clic
+        // Logic de confirmation et validation stricte
         const form = document.querySelector('form');
-        form.addEventListener('submit', function(e) {
+        const btnSubmit = document.getElementById('btnSubmitCourrier');
+        const btnAnnuler = document.querySelector('a.btn-secondary[data-confirm]');
+
+        // Fonction de validation commune
+        function validateRequiredFields(e) {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopImmediatePropagation(); // Bloque base.html.twig
+                form.reportValidity();
+                showNotification("Veuillez renseigner les champs obligatoires (notamment l'objet et la référence).", 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // Handler pour Annuler
+        btnAnnuler?.addEventListener('click', function(e) {
+            if (!validateRequiredFields(e)) {
+                return;
+            }
+        }, true);
+
+        // Handler pour Submit (Enregistrer)
+        btnSubmit?.addEventListener('click', function(e) {
+            if (!validateRequiredFields(e)) {
+                return;
+            }
+            
+            // On laisse base.html.twig prendre le relais pour le data-confirm
+            // OU on gère tout ici pour être sûr
+            const message = btnSubmit.getAttribute('data-confirm');
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            // Validation spécifique
             const typeExp = typeExpSelect.value;
             const userServiceId = "{{ userService.id }}";
-            
-            if (typeExp === 'SERVICE') {
-                const serviceExpId = serviceExpSelect.value;
-                if (serviceExpId === userServiceId) {
-                    e.preventDefault();
-                    showNotification("Erreur : Un courrier entrant ne peut pas avoir votre propre service comme expéditeur.", 'error');
-                    return false;
-                }
+            if (typeExp === 'SERVICE' && serviceExpSelect.value === userServiceId) {
+                showNotification("Erreur : Un courrier entrant ne peut pas avoir votre propre service comme expéditeur.", 'error');
+                return false;
             }
 
-            const btnSubmit = document.getElementById('btnSubmitCourrier');
-            if (btnSubmit) {
-                setTimeout(() => {
-                    const spinner = btnSubmit.querySelector('.submit-spinner');
-                    const icon = btnSubmit.querySelector('.btn-icon');
-                    const text = btnSubmit.querySelector('.btn-text');
-                    
-                    btnSubmit.disabled = true;
-                    if (spinner) spinner.classList.remove('d-none');
-                    if (icon) icon.classList.add('d-none');
-                    if (text) text.innerText = "Enregistrement...";
-                }, 50);
-            }
-        });
+            window.showStyledModal(message, false, () => {
+                const spinner = btnSubmit.querySelector('.submit-spinner');
+                const icon = btnSubmit.querySelector('.btn-icon');
+                const text = btnSubmit.querySelector('.btn-text');
+                
+                btnSubmit.disabled = true;
+                if (spinner) spinner.classList.remove('d-none');
+                if (icon) icon.classList.add('d-none');
+                if (text) text.innerText = "Enregistrement...";
+                form.submit();
+            });
+        }, true);
+
     });
 </script>
 {% endblock %}

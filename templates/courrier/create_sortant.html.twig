@@ -433,11 +433,38 @@
         // Logic de confirmation avec numéro de référence en temps réel
         const form = document.querySelector('form');
         const btnSubmit = document.getElementById('btnSubmitCourrier');
+        const btnAnnuler = document.querySelector('a.btn-secondary[data-confirm]');
         
-        btnSubmit.addEventListener('click', async function(e) {
-            e.preventDefault();
+        // Fonction de validation commune
+        function validateRequiredFields(e) {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopImmediatePropagation(); // Empêche base.html.twig d'afficher le modal
+                form.reportValidity();
+                showNotification("Veuillez renseigner les champs obligatoires (notamment l'objet).", 'error');
+                return false;
+            }
+            return true;
+        }
 
-            // Validation : Pas au même service
+        // Handler pour Annuler
+        btnAnnuler?.addEventListener('click', function(e) {
+            // On applique la validation demandée par l'utilisateur même sur le bouton Annuler
+            if (!validateRequiredFields(e)) {
+                return;
+            }
+        }, true); // Use capture phase to run before base.html.twig global listener
+
+        btnSubmit.addEventListener('click', async function(e) {
+            // Validation standard
+            if (!validateRequiredFields(e)) {
+                return;
+            }
+
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            // Validation spécifique : Pas au même service
             const typeDest = typeDestSelect.value;
             const userServiceId = "{{ userService.id }}";
             
@@ -449,12 +476,6 @@
                 }
             }
 
-            // Vérification des champs obligatoires natifs
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-            
             let refToDisplay = "";
 
             // Interroger l'API pour savoir quel sera le prochain numéro

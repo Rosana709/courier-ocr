@@ -538,15 +538,16 @@
                 const message = element.getAttribute('data-confirm');
                 const isDanger = element.classList.contains('btn-danger') || message.toLowerCase().includes('supprimer') || message.toLowerCase().includes('annuler');
 
-                // Cas d'un lien
-                if (element.tagName === 'A') {
-                    e.preventDefault();
-                    window.showStyledModal(message, isDanger, () => window.location.href = element.href);
-                } 
                 // Cas d'un bouton de soumission
-                else if ((element.tagName === 'BUTTON' || element.tagName === 'INPUT') && element.getAttribute('type') === 'submit') {
+                if ((element.tagName === 'BUTTON' || element.tagName === 'INPUT') && element.getAttribute('type') === 'submit') {
                     const form = element.form;
                     if (form) {
+                        // Validation avant d'afficher le modal
+                        if (!form.checkValidity()) {
+                            form.reportValidity();
+                            return; 
+                        }
+                        
                         e.preventDefault();
                         window.showStyledModal(message, isDanger, () => {
                             if (element.name) {
@@ -559,6 +560,13 @@
                             form.submit();
                         });
                     }
+                } 
+                // Cas d'un lien
+                else if (element.tagName === 'A') {
+                    // Pour le bouton "Annuler", si l'utilisateur a demandé qu'il ramène au formulaire si vide
+                    // On peut ajouter une logique spécifique ici ou laisser le défaut si c'est géré par create.html.twig
+                    e.preventDefault();
+                    window.showStyledModal(message, isDanger, () => window.location.href = element.href);
                 }
             });
 
