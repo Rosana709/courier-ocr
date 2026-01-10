@@ -53,8 +53,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="numeroReference" class="form-label">
-                                        Numéro de référence de l'expéditeur *
+                                    <label for="numeroReference" class="form-label fw-bold">
+                                        Numéro de référence de l'expéditeur <span class="text-danger">*</span>
                                     </label>
                                     <input type="text"
                                            class="form-control"
@@ -62,13 +62,15 @@
                                            name="numeroReference"
                                            required
                                            maxlength="100"
-                                           placeholder="Ex: 123/2025/EXP">
+                                           placeholder="Ex: 123/2025/EXP"
+                                           data-bs-toggle="tooltip"
+                                           title="Numéro de référence porté sur le courrier reçu">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="priorite" class="form-label">Priorité *</label>
-                                    <select class="form-select" id="priorite" name="priorite" required>
+                                    <label for="priorite" class="form-label fw-bold">Priorité <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="priorite" name="priorite" required data-bs-toggle="tooltip" title="Niveau d'urgence défini pour ce courrier">
                                         {% for prioriteValue in priorites %}
                                             <option value="{{ prioriteValue }}" {% if prioriteValue == 'NORMALE' %}selected{% endif %}>
                                                 {{ prioriteValue }}
@@ -82,8 +84,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="dateCourrier" class="form-label">Date du courrier *</label>
-                                    <input type="date" class="form-control" id="dateCourrier" name="dateCourrier" value="{{ 'now'|date('Y-m-d') }}" required>
+                                    <label for="dateCourrier" class="form-label fw-bold">Date du courrier <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="dateCourrier" name="dateCourrier" value="{{ 'now'|date('Y-m-d') }}" required data-bs-toggle="tooltip" title="Date d'émission du courrier original">
                                 </div>
                             </div>
                         </div>
@@ -93,8 +95,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="typeExpediteur" class="form-label">Type d'expéditeur *</label>
-                                    <select class="form-select" id="typeExpediteur" name="typeExpediteur" required>
+                                    <label for="typeExpediteur" class="form-label fw-bold">Type d'expéditeur <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="typeExpediteur" name="typeExpediteur" required data-bs-toggle="tooltip" title="Origine du courrier">
                                         <option value="SERVICE">Service interne</option>
                                         <option value="PERSONNE_EXTERNE" selected>Personne externe</option>
                                     </select>
@@ -153,8 +155,8 @@
 
                         <hr>
                         <div class="mb-3">
-                            <label for="objet" class="form-label">Objet *</label>
-                            <input type="text" class="form-control" id="objet" name="objet" required maxlength="500">
+                            <label for="objet" class="form-label fw-bold">Objet <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="objet" name="objet" required maxlength="500" placeholder="Sujet du courrier" data-bs-toggle="tooltip" title="Titre ou résumé de l'objet du courrier">
                         </div>
 
                         <div class="mb-3">
@@ -163,9 +165,10 @@
                         </div>
 
                         <div class="d-flex justify-content-between mt-4">
-                            <a href="{{ path('courrier_index') }}" class="btn btn-secondary">Annuler</a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save"></i> Enregistrer le courrier
+                            <a href="{{ path('courrier_index') }}" class="btn btn-secondary" data-confirm="Êtes-vous sûr de vouloir annuler la saisie ? Toutes les données non enregistrées seront perdues.">Annuler</a>
+                            <button type="submit" class="btn btn-primary" id="btnSubmitCourrier" data-confirm="Voulez-vous vraiment enregistrer ce courrier entrant ? Un numéro d'arrivée sera automatiquement généré.">
+                                <span class="submit-spinner spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                <i class="bi bi-save btn-icon"></i> <span class="btn-text">Enregistrer le courrier</span>
                             </button>
                         </div>
                     </form>
@@ -401,7 +404,13 @@
             } catch (e) { console.error(e); }
         }
 
-        // Validation Expéditeur != Destinataire
+        // Initialiser les tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Validation Expéditeur != Destinataire et Double-clic
         const form = document.querySelector('form');
         form.addEventListener('submit', function(e) {
             const typeExp = typeExpSelect.value;
@@ -414,6 +423,20 @@
                     showNotification("Erreur : Un courrier entrant ne peut pas avoir votre propre service comme expéditeur.", 'error');
                     return false;
                 }
+            }
+
+            const btnSubmit = document.getElementById('btnSubmitCourrier');
+            if (btnSubmit) {
+                setTimeout(() => {
+                    const spinner = btnSubmit.querySelector('.submit-spinner');
+                    const icon = btnSubmit.querySelector('.btn-icon');
+                    const text = btnSubmit.querySelector('.btn-text');
+                    
+                    btnSubmit.disabled = true;
+                    if (spinner) spinner.classList.remove('d-none');
+                    if (icon) icon.classList.add('d-none');
+                    if (text) text.innerText = "Enregistrement...";
+                }, 50);
             }
         });
     });

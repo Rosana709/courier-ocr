@@ -18,8 +18,25 @@ class SmartAssistantController extends AbstractController
 {
     public function __construct(
         private readonly OcrIntegrationService $ocrService,
-        private readonly \App\Domain\Repository\CourrierRepositoryInterface $courrierRepository
+        private readonly \App\Domain\Repository\CourrierRepositoryInterface $courrierRepository,
+        private readonly \App\Domain\Service\NumeroReferenceGenerator $referenceGenerator
     ) {
+    }
+
+    #[Route('/next-reference', name: 'smart_next_reference', methods: ['GET'])]
+    public function nextReference(): JsonResponse
+    {
+        /** @var \App\Domain\Entity\Utilisateur $user */
+        $user = $this->getUser();
+        $service = $user->getService();
+        
+        if (!$service) {
+            return new JsonResponse(['error' => 'Utilisateur sans service'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $nextRef = $this->referenceGenerator->generer($service);
+
+        return new JsonResponse(['nextReference' => $nextRef]);
     }
 
     #[Route('/extract', name: 'smart_extract', methods: ['POST'])]

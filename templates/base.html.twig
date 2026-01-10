@@ -202,24 +202,32 @@
     </footer>
 
     <!-- Modal de Confirmation Global -->
-    <div class="modal" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content shadow-lg border-0">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold">Confirmation</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow-2xl overflow-hidden" style="border-radius: 20px;">
+                <div id="confirmModalHeader" class="modal-header border-0 py-3 bg-primary text-white d-flex align-items-center">
+                    <i class="bi bi-shield-check fs-4 me-2"></i>
+                    <h5 class="modal-title fw-bold mb-0">Validation requise</h5>
+                    <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body py-4">
-                    <div class="d-flex align-items-start">
-                        <div class="bg-warning-subtle p-3 rounded-circle me-3">
-                            <i class="bi bi-exclamation-triangle-fill text-warning fs-4"></i>
+                <div class="modal-body p-4">
+                    <div class="d-flex align-items-center mb-0">
+                        <div id="confirmModalIconContainer" class="p-3 rounded-circle me-3 flex-shrink-0 animate__animated animate__pulse animate__infinite">
+                            <i id="confirmModalIcon" class="bi bi-question-circle fs-3"></i>
                         </div>
-                        <p id="confirmModalMessage" class="mb-0 fs-5 mt-2 text-dark"></p>
+                        <div>
+                            <p id="confirmModalMessage" class="mb-0 fw-semibold text-dark fs-5"></p>
+                            <p class="small text-muted mb-0 mt-1">Cette action est irréversible une fois validée.</p>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Annuler</button>
-                    <button type="button" class="btn btn-primary px-4" id="confirmModalBtn">Confirmer</button>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i> Abandonner
+                    </button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm" id="confirmModalBtn">
+                        <i class="bi bi-check2-circle me-1"></i> Valider l'action
+                    </button>
                 </div>
             </div>
         </div>
@@ -492,34 +500,82 @@
 
         // Gestion globale des confirmations personnalisées
         document.addEventListener('DOMContentLoaded', function() {
-            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            const confirmModalElement = document.getElementById('confirmModal');
+            const confirmModal = new bootstrap.Modal(confirmModalElement);
             const confirmBtn = document.getElementById('confirmModalBtn');
             const confirmMsg = document.getElementById('confirmModalMessage');
+            const confirmIcon = document.getElementById('confirmModalIcon');
+            const confirmIconContainer = document.getElementById('confirmModalIconContainer');
+            const confirmHeader = document.getElementById('confirmModalHeader');
             let pendingAction = null;
 
-            document.body.addEventListener('submit', function(e) {
-                const form = e.target;
-                if (form.hasAttribute('data-confirm')) {
+            window.showStyledModal = function(message, isDanger = false, callback = null) {
+                confirmMsg.innerHTML = message;
+                pendingAction = callback;
+                
+                if (isDanger) {
+                    confirmHeader.classList.remove('bg-primary');
+                    confirmHeader.classList.add('bg-danger');
+                    confirmIconContainer.className = 'p-3 rounded-circle me-3 flex-shrink-0 bg-danger-subtle text-danger';
+                    confirmIcon.className = 'bi bi-exclamation-triangle fs-3';
+                    confirmBtn.className = 'btn btn-danger rounded-pill px-4 shadow-sm';
+                } else {
+                    confirmHeader.classList.remove('bg-danger');
+                    confirmHeader.classList.add('bg-primary');
+                    confirmIconContainer.className = 'p-3 rounded-circle me-3 flex-shrink-0 bg-primary-subtle text-primary';
+                    confirmIcon.className = 'bi bi-patch-check fs-3';
+                    confirmBtn.className = 'btn btn-primary rounded-pill px-4 shadow-sm';
+                }
+                
+                confirmModal.show();
+            };
+
+            // Gestionnaire unique pour les clics avec data-confirm
+            document.body.addEventListener('click', function(e) {
+                const element = e.target.closest('[data-confirm]');
+                if (!element) return;
+
+                const message = element.getAttribute('data-confirm');
+                const isDanger = element.classList.contains('btn-danger') || message.toLowerCase().includes('supprimer') || message.toLowerCase().includes('annuler');
+
+                // Cas d'un lien
+                if (element.tagName === 'A') {
                     e.preventDefault();
-                    confirmMsg.textContent = form.getAttribute('data-confirm');
-                    pendingAction = () => form.submit();
-                    confirmModal.show();
+                    window.showStyledModal(message, isDanger, () => window.location.href = element.href);
+                } 
+                // Cas d'un bouton de soumission
+                else if ((element.tagName === 'BUTTON' || element.tagName === 'INPUT') && element.getAttribute('type') === 'submit') {
+                    const form = element.form;
+                    if (form) {
+                        e.preventDefault();
+                        window.showStyledModal(message, isDanger, () => {
+                            if (element.name) {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = element.name;
+                                input.value = element.value;
+                                form.appendChild(input);
+                            }
+                            form.submit();
+                        });
+                    }
                 }
             });
 
-            document.body.addEventListener('click', function(e) {
-                const link = e.target.closest('[data-confirm]');
-                if (link && link.tagName === 'A') {
+            // Pour les formulaires complets avec data-confirm
+            document.body.addEventListener('submit', function(e) {
+                const form = e.target;
+                if (form.hasAttribute('data-confirm') && !pendingAction) {
                     e.preventDefault();
-                    confirmMsg.textContent = link.getAttribute('data-confirm');
-                    pendingAction = () => window.location.href = link.href;
-                    confirmModal.show();
+                    const message = form.getAttribute('data-confirm');
+                    window.showStyledModal(message, false, () => form.submit());
                 }
             });
 
             confirmBtn.addEventListener('click', function() {
                 if (pendingAction) {
                     pendingAction();
+                    pendingAction = null;
                 }
                 confirmModal.hide();
             });

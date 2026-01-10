@@ -56,8 +56,8 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="priorite" class="form-label">Priorité *</label>
-                                    <select class="form-select" id="priorite" name="priorite" required>
+                                    <label for="priorite" class="form-label fw-bold">Priorité <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="priorite" name="priorite" required data-bs-toggle="tooltip" title="Niveau d'urgence du traitement">
                                         {% for prioriteValue in priorites %}
                                             <option value="{{ prioriteValue }}" {% if prioriteValue == 'NORMALE' %}selected{% endif %}>
                                                 {{ prioriteValue }}
@@ -68,20 +68,20 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="dateCourrier" class="form-label">Date du courrier *</label>
-                                    <input type="date" class="form-control" id="dateCourrier" name="dateCourrier" value="{{ 'now'|date('Y-m-d') }}" required>
+                                    <label for="dateCourrier" class="form-label fw-bold">Date du courrier <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="dateCourrier" name="dateCourrier" value="{{ 'now'|date('Y-m-d') }}" required data-bs-toggle="tooltip" title="Date portée sur le document physique">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label for="numeroReference" class="form-label">N° Référence</label>
+                                    <label for="numeroReference" class="form-label fw-bold">N° Référence</label>
                                     <input type="text" 
-                                           class="form-control" 
+                                           class="form-control bg-light" 
                                            id="numeroReference" 
                                            name="numeroReference"
-                                           placeholder="Généré automatiquement" 
-                                           title="Laissez vide pour générer automatiquement au format : XXX/MEF/SG/DGI/{{ userService.sigle ?? userService.id }}">
-                                    <small class="text-muted">Laissez vide pour une auto-génération.</small>
+                                           readonly
+                                           data-bs-toggle="tooltip"
+                                           title="Le numéro sera généré automatiquement lors de l'enregistrement.">
                                 </div>
                             </div>
                         </div>
@@ -100,8 +100,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="typeDestinataire" class="form-label">Type de destinataire *</label>
-                                    <select class="form-select" id="typeDestinataire" name="typeDestinataire" required>
+                                    <label for="typeDestinataire" class="form-label fw-bold">Type de destinataire <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="typeDestinataire" name="typeDestinataire" required data-bs-toggle="tooltip" title="Choisissez si le destinataire est interne ou externe">
                                         <option value="">-- Sélectionnez --</option>
                                         <option value="SERVICE">Service interne</option>
                                         <option value="PERSONNE_EXTERNE">Personne externe</option>
@@ -152,8 +152,8 @@
 
                         <hr>
                         <div class="mb-3">
-                            <label for="objet" class="form-label">Objet *</label>
-                            <input type="text" class="form-control" id="objet" name="objet" required maxlength="500">
+                            <label for="objet" class="form-label fw-bold">Objet <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="objet" name="objet" required maxlength="500" placeholder="Sujet principal du courrier" data-bs-toggle="tooltip" title="Saisissez un titre clair et explicite">
                         </div>
 
                         <div class="mb-3">
@@ -162,14 +162,15 @@
                         </div>
 
                         <div class="d-flex justify-content-between align-items-start mt-4">
-                            <a href="{{ path('courrier_index') }}" class="btn btn-secondary">Annuler</a>
+                            <a href="{{ path('courrier_index') }}" class="btn btn-secondary" data-confirm="Êtes-vous sûr de vouloir annuler la saisie ? Toutes les données non enregistrées seront perdues.">Annuler</a>
                             <div class="d-flex flex-column align-items-end gap-2">
                                 <div class="d-flex gap-2">
                                     <button type="button" class="btn btn-smart" id="btnSmartAI" title="L'IA peut vous aider à rédiger le contenu.">
                                         <i class="bi bi-robot"></i> Aide à la rédaction (IA)
                                     </button>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-save"></i> Enregistrer le courrier
+                                    <button type="submit" class="btn btn-primary" id="btnSubmitCourrier">
+                                        <span class="submit-spinner spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                        <i class="bi bi-save btn-icon"></i> <span class="btn-text">Enregistrer le courrier</span>
                                     </button>
                                 </div>
                                 <small class="text-muted"><i class="bi bi-info-circle"></i> Le texte généré par l'IA dans le contenu peut être modifié librement avant l'enregistrement.</small>
@@ -423,20 +424,68 @@
         });
 
 
-        // Validation Expéditeur != Destinataire
+        // Initialiser les tooltips Bootstrap
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Logic de confirmation avec numéro de référence en temps réel
         const form = document.querySelector('form');
-        form.addEventListener('submit', function(e) {
+        const btnSubmit = document.getElementById('btnSubmitCourrier');
+        
+        btnSubmit.addEventListener('click', async function(e) {
+            e.preventDefault();
+
+            // Validation : Pas au même service
             const typeDest = typeDestSelect.value;
             const userServiceId = "{{ userService.id }}";
             
             if (typeDest === 'SERVICE') {
                 const serviceDestId = serviceDestSelect.value;
                 if (serviceDestId === userServiceId) {
-                    e.preventDefault();
                     showNotification("Erreur : Un courrier sortant ne peut pas être adressé à votre propre service.", 'error');
                     return false;
                 }
             }
+
+            // Vérification des champs obligatoires natifs
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            let refToDisplay = "";
+
+            // Interroger l'API pour savoir quel sera le prochain numéro
+            try {
+                const response = await fetch('{{ path('smart_next_reference') }}');
+                const result = await response.json();
+                if (result.nextReference) {
+                    refToDisplay = result.nextReference;
+                    // On remplit IMMÉDIATEMENT le champ dans le formulaire
+                    document.getElementById('numeroReference').value = refToDisplay;
+                }
+            } catch (err) {
+                console.error("Erreur récup ref:", err);
+            }
+
+            const message = `Voulez-vous vraiment enregistrer ce courrier sortant ?<br><br>Le numéro de référence sera : ${refToDisplay || 'En cours...'}<br><br>Cette action est irréversible une fois validée.`;
+            
+            window.showStyledModal(message, false, () => {
+                // Animation du bouton
+                const spinner = btnSubmit.querySelector('.submit-spinner');
+                const icon = btnSubmit.querySelector('.btn-icon');
+                const text = btnSubmit.querySelector('.btn-text');
+                
+                btnSubmit.disabled = true;
+                if (spinner) spinner.classList.remove('d-none');
+                if (icon) icon.classList.add('d-none');
+                if (text) text.innerText = "Enregistrement...";
+                
+                // Soumettre le formulaire
+                form.submit();
+            });
         });
     });
 </script>

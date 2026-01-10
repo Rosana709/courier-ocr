@@ -1,119 +1,84 @@
-# 🦅 Système de Gestion de Courrier Intégré (SGC) - DGI
+# 🦅 Système de Gestion de Courrier Intégré (SGC) - DGI Madagascar
 
-Bienvenue dans le projet de gestion de courrier de la **Direction Générale des Impôts (DGI)**. Ce projet est une solution hybride combinant la puissance de **Symfony 7** pour la gestion métier et un micro-service **FastAPI (Python)** pour l'intelligence artificielle et l'OCR.
+Bienvenue dans la solution officielle de gestion et d'automatisation de courrier de la **Direction Générale des Impôts (DGI) à Madagascar**. Ce projet est une plateforme premium combinant la robustesse du framework **Symfony 7** et l'intelligence artificielle de pointe via **FastAPI (Python)**.
+
+> **"Bienvenue sur notre plateforme d'automatisation d'enregistrement de courrier au sein de la DGI à Madagascar."**
 
 ---
 
-## �️ Architecture du Projet
+## 🏗️ Architecture du Système
 
-Le projet est divisé en deux composants principaux qui communiquent via API :
+Le projet repose sur une architecture moderne à deux piliers, garantissant performance et évolutivité :
 
-### 1. Application Principale (`/gestion_courier`)
+### 1. Cœur Applicatif (`/gestion_courier`)
 *   **Technologie** : PHP 8.2+ / Symfony 7.2
-*   **Rôle** : Cœur de l'application, gestion des utilisateurs, des services, de la base de données, des workflows de validation et des notifications.
-*   **Base de Données** : PostgreSQL 16.
+*   **Base de Données** : PostgreSQL 16
+*   **Rôle** : Gestion métier, sécurité (RBAC), workflows de validation, notifications en temps réel et interface utilisateur premium.
 
-### 2. Système OCR & IA (`/ocr-system/backend`)
-*   **Technologie** : Python 3.10+ / FastAPI
-*   **Rôle** : Micro-service spécialisé dans le traitement de documents.
-    *   **Extraction OCR** : Utilisation de Tesseract/PaddleOCR pour lire les informations des fichiers PDF scannés.
-    *   **Génération de Contenu** : Intégration d'IA pour assister à la rédaction des courriers.
-    *   **Génération de PDF** : Moteur de rendu PDF pour les courriers officiels sortants.
-
----
-
-## ✨ Fonctionnalités Clés
-
-### 📁 Gestion Métier (Symfony)
-*   **Workflow Complet** : Enregistrement, diffusion (aiguillage), suivi et archivage des courriers.
-*   **Accusés de Réception** : Système de décharge numérique pour garantir la traçabilité.
-*   **Notifications Dynamiques** : Alertes sonores et visuelles en temps réel dès la réception d'un courrier.
-*   **Tableaux de Bord** : Rapports d'activité détaillés pour les chefs de service et administrateurs.
-
-### 🤖 Intelligence & Automatisation (Python)
-*   **OCR Intelligent** : Importez un PDF scanné, et le système remplit automatiquement l'objet, la date et le numéro de référence.
-*   **Aide à la Rédaction** : Génération automatique du corps de texte basé sur un prompt.
-*   **Certification PDF** : Création de documents PDF normalisés avec en-tête DGI officiel.
+### 2. Cerveau IA & OCR (`/ocr-system/backend`)
+*   **Technologie** : Python 3.10+ / FastAPI / Groq AI (Llama 3.3)
+*   **Rôle** : Micro-service d'intelligence pour le traitement de documents.
+    *   **Assistant DGI** : Agent conversationnel intelligent spécialisé dans le contexte administratif malgache.
+    *   **Lecture de document (OCR)** : Extraction automatique des données depuis des fichiers scannés.
+    *   **Rédaction assistée** : Génération de contenu de courrier conforme aux standards administratifs.
 
 ---
 
-## � Structure des Dossiers
+## ✨ Fonctionnalités Majeures
 
-```text
-gestion_courier/
-├── src/                      # Code source Symfony (Architecture DDD)
-│   ├── Domain/               # Entités, Repositories (Logique métier)
-│   ├── Application/          # Cas d'utilisation (UseCases)
-│   ├── Infrastructure/       # Services externes (OCR Integration, Mailer)
-│   └── Presentation/         # Contrôleurs et templates Twig
-├── templates/                # Vues Twig (Frontend)
-├── config/                   # Configuration Symfony
-└── public/                   # Point d'entrée web
+### 🤖 Assistant DGI Intelligent
+Un compagnon interactif intégré à la plateforme pour guider les utilisateurs :
+*   **Identité Forte** : Expert DGI Madagascar utilisant un langage courant et non-technique.
+*   **Conscience du Rôle** : Ses réponses s'adaptent selon que vous soyez Administrateur ou Agent.
+*   **Interaction Fluide** : Effets sonores de frappe et notifications vocales pour une expérience "vivante".
 
-ocr-system/
-├── backend/                  # API Python FastAPI
-│   ├── app/
-│   │   ├── api/              # Endpoints (extract, generate-pdf)
-│   │   ├── services/         # Logique OCR et IA
-│   │   └── utils/            # Moteur de génération PDF
-│   └── main.py               # Lancement du serveur Python (Port 8001)
-└── frontend/                 # (Optionnel) Dashboard de monitoring OCR
-```
+### 📁 Gestion Métier Avancée
+*   **Workflow Courrier** : Enregistrement, diffusion, suivi des décharges et archivage systématique.
+*   **Numérotation Automatique** : Génération de numéros de référence et d'arrivée selon les formats officiels de la DGI.
+*   **Tableau de Bord & Audit** : Surveillance globale pour les administrateurs et rapports d'activité pour les services.
+
+### ⚡ Automatisation & Productivité
+*   **Lecture Automatique** : Importez un ancien courrier, et le système "lit" le document pour remplir les champs à votre place.
+*   **Rédaction Expert** : L'IA vous aide à écrire vos lettres de départ en respectant le ton officiel.
+*   **Notifications Smart** : Système d'alerte sonore cristallin pour les nouveaux courriers et les messages de l'assistant.
 
 ---
 
-## 🚀 Installation & Configuration
+## 🚀 Installation Rapide
 
-### 1. Configuration de l'Application Symfony
+### 1. Application Symfony
 ```bash
 cd gestion_courier
 composer install
-
-# Configurer .env.local
-DATABASE_URL="postgresql://user:password@127.0.0.1:5432/gestion_courier?serverVersion=16&charset=utf8"
-OCR_BACKEND_URL="http://127.0.0.1:8001"
-
-# Initialiser la base de données
+# Configuration du .env.local (Database & API Key)
 php bin/console doctrine:database:create
 php bin/console doctrine:migrations:migrate
-php bin/console doctrine:fixtures:load
+symfont server:start
 ```
 
-### 2. Configuration du Backend OCR (Python)
+### 2. Backend IA (Python)
 ```bash
 cd ocr-system/backend
 python -m venv venv
-source venv/bin/activate  # ou venv\Scripts\activate sur Windows
+source venv/bin/activate
 pip install -r requirements.txt
-
-# Lancer le serveur
+# Configurer le GROQ_API_KEY dans le fichier .env
 python main.py
 ```
 
 ---
 
-## 🔌 Fonctionnement de l'Intégration
+## 🔐 Gouvernance & Rôles
 
-L'application Symfony communique avec le service Python via le service `OcrIntegrationService.php`. 
-
-1.  **Extraction** : Quand vous uploadez un fichier dans `Courrier Entrant`, le fichier est envoyé à `POST http://127.0.0.1:8001/api/extract`.
-2.  **Résultat** : Le JSON retourné (objet, date, etc.) est utilisé pour pré-remplir le formulaire Symfony en JavaScript.
-3.  **Génération PDF** : Pour les courriers sortants, Symfony envoie les données à `POST /api/generate-pdf` pour récupérer un fichier PDF formaté.
+Le système applique une séparation stricte des privilèges :
+*   **Administrateur** : Gestion des utilisateurs, des services/bureaux, audit complet et archivage. Pas de création directe de courrier.
+*   **Agent de Service** : Enregistrement des courriers (Entrants/Sortants), réponse aux notifications, rédaction assistée et validation des reçus.
 
 ---
 
-## 🔐 Sécurité & Maintenance
-
-*   **Rôles** : `ROLE_ADMIN` (Gestion totale, archivage) et `ROLE_USER` (Gestion par service).
-*   **Tranches de vie** : Les courriers ne sont jamais supprimés physiquement mais passés au statut `ARCHIVE`.
-*   **Logs** : Le backend Python génère des logs dans `ocr_backend.log` pour le débogage des extractions.
+## 👨‍💻 Crédits
+Propriété de la **Direction Générale des Impôts (DGI)**.  
+Conçu pour moderniser et sécuriser les échanges administratifs à Madagascar.
 
 ---
-
-## 👨‍� Crédits & Contact
-
-Développé pour la **Direction Générale des Impôts**.  
-**Technologies** : Symfony 7, FastAPI, PostgreSQL, Tesseract OCR.
-
----
-*Dernière mise à jour : 06 Janvier 2026*
+*Dernière mise à jour : 08 Janvier 2026*
