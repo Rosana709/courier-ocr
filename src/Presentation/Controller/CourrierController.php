@@ -298,7 +298,7 @@ class CourrierController extends AbstractController
             $this->addFlash('error', $e->getMessage());
         }
 
-        return $this->redirectToRoute('courrier_show', ['id' => $id]);
+        return $this->redirectToRoute('courrier_show', ['id' => $id, 'notification_sound' => 1]);
     }
 
     #[Route('/export/excel', name: 'courrier_export_excel', methods: ['GET'])]
@@ -375,7 +375,34 @@ class CourrierController extends AbstractController
             $this->addFlash('error', $e->getMessage());
         }
 
-        return $this->redirectToRoute('courrier_index');
+        return $this->redirectToRoute('courrier_index', ['notification_sound' => 1]);
+    }
+
+    #[Route('/{id}/desarchiver', name: 'courrier_desarchiver', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function desarchiver(string $id): Response
+    {
+        try {
+            /** @var Courrier $courrier */
+            $courrier = $this->getCourrierUseCase->execute($id);
+            
+            // On passe un statut arbitraire (hors ARCHIVE) pour déclencher la logique de désarchivage du UseCase
+            // Le UseCase va ignorer ce statut et utiliser statutAnterieur s'il existe
+            $dto = new UpdateCourrierDTO(
+                statut: Courrier::STATUT_EN_ATTENTE 
+            );
+            
+            $this->updateCourrierUseCase->execute($id, $dto, $this->getUser()->getId());
+            
+            // On récupère le courrier mis à jour pour afficher le bon statut dans le message (optionnel)
+            // Mais pour l'instant un message générique suffit
+            $this->addFlash('success', 'Courrier désarchivé avec succès. Il a retrouvé son statut d\'origine.');
+            
+        } catch (DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('courrier_show', ['id' => $id, 'notification_sound' => 1]);
     }
 
     #[Route('/{id}/generate-official-pdf', name: 'courrier_generate_official_pdf', methods: ['GET'])]

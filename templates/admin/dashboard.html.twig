@@ -15,121 +15,121 @@
     </div>
 
     {# Statistiques #}
+    {# Statistiques #}
     <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="card text-white bg-primary">
+            <div class="card text-white h-100" style="background-color: #6a9c96;"> {# Teal color for Services #}
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="card-subtitle mb-2 text-white-50">Services Actifs</h6>
-                            <h2 class="card-title mb-0">{{ stats.services_actifs }}</h2>
+                            <h2 class="card-title mb-0 display-4 fw-bold">{{ stats.services_actifs }}</h2>
+                            <small class="text-white-50">Total: {{ stats.total_services }}</small>
                         </div>
                         <div>
                             <i class="bi bi-building" style="font-size: 3rem; opacity: 0.3;"></i>
                         </div>
                     </div>
-                    <small class="text-white-50">Total: {{ stats.total_services }}</small>
                 </div>
             </div>
         </div>
 
         <div class="col-md-3">
-            <div class="card text-white bg-success">
+            <div class="card text-white bg-success h-100" style="background-color: #198754;"> {# Green for Users #}
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="card-subtitle mb-2 text-white-50">Utilisateurs Actifs</h6>
-                            <h2 class="card-title mb-0">{{ stats.utilisateurs_actifs }}</h2>
+                            <h2 class="card-title mb-0 display-4 fw-bold">{{ stats.utilisateurs_actifs }}</h2>
+                            <small class="text-white-50">Total: {{ stats.total_utilisateurs }}</small>
                         </div>
                         <div>
                             <i class="bi bi-people" style="font-size: 3rem; opacity: 0.3;"></i>
                         </div>
                     </div>
-                    <small class="text-white-50">Total: {{ stats.total_utilisateurs }}</small>
                 </div>
             </div>
         </div>
 
         <div class="col-md-3">
-            <div class="card text-white bg-info">
+            <div class="card text-white bg-info h-100" style="background-color: #0dcaf0;"> {# Cyan/Blue for Mail #}
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="card-subtitle mb-2 text-white-50">Total Courriers</h6>
-                            <h2 class="card-title mb-0">{{ stats.total_couriers }}</h2>
+                            <h2 class="card-title mb-0 display-4 fw-bold">{{ stats.total_couriers }}</h2>
+                            <small class="text-white-50">Tous les courriers</small>
                         </div>
                         <div>
                             <i class="bi bi-envelope" style="font-size: 3rem; opacity: 0.3;"></i>
                         </div>
                     </div>
-                    <small class="text-white-50">Tous les courriers</small>
                 </div>
             </div>
         </div>
 
         <div class="col-md-3">
-            <div class="card text-white bg-warning">
+            <div class="card text-white bg-warning h-100" style="background-color: #ffc107;"> {# Yellow for Pending #}
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <h6 class="card-subtitle mb-2 text-white-50">En attente AR</h6>
-                            <h2 class="card-title mb-0">{{ stats.courriers_attente_accuse }}</h2>
+                            <h2 class="card-title mb-0 display-4 fw-bold">{{ stats.courriers_attente_accuse }}</h2>
+                            <small class="text-white-50">Accusés de réception en attente</small>
                         </div>
                         <div>
                             <i class="bi bi-hourglass-split" style="font-size: 3rem; opacity: 0.3;"></i>
                         </div>
                     </div>
-                    <small class="text-white-50">Accusés de réception en attente</small>
                 </div>
             </div>
         </div>
+    </div>
 
+    <div class="row g-3 mb-4">
+        {# Utilisateurs connectés (Moved here to match layout) #}
         <div class="col-md-3">
-            <div class="card text-white bg-secondary">
+             <div class="card text-white bg-secondary h-100" style="background-color: #6c757d;">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="card-subtitle mb-2 text-white-50">Utilisateurs connectés</h6>
-                            <h2 class="card-title mb-0">{{ stats.utilisateurs_connectes }}</h2>
+                            <h2 class="card-title mb-0 display-4 fw-bold">{{ stats.utilisateurs_connectes }}</h2>
+                            <small class="text-white-50">Sessions actives (< 15 min)</small>
                         </div>
                         <div>
                             <i class="bi bi-activity" style="font-size: 3rem; opacity: 0.3;"></i>
                         </div>
                     </div>
-                    <small class="text-white-50">Sessions actives (&lt; 15 min)</small>
                 </div>
             </div>
         </div>
     </div>
 
     {# Actions rapides #}
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Actions rapides</h5>
+    <div class="card mb-4" style="background-color: #6a9c96; border: none;">
+        <div class="card-header text-white border-0" style="background-color: transparent;">
+             <h5 class="mb-0"><i class="bi bi-lightning-fill"></i> Actions rapides</h5>
+        </div>
+        <div class="card-body bg-white border border-top-0 rounded-bottom">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <a href="{{ path('service_create') }}" class="btn btn-outline-secondary w-100 py-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-building fs-4 me-2"></i>
+                        <span>Créer un service</span>
+                    </a>
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <a href="{{ path('service_create') }}" class="btn btn-outline-primary w-100 py-3">
-                                <i class="bi bi-building"></i><br>
-                                Créer un service
-                            </a>
-                        </div>
-                        <div class="col-md-4">
-                            <a href="{{ path('admin_utilisateur_create') }}" class="btn btn-outline-success w-100 py-3">
-                                <i class="bi bi-person-plus"></i><br>
-                                Créer un utilisateur
-                            </a>
-                        </div>
-                        <div class="col-md-4">
-                            <a href="{{ path('courrier_index') }}" class="btn btn-outline-info w-100 py-3">
-                                <i class="bi bi-file-earmark-text"></i><br>
-                                Voir tous les courriers
-                            </a>
-                        </div>
-                    </div>
+                <div class="col-md-4">
+                    <a href="{{ path('admin_utilisateur_create') }}" class="btn btn-outline-success w-100 py-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-person-plus fs-4 me-2"></i>
+                        <span>Créer un utilisateur</span>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ path('courrier_index') }}" class="btn btn-outline-info w-100 py-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-file-earmark-text fs-4 me-2"></i>
+                        <span>Voir tous les courriers</span>
+                    </a>
                 </div>
             </div>
         </div>

@@ -70,13 +70,17 @@ class UpdateCourrierUseCase
             if (!$isAlreadyLocked || $isArchiving || $isUnarchiving) {
                 $ancienStatut = $courrier->getStatut();
                 $nouveauStatut = $dto->statut;
+
+                // Si on archive, mémoriser le statut actuel
+                if ($isArchiving && $ancienStatut !== Courrier::STATUT_ARCHIVE) {
+                    $courrier->setStatutAnterieur($ancienStatut);
+                }
                 
-                // Si on désarchive, trouver le statut précédent avant l'archivage
+                // Si on désarchive, restaurer le statut précédent
                 if ($isUnarchiving) {
-                    $statutAvantArchivage = $this->trouverStatutAvantArchivage($courrier);
-                    if ($statutAvantArchivage) {
-                        $nouveauStatut = $statutAvantArchivage;
-                    }
+                    $statutRestored = $courrier->getStatutAnterieur() ?? $this->trouverStatutAvantArchivage($courrier);
+                    $nouveauStatut = $statutRestored;
+                    $courrier->setStatutAnterieur(null); // Nettoyer après restauration
                 }
                 
                 $courrier->updateStatut($nouveauStatut);

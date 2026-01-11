@@ -260,20 +260,29 @@
 
         function initAudioContext() {
             if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                console.log('AudioContext initialisé');
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioContext = new AudioContext();
             }
+            // Toujours tenter de reprendre si suspendu
             if (audioContext.state === 'suspended') {
-                audioContext.resume().then(() => {
-                    console.log('AudioContext repris après suspension');
-                });
+                audioContext.resume();
             }
         }
 
-        // Les navigateurs bloquent le son tant qu'il n'y a pas eu d'interaction utilisateur
-        ['click', 'keydown', 'mousedown', 'touchstart'].forEach(event => {
-            document.addEventListener(event, initAudioContext, { once: true });
-        });
+        // Tenter de débloquer l'audio sur n'importe quelle interaction
+        function unlockAudio() {
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            } else if (!audioContext) {
+                initAudioContext();
+            }
+            // Une fois débloqué, on peut retirer les écouteurs si on veut, 
+            // mais les garder ne coûte pas cher et assure la résilience.
+        }
+
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('keydown', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
 
         function playNotificationSound() {
             if (!soundEnabled) return;
@@ -328,7 +337,7 @@
                     const osc = audioContext.createOscillator();
                     const gain = audioContext.createGain();
                     
-                    // Son de petit "clic" plus sec et audible
+                    // Son de petit "clic" plus sec et audible (Version Précédente)
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(500 + Math.random() * 150, now);
                     
@@ -359,7 +368,7 @@
                 
                 const now = audioContext.currentTime;
                 
-                // Son double-bip cristallin
+                // Son double-bip cristallin (Version Précédente)
                 const osc = audioContext.createOscillator();
                 const gain = audioContext.createGain();
                 osc.type = 'sine';
@@ -371,7 +380,9 @@
                 gain.connect(audioContext.destination);
                 osc.start(now);
                 osc.stop(now + 0.2);
-            } catch (e) {}
+            } catch (e) {
+                console.error('Erreur son assistant:', e);
+            }
         }
 
 
@@ -446,7 +457,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             const alerts = document.querySelectorAll('#flash-container .alert');
             
-            // Son supprimé pour les messages flash (réservé aux notifications système et chatbox)
+            if (alerts.length > 0) {
+                // Son désactivé pour les messages flash instantanés (conformément à la demande utilisateur)
+                // setTimeout(() => playNotificationSound(), 200); 
+            }
 
             alerts.forEach(function(alert) {
                 // Créer un timer pour chaque alerte
@@ -486,7 +500,8 @@
             
             container.appendChild(alertDiv);
             
-            // Son supprimé ici (réservé aux notifications système et chatbox)
+            // Son désactivé pour les notifications instantanées
+            // playNotificationSound(); 
             
             // Auto-disparition
             setTimeout(() => {
@@ -587,6 +602,26 @@
                 }
                 confirmModal.hide();
             });
+        });
+
+        // Vérifier le paramètre de son de notification dans l'URL (pour feedback après rechargement)
+        window.addEventListener('load', function() {
+             const urlParams = new URLSearchParams(window.location.search);
+             if (urlParams.has('notification_sound')) {
+                 // Retirer le paramètre de l'URL pour ne pas rejouer au rafraîchissement
+                 const url = new URL(window.location);
+                 url.searchParams.delete('notification_sound');
+                 window.history.replaceState({}, '', url);
+                 
+                 // Jouer le son
+                 // Note: Peut être bloqué par les politiques d'autoplay si aucune interaction préalable
+                 setTimeout(() => {
+                     // On essaie de reprendre le contexte si suspendu
+                     if (soundEnabled) {
+                        playNotificationSound();
+                     }
+                 }, 300);
+             }
         });
     </script>
     {% endif %}

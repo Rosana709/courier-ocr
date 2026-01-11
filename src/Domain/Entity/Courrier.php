@@ -124,6 +124,9 @@ class Courrier
     #[ORM\Column(type: 'datetime_immutable', nullable: true, name: 'datemodification')]
     private ?\DateTimeImmutable $dateModification = null;
 
+    #[ORM\Column(type: 'string', length: 50, nullable: true, name: 'statut_anterieur')]
+    private ?string $statutAnterieur = null;
+
     public function __construct(
         string $numeroReference,
         string $type,
@@ -316,6 +319,16 @@ class Courrier
     {
         $this->statut = $this->validateStatut($statut);
         $this->dateModification = new \DateTimeImmutable();
+    }
+
+    public function getStatutAnterieur(): ?string
+    {
+        return $this->statutAnterieur;
+    }
+
+    public function setStatutAnterieur(?string $statutAnterieur): void
+    {
+        $this->statutAnterieur = $statutAnterieur;
     }
 
     public function getNotes(): ?string
