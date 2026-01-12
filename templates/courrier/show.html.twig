@@ -403,22 +403,45 @@
                 </div>
             </div>
 
-            {% if is_granted('ROLE_ADMIN') %}
-            <div class="card border-secondary">
+            {% set isAdmin = is_granted('ROLE_ADMIN') %}
+            {% set isArchived = courrier.statut == 'ARCHIVE' %}
+
+            {# Zone Administrateur (Uniquement pour les courriers archivés) #}
+            {% if isAdmin and isArchived %}
+            <div class="card border-secondary shadow-sm mb-4">
                 <div class="card-header bg-secondary text-white">
-                    <h6 class="mb-0">Zone Administrateur</h6>
+                    <h6 class="mb-0"><i class="bi bi-shield-lock-fill me-2"></i>Zone Administrateur</h6>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-3">
                     <div class="d-grid gap-2">
-                        {% if courrier.statut == 'ARCHIVE' %}
-                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#archiveModal">
-                                <i class="bi bi-archive-fill"></i> Désarchiver
+                        <form method="post" action="{{ path('courrier_desarchiver', {id: courrier.id}) }}">
+                            <button type="submit" class="btn btn-success btn-sm w-100 shadow-sm">
+                                <i class="bi bi-archive-fill me-1"></i> Désarchiver ce courrier
                             </button>
-                        {% else %}
-                            <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#archiveModal">
-                                <i class="bi bi-archive"></i> Archiver
+                        </form>
+                        <form method="post" action="{{ path('courrier_delete', {id: courrier.id}) }}" data-confirm="VOULEZ-VOUS VRAIMENT SUPPRIMER CE COURRIER DÉFINITIVEMENT ?">
+                            <button type="submit" class="btn btn-danger btn-sm w-100 mt-1 shadow-sm">
+                                <i class="bi bi-trash-fill me-1"></i> Supprimer définitivement
                             </button>
-                        {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {# Zone Service (Suppression/Archivage) #}
+            {% if not isAdmin and is_granted('courrier_archive', courrier) %}
+            <div class="card border-secondary shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0"><i class="bi bi-person-badge-fill me-2"></i>Zone Service</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-grid gap-2">
+                        <form method="post" action="{{ path('courrier_archiver', {id: courrier.id}) }}" data-confirm="Voulez-vous vraiment supprimer ce courrier de votre liste ?">
+                            <button type="submit" class="btn btn-danger btn-sm w-100 shadow-sm">
+                                <i class="bi bi-trash-fill me-1"></i> Supprimer ce courrier
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>

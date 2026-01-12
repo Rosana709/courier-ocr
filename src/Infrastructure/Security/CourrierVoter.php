@@ -19,10 +19,11 @@ class CourrierVoter extends Voter
     public const VIEW = 'courrier_view';
     public const EDIT = 'courrier_edit';
     public const DELETE = 'courrier_delete';
+    public const ARCHIVE = 'courrier_archive';
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::VIEW, self::EDIT, self::DELETE])
+        return in_array($attribute, [self::VIEW, self::EDIT, self::DELETE, self::ARCHIVE])
             && $subject instanceof Courrier;
     }
 
@@ -47,7 +48,8 @@ class CourrierVoter extends Voter
             return match ($attribute) {
                 self::VIEW => $this->canView($courrier, $user),
                 self::EDIT => $this->canEdit($courrier, $user),
-                self::DELETE => false, // Les services ne peuvent pas supprimer
+                self::DELETE => false,
+                self::ARCHIVE => $this->canView($courrier, $user) && $courrier->getStatut() !== Courrier::STATUT_ARCHIVE,
                 default => false,
             };
         }

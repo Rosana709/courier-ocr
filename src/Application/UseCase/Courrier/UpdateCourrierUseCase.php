@@ -35,24 +35,28 @@ class UpdateCourrierUseCase
             throw new EntityNotFoundException("Courrier non trouvé");
         }
 
-        // Empêcher la modification d'un courrier sortant (sauf si c'est pour l'archiver ou désarchiver)
-        if ($courrier->estSortant() && $dto->statut !== Courrier::STATUT_ARCHIVE && $courrier->getStatut() !== Courrier::STATUT_ARCHIVE) {
-            throw new \RuntimeException("Un courrier sortant ne peut pas être modifié après sa création.");
-        }
+        // Les modifications sont maintenant gérées au cas par cas dans la suite de la méthode
 
-        if ($dto->objet !== null && $courrier->estEntrant()) {
+
+        $modifications = [];
+
+        if ($dto->objet !== null && $courrier->estEntrant() && $dto->objet !== $courrier->getObjet()) {
+            $modifications[] = sprintf('Objet modifié : "%s" -> "%s"', $courrier->getObjet(), $dto->objet);
             $courrier->updateObjet($dto->objet);
         }
 
-        if ($dto->contenu !== null && $courrier->estEntrant()) {
+        if ($dto->contenu !== null && $courrier->estEntrant() && $dto->contenu !== $courrier->getContenu()) {
+            $modifications[] = 'Contenu modifié';
             $courrier->updateContenu($dto->contenu);
         }
 
-        if ($dto->priorite !== null && $courrier->estEntrant()) {
+        if ($dto->priorite !== null && $courrier->estEntrant() && $dto->priorite !== $courrier->getPriorite()) {
+            $modifications[] = sprintf('Priorité modifiée : %s -> %s', $courrier->getPriorite(), $dto->priorite);
             $courrier->updatePriorite($dto->priorite);
         }
 
-        if ($dto->statut !== null) {
+        $statusChanged = false;
+        if ($dto->statut !== null && $dto->statut !== $courrier->getStatut()) {
             $statutsVerrouilles = [
                 Courrier::STATUT_RECU_CONFIRME,
                 Courrier::STATUT_ACCUSE_RECEPTION_RECU,
@@ -60,9 +64,6 @@ class UpdateCourrierUseCase
                 Courrier::STATUT_ARCHIVE
             ];
 
-            // On ne permet pas de changer le statut si le courrier est déjà confirmé/terminal
-            // SAUF si on veut l'archiver (et qu'il n'est pas déjà archivé)
-            // OU si on veut le désarchiver (passer de ARCHIVE à un autre statut)
             $isArchiving = $dto->statut === Courrier::STATUT_ARCHIVE;
             $isUnarchiving = $courrier->getStatut() === Courrier::STATUT_ARCHIVE && $dto->statut !== Courrier::STATUT_ARCHIVE;
             $isAlreadyLocked = in_array($courrier->getStatut(), $statutsVerrouilles);
@@ -71,34 +72,48 @@ class UpdateCourrierUseCase
                 $ancienStatut = $courrier->getStatut();
                 $nouveauStatut = $dto->statut;
 
-                // Si on archive, mémoriser le statut actuel
                 if ($isArchiving && $ancienStatut !== Courrier::STATUT_ARCHIVE) {
                     $courrier->setStatutAnterieur($ancienStatut);
                 }
                 
-                // Si on désarchive, restaurer le statut précédent
                 if ($isUnarchiving) {
                     $statutRestored = $courrier->getStatutAnterieur() ?? $this->trouverStatutAvantArchivage($courrier);
                     $nouveauStatut = $statutRestored;
-                    $courrier->setStatutAnterieur(null); // Nettoyer après restauration
+                    $courrier->setStatutAnterieur(null);
                 }
                 
                 $courrier->updateStatut($nouveauStatut);
+                $statusChanged = true;
 
                 if ($utilisateurId) {
                     $utilisateur = $this->utilisateurRepository->findById($utilisateurId);
                     if ($utilisateur) {
+                        $typeAction = HistoriqueAction::TYPE_MODIFICATION_STATUT;
+                        
+                        if ($nouveauStatut === Courrier::STATUT_ARCHIVE) {
+                            if ($utilisateur->isAdmin()) {
+                                $typeAction = HistoriqueAction::TYPE_ARCHIVAGE;
+                                $description = "Courrier archivé par l'administrateur";
+                            } else {
+                                $typeAction = HistoriqueAction::TYPE_SUPPRESSION;
+                                $description = "Courrier supprimé (archivé) par le service " . ($utilisateur->getService() ? $utilisateur->getService()->getNom() : '');
+                            }
+                        } elseif ($isUnarchiving) {
+                            $description = "Courrier désarchivé et remis en circulation";
+                        } else {
+                            $description = sprintf('Statut modifié de %s à %s', $ancienStatut, $nouveauStatut);
+                        }
+
                         $historiqueAction = new HistoriqueAction(
                             courrier: $courrier,
-                            typeAction: HistoriqueAction::TYPE_MODIFICATION_STATUT,
-                            description: sprintf('Statut modifié de %s à %s', $ancienStatut, $nouveauStatut),
+                            typeAction: $typeAction,
+                            description: $description,
                             effectuePar: $utilisateur,
                             ancienneValeur: $ancienStatut,
                             nouvelleValeur: $nouveauStatut
                         );
                         $this->historiqueActionRepository->save($historiqueAction);
                         
-                        // Créer des notifications lors du désarchivage
                         if ($isUnarchiving) {
                             $this->creerNotificationsDesarchivage($courrier);
                         }
@@ -109,32 +124,31 @@ class UpdateCourrierUseCase
 
         if ($dto->notes !== null) {
             $courrier->ajouterNotes($dto->notes);
+            $modifications[] = 'Note ajoutée';
         }
 
         if ($dto->destinatairesCopieIds !== null) {
-            // Note: Normalement on devrait vérifier ici sir l'utilisateur est l'expéditeur.
-            // Mais le Use Case ne reçoit pas l'utilisateur actuel. 
-            // On va supposer que le Voter a fait son travail ou on pourra ajouter un paramètre plus tard si besoin.
-            // Cependant, le USER a dit "seul l'expéditeur doit faire le copie".
-            
-            $existingCopieIds = array_map(fn($s) => $s->getId(), $courrier->getDestinatairesCopie()->toArray());
-            
-            // Supprimer tous les destinataires en copie existants
-            foreach ($courrier->getDestinatairesCopie() as $service) {
-                $courrier->retirerDestinataireCopie($service);
-            }
-
-            // Ajouter les nouveaux destinataires en copie
+            $courrier->getDestinatairesCopie()->clear();
             foreach ($dto->destinatairesCopieIds as $serviceId) {
                 $service = $this->serviceRepository->findById($serviceId);
                 if ($service) {
                     $courrier->ajouterDestinataireCopie($service);
-                    
-                    // Si le service est nouveau dans la liste des copies, on le notifie
-                    if (!in_array($serviceId, $existingCopieIds)) {
-                        $this->creerNotification($courrier, $service, true);
-                    }
                 }
+            }
+            $modifications[] = 'Liste des copies mise à jour';
+        }
+
+        // Si on a des modifications autres que le statut, on les logue globalement
+        if (!empty($modifications) && $utilisateurId) {
+            $utilisateur = $this->utilisateurRepository->findById($utilisateurId);
+            if ($utilisateur) {
+                $historiqueAction = new HistoriqueAction(
+                    courrier: $courrier,
+                    typeAction: HistoriqueAction::TYPE_MODIFICATION_CONTENU,
+                    description: implode(' | ', $modifications),
+                    effectuePar: $utilisateur
+                );
+                $this->historiqueActionRepository->save($historiqueAction);
             }
         }
 

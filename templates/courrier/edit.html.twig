@@ -24,51 +24,25 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="objet" class="form-label">Objet *</label>
-                        <input type="text" class="form-control" id="objet" name="objet" value="{{ courrier.objet }}" required maxlength="500">
+                        <label for="objet" class="form-label">Objet (non modifiable)</label>
+                        <input type="text" class="form-control bg-light" id="objet" name="objet" value="{{ courrier.objet }}" readonly>
                     </div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="priorite" class="form-label">Priorité *</label>
-                        <select class="form-select" id="priorite" name="priorite" required>
-                            {% for prioriteValue in priorites %}
-                                <option value="{{ prioriteValue }}" {% if prioriteValue == courrier.priorite %}selected{% endif %}>
-                                    {{ prioriteValue }}
-                                </option>
-                            {% endfor %}
-                        </select>
+                        <label for="priorite" class="form-label">Priorité (non modifiable)</label>
+                        <input type="text" class="form-control bg-light" id="priorite" name="priorite" value="{{ courrier.priorite }}" readonly>
                     </div>
                 </div>
             </div>
 
-            {% if is_granted('ROLE_ADMIN') %}
-                <div class="mb-3">
-                    <label for="statut" class="form-label">État du courrier * (Administrateur)</label>
-                    <select class="form-select" id="statut" name="statut" required>
-                        {% if courrier.statut == 'ARCHIVE' %}
-                            {# Si le courrier est archivé, proposer de le désarchiver #}
-                            <option value="ARCHIVE" selected>ARCHIVE (actuel)</option>
-                            <option value="EN_ATTENTE">Désarchiver (EN ATTENTE)</option>
-                        {% else %}
-                            {# Sinon, afficher tous les statuts normalement #}
-                            {% for statutValue in statuts %}
-                                <option value="{{ statutValue }}" {% if statutValue == courrier.statut %}selected{% endif %}>
-                                    {{ statutValue|replace({'_': ' '}) }}
-                                </option>
-                            {% endfor %}
-                        {% endif %}
-                    </select>
-                </div>
-            {% else %}
-                {# Le statut n'est plus modifiable pour les services dans ce formulaire #}
-                <input type="hidden" name="statut" value="{{ courrier.statut }}">
-            {% endif %}
+            {# Le statut et le contenu sont aussi figés dans ce formulaire #}
+            <input type="hidden" name="statut" value="{{ courrier.statut }}">
 
             <div class="mb-3">
-                <label for="contenu" class="form-label">Contenu</label>
-                <textarea class="form-control" id="contenu" name="contenu" rows="5">{{ courrier.contenu }}</textarea>
+                <label for="contenu" class="form-label">Contenu (non modifiable)</label>
+                <textarea class="form-control bg-light" id="contenu" name="contenu" rows="5" readonly>{{ courrier.contenu }}</textarea>
             </div>
 
             {% set currentUserService = app.user.service %}

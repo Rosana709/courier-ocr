@@ -361,16 +361,24 @@ class CourrierController extends AbstractController
     }
 
     #[Route('/{id}/archiver', name: 'courrier_archiver', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_USER')]
     public function archiver(string $id): Response
     {
         try {
-            $this->getCourrierUseCase->execute($id); // assure existence
+            $courrier = $this->getCourrierUseCase->execute($id);
+            
+            $this->denyAccessUnlessGranted('courrier_archive', $courrier);
+
             $dto = new UpdateCourrierDTO(
                 statut: Courrier::STATUT_ARCHIVE
             );
             $this->updateCourrierUseCase->execute($id, $dto, $this->getUser()->getId());
-            $this->addFlash('success', 'Courrier archivé avec succès.');
+            
+            if ($this->isGranted('ROLE_ADMIN')) {
+                $this->addFlash('success', 'Courrier archivé avec succès.');
+            } else {
+                $this->addFlash('success', 'Le courrier a été supprimé de votre liste avec succès.');
+            }
         } catch (DomainException $e) {
             $this->addFlash('error', $e->getMessage());
         }
@@ -396,7 +404,7 @@ class CourrierController extends AbstractController
             
             // On récupère le courrier mis à jour pour afficher le bon statut dans le message (optionnel)
             // Mais pour l'instant un message générique suffit
-            $this->addFlash('success', 'Courrier désarchivé avec succès. Il a retrouvé son statut d\'origine.');
+            $this->addFlash('success', 'Courrier désarchivé avec succès. Il est à nouveau visible pour les services concernés.');
             
         } catch (DomainException $e) {
             $this->addFlash('error', $e->getMessage());
@@ -544,6 +552,19 @@ class CourrierController extends AbstractController
         }
     }
 
+    #[Route('/{id}/delete', name: 'courrier_delete', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function delete(string $id): Response
+    {
+        try {
+            $this->deleteCourrierUseCase->execute($id, $this->getUser()->getId());
+            $this->addFlash('success', 'Courrier supprimé définitivement.');
+        } catch (DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('courrier_archives');
+    }
 }
 
 
