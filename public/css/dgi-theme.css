@@ -32,11 +32,23 @@
     border-color: var(--color-primary);
 }
 
-.btn-primary:hover,
-.btn-primary:focus,
 .btn-primary:active {
     background-color: var(--color-primary-dark);
     border-color: var(--color-primary-dark);
+    transform: translateY(0);
+}
+
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+.btn.transition-all:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+.btn.transition-all:active {
+    transform: translateY(1px);
 }
 
 .btn-outline-primary {
@@ -248,9 +260,13 @@ footer {
 }
 
 .btn-smart:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+    filter: brightness(1.05);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
     color: white;
+}
+
+.btn-smart:active {
+    transform: translateY(1px);
 }
 
 .loading-overlay {

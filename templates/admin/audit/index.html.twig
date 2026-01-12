@@ -1,0 +1,174 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Journal d'audit - Administration{% endblock %}
+
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h1 class="h2 mb-0">
+                <i class="bi bi-shield-lock-fill text-primary"></i> Journal d'Audit Système
+            </h1>
+            <p class="text-muted small mb-0">Historique complet des actions effectuées sur la plateforme.</p>
+        </div>
+        <div class="col-auto d-flex gap-2">
+            <div class="btn-group">
+                <a href="{{ path('admin_audit_export_excel') }}" class="btn btn-success shadow-sm d-flex align-items-center px-3 py-2 transition-all border-0">
+                    <i class="bi bi-file-earmark-excel me-2"></i> 
+                    <span class="fw-medium">Excel</span>
+                </a>
+                <a href="{{ path('admin_audit_export_pdf') }}" class="btn btn-danger shadow-sm d-flex align-items-center px-3 py-2 transition-all border-0">
+                    <i class="bi bi-file-earmark-pdf me-2"></i> 
+                    <span class="fw-medium">PDF</span>
+                </a>
+            </div>
+            <a href="{{ path('admin_dashboard') }}" class="btn btn-outline-dark shadow-sm d-flex align-items-center px-4 py-2 transition-all border-0" style="background-color: #f8f9fa;">
+                <i class="bi bi-arrow-left-circle me-2 fs-5 text-dark"></i> 
+                <span class="fw-medium text-dark">Retour</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
+        <div class="card-body p-0">
+            {% if actions|length == 0 %}
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                    <h3 class="mt-3">Journal vide</h3>
+                    <p class="text-muted">Aucune activité récente n'a été enregistrée.</p>
+                </div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 15%;">Date & Heure</th>
+                                <th>Entrée d'audit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for action in actions %}
+                                <tr class="activity-row" data-action-id="{{ action.id }}" style="cursor: pointer;">
+                                    <td class="small text-nowrap">{{ action.dateAction|date('d/m/Y H:i:s') }}</td>
+                                    <td>
+                                        {# Acteur #}
+                                        <span class="fw-bold text-primary">
+                                            {% if action.effectuePar and action.effectuePar.service %}
+                                                {{ action.effectuePar.service.nom }}
+                                            {% elseif action.effectuePar %}
+                                                {{ action.effectuePar.email }}
+                                            {% else %}
+                                                Système
+                                            {% endif %}
+                                        </span>
+                                        
+                                        <span class="mx-1">—</span>
+                                        
+                                        {# Action en phrase simple #}
+                                        {% set actionText = '' %}
+                                        {% if action.typeAction == 'CREATION' %}
+                                            {% set actionText = 'Crée le courrier' %}
+                                        {% elseif action.typeAction == 'MODIFICATION_STATUT' %}
+                                            {% set actionText = 'Modifie le statut du courrier' %}
+                                        {% elseif action.typeAction == 'ENVOI_ACCUSE_RECEPTION' %}
+                                            {% set actionText = 'Envoie l\'accusé de réception pour le courrier' %}
+                                        {% elseif action.typeAction == 'UTILISATEUR_CREATION' %}
+                                            {% set actionText = 'Crée l\'utilisateur' %}
+                                        {% elseif action.typeAction == 'UTILISATEUR_MODIFICATION' %}
+                                            {% set actionText = 'Modifie l\'utilisateur' %}
+                                        {% elseif action.typeAction == 'UTILISATEUR_TOGGLE' %}
+                                            {% set actionText = 'Active/Désactive l\'utilisateur' %}
+                                        {% elseif action.typeAction == 'SERVICE_CREATION' %}
+                                            {% set actionText = 'Crée le service' %}
+                                        {% elseif action.typeAction == 'SERVICE_MODIFICATION' %}
+                                            {% set actionText = 'Modifie le service' %}
+                                        {% elseif action.typeAction == 'SERVICE_TOGGLE' %}
+                                            {% set actionText = 'Active/Désactive le service' %}
+                                        {% elseif action.typeAction == 'PERSONNE_EXTERNE_CREATION' %}
+                                            {% set actionText = 'Crée la personne externe' %}
+                                        {% elseif action.typeAction == 'PERSONNE_EXTERNE_MODIFICATION' %}
+                                            {% set actionText = 'Modifie la personne externe' %}
+                                        {% elseif action.typeAction == 'PERSONNE_EXTERNE_TOGGLE' %}
+                                            {% set actionText = 'Active/Désactive la personne externe' %}
+                                        {% elseif action.typeAction == 'ARCHIVE' %}
+                                            {% set actionText = 'Archive le courrier' %}
+                                        {% else %}
+                                            {% set actionText = action.typeAction|replace({'_': ' '})|lower|capitalize %}
+                                        {% endif %}
+                                        
+                                        <span>{{ actionText }}</span>
+                                        
+                                        {# Référence du courrier si disponible #}
+                                        {% if action.courrier %}
+                                            <span class="fw-bold">N°{{ action.courrier.numeroReference }}</span>
+                                        {% endif %}
+                                        
+                                        {# Description supplémentaire si disponible #}
+                                        {% if action.description and not action.courrier %}
+                                            <span class="text-muted small">— {{ action.description }}</span>
+                                        {% endif %}
+                                        
+                                        {# Lien vers le courrier si disponible #}
+                                        {% if action.courrier %}
+                                            <a href="{{ path('courrier_show', {id: action.courrier.id}) }}" class="ms-2 small text-decoration-none" onclick="event.stopPropagation();">
+                                                <i class="bi bi-link-45deg"></i> Consulter
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# Modal pour les détails de l'action #}
+<div class="modal fade" id="actionDetailModal" tabindex="-1" aria-labelledby="actionDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="action-detail-content">
+            <!-- Contenu chargé via AJAX -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const actionModal = new bootstrap.Modal(document.getElementById('actionDetailModal'));
+    const modalContent = document.getElementById('action-detail-content');
+
+    window.showActionDetail = function(actionId) {
+        modalContent.innerHTML = `
+            <div class="modal-body text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-2 text-muted">Chargement des détails...</p>
+            </div>
+        `;
+        
+        actionModal.show();
+
+        fetch(`/admin/action/${actionId}/detail`)
+            .then(response => response.text())
+            .then(html => {
+                modalContent.innerHTML = html;
+            })
+            .catch(error => {
+                modalContent.innerHTML = '<div class="modal-body"><p class="text-danger">Erreur de chargement</p></div>';
+            });
+    };
+
+    document.querySelectorAll('.activity-row').forEach(row => {
+        row.addEventListener('click', function() {
+            window.showActionDetail(this.dataset.actionId);
+        });
+    });
+});
+</script>
+{% endblock %}

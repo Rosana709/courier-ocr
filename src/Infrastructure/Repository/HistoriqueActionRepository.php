@@ -47,6 +47,18 @@ class HistoriqueActionRepository extends ServiceEntityRepository implements Hist
             ->getResult();
     }
 
+    public function findAllSortedByDate(): array
+    {
+        return $this->createQueryBuilder('h')
+            ->leftJoin('h.courrier', 'c')
+            ->addSelect('c')
+            ->leftJoin('h.effectuePar', 'u')
+            ->addSelect('u')
+            ->orderBy('h.dateAction', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function countSince(\DateTimeImmutable $date): int
     {
         return (int) $this->createQueryBuilder('h')

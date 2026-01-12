@@ -8,8 +8,10 @@ use App\Domain\Repository\CourrierRepositoryInterface;
 use App\Domain\Repository\ServiceRepositoryInterface;
 use App\Domain\Repository\SessionTraceRepositoryInterface;
 use App\Domain\Repository\UtilisateurRepositoryInterface;
-use App\Domain\Repository\HistoriqueActionRepositoryInterface;
 use App\Domain\Entity\Courrier;
+use App\Domain\Repository\HistoriqueActionRepositoryInterface;
+use App\Infrastructure\Service\ExcelExportService;
+use App\Infrastructure\Service\PdfExportService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -24,7 +26,9 @@ class AdminDashboardController extends AbstractController
         private readonly CourrierRepositoryInterface $courrierRepository,
         private readonly UtilisateurRepositoryInterface $utilisateurRepository,
         private readonly SessionTraceRepositoryInterface $sessionTraceRepository,
-        private readonly HistoriqueActionRepositoryInterface $historiqueActionRepository
+        private readonly HistoriqueActionRepositoryInterface $historiqueActionRepository,
+        private readonly ExcelExportService $excelExportService,
+        private readonly PdfExportService $pdfExportService
     ) {
     }
 
@@ -68,5 +72,77 @@ class AdminDashboardController extends AbstractController
         return $this->render('admin/dashboard/_action_detail.html.twig', [
             'action' => $action,
         ]);
+    }
+
+    #[Route('/audit', name: 'audit_index')]
+    public function listAudit(): Response
+    {
+        return $this->render('admin/audit/index.html.twig', [
+            'actions' => $this->historiqueActionRepository->findAllSortedByDate(),
+        ]);
+    }
+
+    #[Route('/audit/export/excel', name: 'audit_export_excel', methods: ['GET'])]
+    public function exportAuditExcel(): Response
+    {
+        $actions = $this->historiqueActionRepository->findAllSortedByDate();
+        
+        $data = [];
+        foreach ($actions as $action) {
+            $actor = 'Système';
+            if ($action->getEffectuePar()) {
+                $actor = $action->getEffectuePar()->getService() 
+                    ? $action->getEffectuePar()->getService()->getNom() 
+                    : $action->getEffectuePar()->getEmail();
+            }
+
+            $description = $action->getDescription();
+            if ($action->getCourrier()) {
+                $description .= ' [N°' . $action->getCourrier()->getNumeroReference() . ']';
+            }
+
+            $data[] = [
+                $action->getDateAction()->format('d/m/Y H:i:s'),
+                $actor,
+                $action->getTypeAction(),
+                $description
+            ];
+        }
+
+        $headers = ['Date & Heure', 'Acteur', 'Type d\'action', 'Description'];
+
+        return $this->excelExportService->export($data, $headers, 'Journal_Audit_' . date('Y-m-d'));
+    }
+
+    #[Route('/audit/export/pdf', name: 'audit_export_pdf', methods: ['GET'])]
+    public function exportAuditPdf(): Response
+    {
+        $actions = $this->historiqueActionRepository->findAllSortedByDate();
+        
+        $data = [];
+        foreach ($actions as $action) {
+            $actor = 'Système';
+            if ($action->getEffectuePar()) {
+                $actor = $action->getEffectuePar()->getService() 
+                    ? $action->getEffectuePar()->getService()->getNom() 
+                    : $action->getEffectuePar()->getEmail();
+            }
+
+            $description = $action->getDescription();
+            if ($action->getCourrier()) {
+                $description .= ' [N°' . $action->getCourrier()->getNumeroReference() . ']';
+            }
+
+            $data[] = [
+                $action->getDateAction()->format('d/m/Y H:i:s'),
+                $actor,
+                $action->getTypeAction(),
+                $description
+            ];
+        }
+
+        $headers = ['Date & Heure', 'Acteur', 'Type', 'Description'];
+
+        return $this->pdfExportService->export($data, $headers, 'Journal_Audit_' . date('Y-m-d'), 'Journal d\'Audit Système');
     }
 }

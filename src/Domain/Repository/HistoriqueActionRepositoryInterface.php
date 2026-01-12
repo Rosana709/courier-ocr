@@ -13,6 +13,8 @@ interface HistoriqueActionRepositoryInterface
 
     public function findByCourrier(Courrier $courrier): array;
 
+    public function findAllSortedByDate(): array;
+
     public function findLast(int $limit = 5): array;
 
     public function countSince(\DateTimeImmutable $date): int;
