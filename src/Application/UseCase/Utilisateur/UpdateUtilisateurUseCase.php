@@ -6,6 +6,7 @@ namespace App\Application\UseCase\Utilisateur;
 
 use App\Application\DTO\UpdateUtilisateurDTO;
 use App\Domain\Entity\Utilisateur;
+use App\Domain\Entity\HistoriqueAction;
 use App\Domain\Exception\EntityNotFoundException;
 use App\Domain\Repository\ServiceRepositoryInterface;
 use App\Domain\Repository\UtilisateurRepositoryInterface;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\UseCase\PersonneExterne;
 
 use App\Domain\Entity\PersonneExterne;
+use App\Domain\Entity\HistoriqueAction;
 use App\Domain\Exception\EntityNotFoundException;
 use App\Domain\Repository\PersonneExterneRepositoryInterface;
 
@@ -34,20 +35,16 @@ class TogglePersonneExterneStatusUseCase
         $this->personneExterneRepository->save($personneExterne);
 
         if ($performingUserId) {
-            try {
-                $performingUser = $this->utilisateurRepository->findById($performingUserId);
-                if ($performingUser) {
-                    $historiqueAction = new \App\Domain\Entity\HistoriqueAction(
-                        courrier: null,
-                        typeAction: \App\Domain\Entity\HistoriqueAction::TYPE_PERSONNE_EXTERNE_TOGGLE,
-                        description: sprintf('%s pour %s', $personneExterne->estActif() ? 'Activation' : 'Désactivation', $personneExterne->getNomOuRaisonSociale()),
-                        effectuePar: $performingUser,
-                        nouvelleValeur: $personneExterne->estActif() ? 'ACTIF' : 'INACTIF'
-                    );
-                    $this->historiqueActionRepository->save($historiqueAction);
-                }
-            } catch (\Exception $e) {
-                // Log error safely
+            $performingUser = $this->utilisateurRepository->findById($performingUserId);
+            if ($performingUser) {
+                $historiqueAction = new HistoriqueAction(
+                    courrier: null,
+                    typeAction: HistoriqueAction::TYPE_PERSONNE_EXTERNE_TOGGLE,
+                    description: sprintf('%s pour %s', $personneExterne->estActif() ? 'Activation' : 'Désactivation', $personneExterne->getNomOuRaisonSociale()),
+                    effectuePar: $performingUser,
+                    nouvelleValeur: $personneExterne->estActif() ? 'ACTIF' : 'INACTIF'
+                );
+                $this->historiqueActionRepository->save($historiqueAction);
             }
         }
 

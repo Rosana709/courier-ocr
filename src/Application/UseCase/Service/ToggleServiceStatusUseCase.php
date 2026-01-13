@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\UseCase\Service;
 
 use App\Domain\Entity\Service;
+use App\Domain\Entity\HistoriqueAction;
 use App\Domain\Exception\EntityNotFoundException;
 use App\Domain\Repository\ServiceRepositoryInterface;
 
@@ -84,20 +85,16 @@ class ToggleServiceStatusUseCase
 
     private function logAction(Service $service, string $description, string $performingUserId): void
     {
-        try {
-            $performingUser = $this->utilisateurRepository->findById($performingUserId);
-            if ($performingUser) {
-                $historiqueAction = new \App\Domain\Entity\HistoriqueAction(
-                    courrier: null,
-                    typeAction: \App\Domain\Entity\HistoriqueAction::TYPE_SERVICE_TOGGLE,
-                    description: sprintf('%s %s (%s)', $description, $service->getNom(), $service->getId()),
-                    effectuePar: $performingUser,
-                    nouvelleValeur: $service->isEstActif() ? 'ACTIF' : 'INACTIF'
-                );
-                $this->historiqueActionRepository->save($historiqueAction);
-            }
-        } catch (\Exception $e) {
-            // Log error safely
+        $performingUser = $this->utilisateurRepository->findById($performingUserId);
+        if ($performingUser) {
+            $historiqueAction = new HistoriqueAction(
+                courrier: null,
+                typeAction: HistoriqueAction::TYPE_SERVICE_TOGGLE,
+                description: sprintf('%s %s (%s)', $description, $service->getNom(), $service->getId()),
+                effectuePar: $performingUser,
+                nouvelleValeur: $service->isEstActif() ? 'ACTIF' : 'INACTIF'
+            );
+            $this->historiqueActionRepository->save($historiqueAction);
         }
     }
 }

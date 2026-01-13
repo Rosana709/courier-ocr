@@ -57,7 +57,6 @@
                         <thead class="table-light text-muted">
                             <tr>
                                 <th style="width: 12rem;">Date & Heure</th>
-                                <th style="width: 12rem;">Acteur</th>
                                 <th>Action</th>
                                 <th class="text-end">Infos</th>
                             </tr>
@@ -66,20 +65,8 @@
                             {% for action in actions %}
                                 <tr class="text-muted small">
                                     <td>{{ action.dateAction|date('d/m/Y H:i') }}</td>
-                                    <td>
-                                        {% if action.effectuePar and action.effectuePar.service %}
-                                            {{ action.effectuePar.service.nom }}
-                                        {% elseif action.effectuePar %}
-                                            {{ action.effectuePar.email }}
-                                        {% else %}
-                                            Système
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border-0">
-                                            {{ action.typeAction }}
-                                        </span>
-                                        {{ action.description }}
+                                    <td colspan="2">
+                                        {{ action.phraseAction }}
                                     </td>
                                     <td class="text-end">
                                         <button class="btn btn-link btn-sm p-0" onclick="window.showActionDetail('{{ action.id }}')">

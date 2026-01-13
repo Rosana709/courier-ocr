@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\UseCase\Utilisateur;
 
 use App\Domain\Entity\Utilisateur;
+use App\Domain\Entity\HistoriqueAction;
 use App\Domain\Repository\UtilisateurRepositoryInterface;
 use App\Infrastructure\Service\MailService;
 use Psr\Log\LoggerInterface;
@@ -88,20 +89,16 @@ class ToggleUserStatusUseCase
 
     private function logAction(Utilisateur $utilisateur, string $description, string $performingUserId): void
     {
-        try {
-            $performingUser = $this->utilisateurRepository->findById($performingUserId);
-            if ($performingUser) {
-                $historiqueAction = new \App\Domain\Entity\HistoriqueAction(
-                    courrier: null,
-                    typeAction: \App\Domain\Entity\HistoriqueAction::TYPE_UTILISATEUR_TOGGLE,
-                    description: sprintf('%s pour %s', $description, $utilisateur->getEmail()),
-                    effectuePar: $performingUser,
-                    nouvelleValeur: $utilisateur->estActif() ? 'ACTIF' : 'INACTIF'
-                );
-                $this->historiqueActionRepository->save($historiqueAction);
-            }
-        } catch (\Exception $e) {
-            $this->logger->error('Erreur lors de l\'historisation du changement de statut utilisateur : ' . $e->getMessage());
+        $performingUser = $this->utilisateurRepository->findById($performingUserId);
+        if ($performingUser) {
+            $historiqueAction = new HistoriqueAction(
+                courrier: null,
+                typeAction: HistoriqueAction::TYPE_UTILISATEUR_TOGGLE,
+                description: sprintf('%s pour %s', $description, $utilisateur->getEmail()),
+                effectuePar: $performingUser,
+                nouvelleValeur: $utilisateur->estActif() ? 'ACTIF' : 'INACTIF'
+            );
+            $this->historiqueActionRepository->save($historiqueAction);
         }
     }
 

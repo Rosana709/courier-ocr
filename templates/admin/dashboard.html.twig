@@ -168,62 +168,7 @@
                                         <tr class="activity-row" data-action-id="{{ action.id }}" style="cursor: pointer;">
                                             <td class="small text-nowrap">{{ action.dateAction|date('d/m/Y H:i') }}</td>
                                             <td>
-                                                {# Acteur #}
-                                                <span class="fw-bold text-primary">
-                                                    {% if action.effectuePar and action.effectuePar.service %}
-                                                        {{ action.effectuePar.service.nom }}
-                                                    {% elseif action.effectuePar %}
-                                                        {{ action.effectuePar.email }}
-                                                    {% else %}
-                                                        Système
-                                                    {% endif %}
-                                                </span>
-                                                
-                                                <span class="mx-1">—</span>
-                                                
-                                                {# Action en phrase simple #}
-                                                {% set actionText = '' %}
-                                                {% if action.typeAction == 'CREATION' %}
-                                                    {% set actionText = 'Crée le courrier' %}
-                                                {% elseif action.typeAction == 'MODIFICATION_STATUT' %}
-                                                    {% set actionText = 'Modifie le statut du courrier' %}
-                                                {% elseif action.typeAction == 'ENVOI_ACCUSE_RECEPTION' %}
-                                                    {% set actionText = 'Envoie l\'accusé de réception pour le courrier' %}
-                                                {% elseif action.typeAction == 'UTILISATEUR_CREATION' %}
-                                                    {% set actionText = 'Crée l\'utilisateur' %}
-                                                {% elseif action.typeAction == 'UTILISATEUR_MODIFICATION' %}
-                                                    {% set actionText = 'Modifie l\'utilisateur' %}
-                                                {% elseif action.typeAction == 'UTILISATEUR_TOGGLE' %}
-                                                    {% set actionText = 'Active/Désactive l\'utilisateur' %}
-                                                {% elseif action.typeAction == 'SERVICE_CREATION' %}
-                                                    {% set actionText = 'Crée le service' %}
-                                                {% elseif action.typeAction == 'SERVICE_MODIFICATION' %}
-                                                    {% set actionText = 'Modifie le service' %}
-                                                {% elseif action.typeAction == 'SERVICE_TOGGLE' %}
-                                                    {% set actionText = 'Active/Désactive le service' %}
-                                                {% elseif action.typeAction == 'PERSONNE_EXTERNE_CREATION' %}
-                                                    {% set actionText = 'Crée la personne externe' %}
-                                                {% elseif action.typeAction == 'PERSONNE_EXTERNE_MODIFICATION' %}
-                                                    {% set actionText = 'Modifie la personne externe' %}
-                                                {% elseif action.typeAction == 'PERSONNE_EXTERNE_TOGGLE' %}
-                                                    {% set actionText = 'Active/Désactive la personne externe' %}
-                                                {% elseif action.typeAction == 'ARCHIVE' %}
-                                                    {% set actionText = 'Archive le courrier' %}
-                                                {% else %}
-                                                    {% set actionText = action.typeAction|replace({'_': ' '})|lower|capitalize %}
-                                                {% endif %}
-                                                
-                                                <span>{{ actionText }}</span>
-                                                
-                                                {# Référence du courrier si disponible #}
-                                                {% if action.courrier %}
-                                                    <span class="fw-bold">N°{{ action.courrier.numeroReference }}</span>
-                                                {% endif %}
-                                                
-                                                {# Description supplémentaire si disponible #}
-                                                {% if action.description and not action.courrier %}
-                                                    <span class="text-muted small">— {{ action.description }}</span>
-                                                {% endif %}
+                                                <span>{{ action.phraseAction }}</span>
                                                 
                                                 {# Lien vers le courrier si disponible #}
                                                 {% if action.courrier %}

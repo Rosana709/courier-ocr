@@ -37,7 +37,7 @@ class HistoriqueAction
     public const TYPE_PERSONNE_EXTERNE_TOGGLE = 'PERSONNE_EXTERNE_TOGGLE';
 
     #[ORM\Id]
-    #[ORM\Column(type: 'uuid')]
+    #[ORM\Column(type: 'string', length: 36)]
     private string $id;
 
     #[ORM\ManyToOne(targetEntity: Courrier::class)]
@@ -146,6 +146,52 @@ class HistoriqueAction
             self::TYPE_PERSONNE_EXTERNE_MODIFICATION,
             self::TYPE_PERSONNE_EXTERNE_TOGGLE,
         ];
+    }
+
+    public function getPhraseAction(): string
+    {
+        $acteur = $this->getEffectuePar()->getService() 
+            ? $this->getEffectuePar()->getService()->getNom() 
+            : $this->getEffectuePar()->getEmail();
+        
+        $actionVerb = match($this->typeAction) {
+            self::TYPE_CREATION => "a créé le courrier",
+            self::TYPE_MODIFICATION_STATUT => $this->ancienneValeur === Courrier::STATUT_ARCHIVE ? "a désarchivé le courrier" : "a modifié le statut du courrier",
+            self::TYPE_MODIFICATION_CONTENU => "a modifié le contenu du courrier",
+            self::TYPE_MODIFICATION_PRIORITE => "a modifié la priorité du courrier",
+            self::TYPE_AJOUT_PIECE_JOINTE => "a ajouté une pièce jointe au courrier",
+            self::TYPE_SUPPRESSION_PIECE_JOINTE => "a supprimé une pièce jointe du courrier",
+            self::TYPE_ENVOI_ACCUSE_RECEPTION => "a envoyé l'accusé de réception pour le courrier",
+            self::TYPE_AJOUT_DESTINATAIRE_COPIE => "a ajouté un destinataire en copie au courrier",
+            self::TYPE_SUPPRESSION_DESTINATAIRE_COPIE => "a supprimé un destinataire en copie du courrier",
+            self::TYPE_AJOUT_NOTES => "a ajouté des notes au courrier",
+            self::TYPE_ARCHIVAGE => "a archivé le courrier",
+            self::TYPE_SUPPRESSION => "a supprimé le courrier",
+            self::TYPE_UTILISATEUR_CREATION => "a créé l'utilisateur",
+            self::TYPE_UTILISATEUR_MODIFICATION => "a modifié l'utilisateur",
+            self::TYPE_UTILISATEUR_TOGGLE => $this->nouvelleValeur === 'ACTIF' ? "a activé l'utilisateur" : "a désactivé l'utilisateur",
+            self::TYPE_SERVICE_CREATION => "a créé le service",
+            self::TYPE_SERVICE_MODIFICATION => "a modifié le service",
+            self::TYPE_SERVICE_TOGGLE => $this->nouvelleValeur === 'ACTIF' ? "a activé le service" : "a désactivé le service",
+            self::TYPE_PERSONNE_EXTERNE_CREATION => "a créé la personne externe",
+            self::TYPE_PERSONNE_EXTERNE_MODIFICATION => "a modifié la personne externe",
+            self::TYPE_PERSONNE_EXTERNE_TOGGLE => $this->nouvelleValeur === 'ACTIF' ? "a activé la personne externe" : "a désactivé la personne externe",
+            default => "a effectué l'action " . str_replace('_', ' ', strtolower($this->typeAction))
+        };
+
+        $complement = "";
+        if ($this->courrier) {
+            $complement = " N°" . $this->courrier->getNumeroReference();
+        } elseif ($this->description && (
+            str_contains($this->typeAction, 'UTILISATEUR') || 
+            str_contains($this->typeAction, 'SERVICE') || 
+            str_contains($this->typeAction, 'PERSONNE')
+        )) {
+             // For creation/modification of user/service/person, the description usually contains the label or details
+             $complement = " (" . $this->description . ")";
+        }
+
+        return $acteur . " " . $actionVerb . $complement . ".";
     }
 
     private function validateTypeAction(string $type): string
