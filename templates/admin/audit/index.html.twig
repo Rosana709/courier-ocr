@@ -30,6 +30,24 @@
         </div>
     </div>
 
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 border-start border-primary border-4">
+                <div class="card-body p-3">
+                    <div class="row align-items-center">
+                        <div class="col-12">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="bi bi-search text-primary"></i>
+                                </span>
+                                <input type="text" id="auditSearchInput" class="form-control border-start-0 py-3" placeholder="Rechercher par date, acteur, référence ou libellé de l'action...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
         <div class="card-body p-0">
             {% if actions|length == 0 %}
@@ -40,7 +58,7 @@
                 </div>
             {% else %}
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table class="table table-hover align-middle mb-0" id="auditTable">
                         <thead class="table-light">
                             <tr>
                                 <th style="width: 15%;">Date & Heure</th>
@@ -136,11 +154,42 @@
 </div>
 {% endblock %}
 
+{% block stylesheets %}
+{{ parent() }}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<style>
+    .dataTables_wrapper .dataTables_filter {
+        display: none;
+    }
+    .activity-row:hover {
+        background-color: #f1f7f7 !important;
+    }
+</style>
+{% endblock %}
+
 {% block javascripts %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const actionModal = new bootstrap.Modal(document.getElementById('actionDetailModal'));
     const modalContent = document.getElementById('action-detail-content');
+
+    const table = $('#auditTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/fr-FR.json'
+        },
+        pageLength: 20,
+        order: [[0, 'desc']],
+        dom: 'rtip',
+        autoWidth: false
+    });
+
+    // Custom Search
+    $('#auditSearchInput').on('keyup', function() {
+        table.search(this.value).draw();
+    });
 
     window.showActionDetail = function(actionId) {
         modalContent.innerHTML = `
@@ -164,10 +213,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     };
 
-    document.querySelectorAll('.activity-row').forEach(row => {
-        row.addEventListener('click', function() {
-            window.showActionDetail(this.dataset.actionId);
-        });
+    // Row clicks using Event Delegation for DataTables
+    $('#auditTable tbody').on('click', '.activity-row', function() {
+        window.showActionDetail(this.dataset.actionId);
     });
 });
 </script>

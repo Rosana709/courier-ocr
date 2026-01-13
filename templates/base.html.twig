@@ -135,6 +135,13 @@
                             <i class="bi bi-question-circle fs-5"></i>
                         </a>
                     </li>
+                    {% if is_granted('ROLE_ADMIN') %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('admin_audit_index') }}" title="Journal d'Audit">
+                            <i class="bi bi-shield-lock fs-5"></i>
+                        </a>
+                    </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link position-relative" href="{{ path('notification_index') }}" title="Notifications">
                             <i class="bi bi-bell fs-5"></i>
@@ -218,6 +225,15 @@
                         <div>
                             <p id="confirmModalMessage" class="mb-0 fw-semibold text-dark fs-5"></p>
                             <p class="small text-muted mb-0 mt-1">Cette action est irréversible une fois validée.</p>
+                        </div>
+                    </div>
+                    <div id="confirmModalInputContainer" class="mt-4" style="display: none;">
+                        <label for="confirmModalInput" class="form-label fw-bold text-danger">
+                            <i class="bi bi-chat-left-dots-fill me-1"></i> Justification obligatoire :
+                        </label>
+                        <textarea id="confirmModalInput" class="form-control border-danger" rows="3" placeholder="Indiquez la raison précise de cette suppression..."></textarea>
+                        <div id="confirmModalInputError" class="text-danger small mt-1" style="display: none;">
+                            <i class="bi bi-exclamation-circle me-1"></i> La justification est obligatoire.
                         </div>
                     </div>
                 </div>
@@ -522,12 +538,26 @@
             const confirmIcon = document.getElementById('confirmModalIcon');
             const confirmIconContainer = document.getElementById('confirmModalIconContainer');
             const confirmHeader = document.getElementById('confirmModalHeader');
+            const confirmInputContainer = document.getElementById('confirmModalInputContainer');
+            const confirmInput = document.getElementById('confirmModalInput');
+            const confirmInputError = document.getElementById('confirmModalInputError');
             let pendingAction = null;
 
-            window.showStyledModal = function(message, isDanger = false, callback = null) {
+            window.showStyledModal = function(message, isDanger = false, callback = null, requireInput = false) {
                 confirmMsg.innerHTML = message;
                 pendingAction = callback;
                 
+                // Reset input state
+                confirmInput.value = '';
+                confirmInputError.style.display = 'none';
+                confirmInput.classList.remove('is-invalid');
+                
+                if (requireInput) {
+                    confirmInputContainer.style.display = 'block';
+                } else {
+                    confirmInputContainer.style.display = 'none';
+                }
+
                 if (isDanger) {
                     confirmHeader.classList.remove('bg-primary');
                     confirmHeader.classList.add('bg-danger');
@@ -552,6 +582,7 @@
 
                 const message = element.getAttribute('data-confirm');
                 const isDanger = element.classList.contains('btn-danger') || message.toLowerCase().includes('supprimer') || message.toLowerCase().includes('annuler');
+                const requireJustification = message.toLowerCase().includes('supprimer') || message.toLowerCase().includes('archive') || element.closest('form')?.getAttribute('action')?.includes('delete') || element.closest('form')?.getAttribute('action')?.includes('archiver');
 
                 // Cas d'un bouton de soumission
                 if ((element.tagName === 'BUTTON' || element.tagName === 'INPUT') && element.getAttribute('type') === 'submit') {
@@ -564,7 +595,19 @@
                         }
                         
                         e.preventDefault();
-                        window.showStyledModal(message, isDanger, () => {
+                        window.showStyledModal(message, isDanger, (justification) => {
+                            if (requireJustification) {
+                                // Injecter la justification dans le formulaire
+                                let inputJustif = form.querySelector('input[name="justification"]');
+                                if (!inputJustif) {
+                                    inputJustif = document.createElement('input');
+                                    inputJustif.type = 'hidden';
+                                    inputJustif.name = 'justification';
+                                    form.appendChild(inputJustif);
+                                }
+                                inputJustif.value = justification;
+                            }
+
                             if (element.name) {
                                 const input = document.createElement('input');
                                 input.type = 'hidden';
@@ -573,7 +616,7 @@
                                 form.appendChild(input);
                             }
                             form.submit();
-                        });
+                        }, requireJustification);
                     }
                 } 
                 // Cas d'un lien
@@ -581,7 +624,7 @@
                     // Pour le bouton "Annuler", si l'utilisateur a demandé qu'il ramène au formulaire si vide
                     // On peut ajouter une logique spécifique ici ou laisser le défaut si c'est géré par create.html.twig
                     e.preventDefault();
-                    window.showStyledModal(message, isDanger, () => window.location.href = element.href);
+                    window.showStyledModal(message, isDanger, () => window.location.href = element.href, requireJustification);
                 }
             });
 
@@ -589,15 +632,38 @@
             document.body.addEventListener('submit', function(e) {
                 const form = e.target;
                 if (form.hasAttribute('data-confirm') && !pendingAction) {
-                    e.preventDefault();
                     const message = form.getAttribute('data-confirm');
-                    window.showStyledModal(message, false, () => form.submit());
+                    const requireJustification = message.toLowerCase().includes('supprimer') || message.toLowerCase().includes('archive') || form.getAttribute('action')?.includes('delete') || form.getAttribute('action')?.includes('archiver');
+
+                    e.preventDefault();
+                    window.showStyledModal(message, false, (justification) => {
+                        if (requireJustification) {
+                            let inputJustif = form.querySelector('input[name="justification"]');
+                            if (!inputJustif) {
+                                inputJustif = document.createElement('input');
+                                inputJustif.type = 'hidden';
+                                inputJustif.name = 'justification';
+                                form.appendChild(inputJustif);
+                            }
+                            inputJustif.value = justification;
+                        }
+                        form.submit();
+                    }, requireJustification);
                 }
             });
 
             confirmBtn.addEventListener('click', function() {
                 if (pendingAction) {
-                    pendingAction();
+                    const requireJustification = confirmInputContainer.style.display === 'block';
+                    const justification = confirmInput.value.trim();
+
+                    if (requireJustification && !justification) {
+                        confirmInput.classList.add('is-invalid');
+                        confirmInputError.style.display = 'block';
+                        return;
+                    }
+
+                    pendingAction(justification);
                     pendingAction = null;
                 }
                 confirmModal.hide();

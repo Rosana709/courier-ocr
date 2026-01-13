@@ -41,7 +41,7 @@ class HistoriqueAction
     private string $id;
 
     #[ORM\ManyToOne(targetEntity: Courrier::class)]
-    #[ORM\JoinColumn(name: 'courrier_id', referencedColumnName: 'id', nullable: true, onDelete: 'CASCADE')]
+    #[ORM\JoinColumn(name: 'courrier_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?Courrier $courrier = null;
 
     #[ORM\Column(name: 'typeaction', type: 'string', length: 50)]

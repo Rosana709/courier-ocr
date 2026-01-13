@@ -76,9 +76,17 @@ Le système applique une séparation stricte des privilèges :
 
 ---
 
+### 🛡️ Transparence & Audit Renforcé (Nouveauté Janvier 2026)
+Le système garantit désormais une traçabilité totale et irréversible :
+*   **Justification Obligatoire** : Toute action de suppression (définitive ou archivage) impose désormais la saisie d'un motif précis.
+*   **Journal d'Audit Avancé** : Un journal d'audit filtrable et exportable (PDF/Excel) est accessible directement via un raccourci dédié dans la barre de navigation pour les administrateurs.
+*   **Persistance de l'Audit** : Même après la suppression définitive d'un courrier, la trace de l'action, l'acteur, la date et la justification sont conservés pour garantir la conformité administrative.
+
+---
+
 ## 👨‍💻 Crédits
 Propriété de la **Direction Générale des Impôts (DGI)**.  
 Conçu pour moderniser et sécuriser les échanges administratifs à Madagascar.
 
 ---
-*Dernière mise à jour : 08 Janvier 2026*
+*Dernière mise à jour : 13 Janvier 2026*

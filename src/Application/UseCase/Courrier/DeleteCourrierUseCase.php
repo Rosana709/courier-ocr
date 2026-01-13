@@ -19,7 +19,7 @@ class DeleteCourrierUseCase
     ) {
     }
 
-    public function execute(string $courrierId, ?string $utilisateurId = null): void
+    public function execute(string $courrierId, ?string $utilisateurId = null, ?string $justification = null): void
     {
         $courrier = $this->courrierRepository->findById($courrierId);
 
@@ -31,18 +31,23 @@ class DeleteCourrierUseCase
         if ($utilisateurId) {
             $utilisateur = $this->utilisateurRepository->findById($utilisateurId);
             if ($utilisateur) {
+                $description = sprintf('Courrier (Réf: %s, Objet: "%s") supprimé définitivement par %s', 
+                    $courrier->getNumeroReference(), 
+                    $courrier->getObjet(), 
+                    $utilisateur->getEmail()
+                );
+                
+                if ($justification) {
+                    $description .= ' | Justification obligatoire : ' . $justification;
+                }
+
                 $historiqueAction = new HistoriqueAction(
                     courrier: $courrier,
-                    typeAction: 'SUPPRESSION', // Type custom car non défini dans les const mais utile pour le rapport
-                    description: sprintf('Courrier "%s" supprimé définitivement par %s', $courrier->getObjet(), $utilisateur->getEmail()),
+                    typeAction: HistoriqueAction::TYPE_SUPPRESSION,
+                    description: $description,
                     effectuePar: $utilisateur
                 );
-                // Note: On ne peut pas facilement sauver HistoriqueAction si Courrier est supprimé à cause de la FK
-                // Sauf si on utilise un type d'action sans FK ou si on gère autrement.
-                // Dans HistoriqueAction.php, courrier_id est nullable: false, onDelete: 'CASCADE'.
-                // Donc si on supprime le courrier, l'historique part. 
-                // C'est peut-être voulu, ou non. Le user veut un "petit rapport".
-                // Si on veut garder la trace, il faudrait que HistoriqueAction garde une trace texte du courrier au lieu de l'objet.
+                $this->historiqueActionRepository->save($historiqueAction);
             }
         }
 

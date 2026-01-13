@@ -27,7 +27,7 @@ class UpdateCourrierUseCase
     ) {
     }
 
-    public function execute(string $courrierId, UpdateCourrierDTO $dto, ?string $utilisateurId = null): Courrier
+    public function execute(string $courrierId, UpdateCourrierDTO $dto, ?string $utilisateurId = null, ?string $justification = null): Courrier
     {
         $courrier = $this->courrierRepository->findById($courrierId);
 
@@ -102,6 +102,10 @@ class UpdateCourrierUseCase
                             $description = "Courrier désarchivé et remis en circulation";
                         } else {
                             $description = sprintf('Statut modifié de %s à %s', $ancienStatut, $nouveauStatut);
+                        }
+
+                        if ($justification) {
+                            $description .= ' | Justification : ' . $justification;
                         }
 
                         $historiqueAction = new HistoriqueAction(

@@ -120,18 +120,8 @@ class ListCourriersUseCase
             }
         }
 
-        // Filtrer : un courrier entrant interne n'apparaît qu'après accusé de réception
-        $uniqueCourriers = array_values(array_filter($uniqueCourriers, function($courrier) {
-            if ($courrier->getTypeExpediteur() === Courrier::ACTEUR_SERVICE
-                && $courrier->getTypeDestinataire() === Courrier::ACTEUR_SERVICE) {
-                return in_array($courrier->getStatut(), [
-                    Courrier::STATUT_ACCUSE_RECEPTION_RECU,
-                    Courrier::STATUT_RECU_CONFIRME
-                ]);
-            }
-            return true;
-        }));
-
+        // Filtrer : un courrier entrant interne doit être visible dès qu'il est envoyé
+        // On garde uniquement le filtrage par archivage (déjà fait ou à faire après)
         $uniqueCourriers = $this->filterNonArchived($uniqueCourriers);
 
         // Trier par date (plus récent en premier)

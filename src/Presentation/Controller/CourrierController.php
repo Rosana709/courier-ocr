@@ -362,17 +362,19 @@ class CourrierController extends AbstractController
 
     #[Route('/{id}/archiver', name: 'courrier_archiver', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
-    public function archiver(string $id): Response
+    public function archiver(Request $request, string $id): Response
     {
         try {
             $courrier = $this->getCourrierUseCase->execute($id);
             
             $this->denyAccessUnlessGranted('courrier_archive', $courrier);
 
+            $justification = $request->request->get('justification');
+
             $dto = new UpdateCourrierDTO(
                 statut: Courrier::STATUT_ARCHIVE
             );
-            $this->updateCourrierUseCase->execute($id, $dto, $this->getUser()->getId());
+            $this->updateCourrierUseCase->execute($id, $dto, $this->getUser()->getId(), $justification);
             
             if ($this->isGranted('ROLE_ADMIN')) {
                 $this->addFlash('success', 'Courrier archivé avec succès.');
@@ -554,10 +556,11 @@ class CourrierController extends AbstractController
 
     #[Route('/{id}/delete', name: 'courrier_delete', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function delete(string $id): Response
+    public function delete(Request $request, string $id): Response
     {
         try {
-            $this->deleteCourrierUseCase->execute($id, $this->getUser()->getId());
+            $justification = $request->request->get('justification');
+            $this->deleteCourrierUseCase->execute($id, $this->getUser()->getId(), $justification);
             $this->addFlash('success', 'Courrier supprimé définitivement.');
         } catch (DomainException $e) {
             $this->addFlash('error', $e->getMessage());
