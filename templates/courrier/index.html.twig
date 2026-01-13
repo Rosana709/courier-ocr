@@ -149,11 +149,7 @@
                                     <a href="{{ path('courrier_show', {id: courrier.id}) }}" class="btn btn-sm btn-outline-primary" title="Voir">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    {% if is_granted('courrier_edit', courrier) %}
-                                    <a href="{{ path('courrier_edit', {id: courrier.id}) }}" class="btn btn-sm btn-outline-secondary" title="Modifier">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    {% endif %}
+{# Bouton modifier retiré de la liste, accessible uniquement via le détail #}
                                 </div>
                             </td>
                         </tr>

@@ -20,7 +20,7 @@
             </h1>
         </div>
         <div class="col-auto">
-            {% if is_granted('ROLE_ADMIN') %}
+            {% if is_granted('courrier_edit', courrier) %}
             <a href="{{ path('courrier_edit', {id: courrier.id}) }}" class="btn btn-primary">
                 <i class="bi bi-pencil"></i> Modifier
             </a>

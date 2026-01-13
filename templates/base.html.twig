@@ -276,13 +276,12 @@
 
         function initAudioContext() {
             if (!audioContext) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                audioContext = new AudioContext();
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
-            // Toujours tenter de reprendre si suspendu
             if (audioContext.state === 'suspended') {
-                audioContext.resume();
+                return audioContext.resume();
             }
+            return Promise.resolve();
         }
 
         // Tenter de débloquer l'audio sur n'importe quelle interaction
@@ -300,43 +299,45 @@
         document.addEventListener('keydown', unlockAudio);
         document.addEventListener('touchstart', unlockAudio);
 
-        function playNotificationSound() {
+        async function playNotificationSound() {
             if (!soundEnabled) return;
             
             try {
-                initAudioContext();
+                await initAudioContext();
                 const now = audioContext.currentTime;
                 
-                // Premier Ding (Note principale)
+                // Note d'attaque immédiate (Note de tête)
                 const osc = audioContext.createOscillator();
                 const gain = audioContext.createGain();
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(1567.98, now); // G6
                 gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(0.3, now + 0.01);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                gain.gain.linearRampToValueAtTime(0.3, now + 0.005); // Attaque ultra-rapide (5ms)
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                
                 osc.connect(gain);
                 gain.connect(audioContext.destination);
                 osc.start(now);
-                osc.stop(now + 0.5);
+                osc.stop(now + 0.4);
 
-                // Deuxième Ding (Un peu plus haut, décalé de 120ms)
-                const delay = 0.12;
+                // Note d'écho rapide (Décalage réduit à 80ms pour plus de nervosité)
+                const delay = 0.08;
                 const osc2 = audioContext.createOscillator();
                 const gain2 = audioContext.createGain();
                 osc2.type = 'sine';
                 osc2.frequency.setValueAtTime(2093.00, now + delay); // C7
                 gain2.gain.setValueAtTime(0, now + delay);
-                gain2.gain.linearRampToValueAtTime(0.2, now + delay + 0.01);
-                gain2.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.4);
+                gain2.gain.linearRampToValueAtTime(0.2, now + delay + 0.005);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.3);
+                
                 osc2.connect(gain2);
                 gain2.connect(audioContext.destination);
                 osc2.start(now + delay);
-                osc2.stop(now + delay + 0.4);
+                osc2.stop(now + delay + 0.3);
                 
-                console.log('Son de notification premium joué');
+                console.log('Son de notification immédiat déclenché');
             } catch (e) {
-                console.error('Erreur audio détaillées:', e);
+                console.error('Erreur audio notification:', e);
             }
         }
 
@@ -466,8 +467,8 @@
         // Charger au démarrage
         loadNotificationCount();
 
-        // Recharger toutes les 5 secondes pour une réactivité quasi-instantanée
-        setInterval(loadNotificationCount, 5000);
+        // Recharger toutes les 2 secondes pour une réactivité maximale
+        setInterval(loadNotificationCount, 2000);
 
         // Auto-disparition des messages flash
         document.addEventListener('DOMContentLoaded', function() {
@@ -582,7 +583,10 @@
 
                 const message = element.getAttribute('data-confirm');
                 const isDanger = element.classList.contains('btn-danger') || message.toLowerCase().includes('supprimer') || message.toLowerCase().includes('annuler');
-                const requireJustification = message.toLowerCase().includes('supprimer') || message.toLowerCase().includes('archive') || element.closest('form')?.getAttribute('action')?.includes('delete') || element.closest('form')?.getAttribute('action')?.includes('archiver');
+                
+                // Justification obligatoire sauf pour la suppression définitive de l'admin
+                const isPermanentDelete = message.includes('DÉFINITIVEMENT');
+                const requireJustification = !isPermanentDelete && (message.toLowerCase().includes('supprimer') || message.toLowerCase().includes('archive') || element.closest('form')?.getAttribute('action')?.includes('delete') || element.closest('form')?.getAttribute('action')?.includes('archiver'));
 
                 // Cas d'un bouton de soumission
                 if ((element.tagName === 'BUTTON' || element.tagName === 'INPUT') && element.getAttribute('type') === 'submit') {
@@ -633,7 +637,8 @@
                 const form = e.target;
                 if (form.hasAttribute('data-confirm') && !pendingAction) {
                     const message = form.getAttribute('data-confirm');
-                    const requireJustification = message.toLowerCase().includes('supprimer') || message.toLowerCase().includes('archive') || form.getAttribute('action')?.includes('delete') || form.getAttribute('action')?.includes('archiver');
+                    const isPermanentDelete = message.includes('DÉFINITIVEMENT');
+                    const requireJustification = !isPermanentDelete && (message.toLowerCase().includes('supprimer') || message.toLowerCase().includes('archive') || form.getAttribute('action')?.includes('delete') || form.getAttribute('action')?.includes('archiver'));
 
                     e.preventDefault();
                     window.showStyledModal(message, false, (justification) => {
@@ -681,12 +686,12 @@
                  
                  // Jouer le son
                  // Note: Peut être bloqué par les politiques d'autoplay si aucune interaction préalable
+                 // Délai réduit pour plus de réactivité au chargement
                  setTimeout(() => {
-                     // On essaie de reprendre le contexte si suspendu
                      if (soundEnabled) {
                         playNotificationSound();
                      }
-                 }, 300);
+                 }, 100);
              }
         });
     </script>
